@@ -47,21 +47,31 @@ controls.enablePan = false;
 // Where you stand. From the quarterdeck you see the whole sail plan and the
 // horizon; on deck you are among the rigging, with the shrouds going up past
 // you from the rail. c shifts your station.
-const VIEWS = {
-  quarterdeck: { at: [74, 22, 64], look: [0, 13, 0], near: 22, far: 300 },
-  // Forward on the forecastle, looking aft down the deck. The spanker fills
-  // the after end of her, so there is nowhere to stand right aft.
-  deck:        { at: [1.8, deckAt(14) + 2.5, 14.0], look: [0, deckAt(0) + 8.0, -1.0], near: 3, far: 56 }
-};
 let station = 'quarterdeck';
 
 function stand(where) {
-  const v = VIEWS[where];
   station = where;
-  controls.minDistance = v.near;
-  controls.maxDistance = v.far;
-  controls.target.set(...v.look);
-  camera.position.set(...v.at);
+  // A wider angle on deck, because standing among it you take in far more of
+  // her at once than you do looking at her from off her quarter.
+  camera.fov = where === 'deck' ? 70 : 48;
+  camera.updateProjectionMatrix();
+
+  if (where === 'quarterdeck') {
+    controls.minDistance = 22;
+    controls.maxDistance = 300;
+    controls.target.set(0, 13, 0);
+    camera.position.set(74, 22, 64);
+  } else {
+    // Forward on the forecastle, and always on the weather side -- which is
+    // where the officer of the watch keeps, and also the side her canvas is
+    // not bellying into. The spanker fills the after end of her, so there is
+    // nowhere to stand right aft.
+    const side = Math.sign(signedDiff(weather.windFrom, heading)) || 1;
+    controls.minDistance = 3;
+    controls.maxDistance = 56;
+    controls.target.set(0, deckAt(0) + 8.0, -1.0);
+    camera.position.set(-side * 1.9, deckAt(14) + 2.5, 14.0);
+  }
   controls.update();
 }
 
