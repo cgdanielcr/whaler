@@ -15,8 +15,12 @@ const MAIN = {
   truck: 33.0,
   yard: { course: 12.6, topsail: 20.2, topgallant: 26.0, royal: 30.4 },
   half: { course: 8.6, topsail: 7.0, topgallant: 5.3, royal: 3.8 },
-  courseFoot: 2.4
+  courseFoot: 3.4          // where the clews of a course hang above the deck
 };
+
+// The hollow cut in the foot of each sail. Only the courses have much of one,
+// and it is what keeps them clear of the deck.
+const ROACH = { course: 2.6, topsail: 0.5, topgallant: 0.3, royal: 0.2 };
 
 const MASTS = [
   { key: 'fore',   name: 'Fore',   z:  10.4, h: 0.94, w: 0.92, course: true },
@@ -76,8 +80,8 @@ function makeYard(half) {
 // with it; furling rolls her up on the yard. Her foot is sheeted to the yard
 // below, so when that yard comes down she comes down with it.
 function squareSailUnit(spec) {
-  const { headHalf, footHalf, hoist, belly, yard, footOf } = spec;
-  const mesh = new THREE.Mesh(squareSail(headHalf, footHalf, hoist, belly), CANVAS);
+  const { headHalf, footHalf, hoist, belly, roach, yard, footOf } = spec;
+  const mesh = new THREE.Mesh(squareSail(headHalf, footHalf, hoist, belly, roach), CANVAS);
   mesh.position.z = 0.34;
   mesh.castShadow = true;
   const bundle = furledBundle(headHalf);
@@ -109,7 +113,8 @@ function squareSailUnit(spec) {
       this.mesh.visible = spread > 0.02;
       if (this.mesh.visible) {
         this.mesh.geometry.dispose();
-        this.mesh.geometry = squareSail(headHalf, headHalf + (footHalf - headHalf) * spread, drop, belly * spread);
+        this.mesh.geometry = squareSail(headHalf, headHalf + (footHalf - headHalf) * spread,
+                                        drop, belly * spread, roach * spread);
       }
       this.bundle.visible = spread < 0.98;
       this.bundle.scale.set(1 - spread, 1, 1 - spread);
@@ -155,7 +160,7 @@ function buildMast(m, sails, braces, uppers, parts) {
       tier, mast: m.key, ladder: tier === 'topsail' ? REEFABLE : PLAIN,
       footOf: below ? () => yards[below].position.y : () => foot,
       fullArea: hoist * (headHalf + footHalf),
-      headHalf, footHalf, hoist, belly: BELLY[tier], yard
+      headHalf, footHalf, hoist, belly: BELLY[tier], roach: ROACH[tier] * m.h, yard
     });
     brace.add(unit.mesh);
     sails.push(unit);

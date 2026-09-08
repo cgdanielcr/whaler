@@ -29,7 +29,11 @@ const FURLED = new THREE.MeshStandardMaterial({ color: '#b3a992', roughness: 0.9
 // A square sail: bent to its yard at the head, spread to the yard below at the
 // foot, with a little belly in it so it looks like cloth and not a board.
 // Built with the foot at local y = 0.
-export function squareSail(headHalf, footHalf, hoist, belly) {
+//
+// "roach" is the hollow cut in the foot, deepest amidships and dying away at
+// the clews. The courses are cut this way so their feet clear the deck and
+// everything on it; without it a course hangs about the height of a man's head.
+export function squareSail(headHalf, footHalf, hoist, belly, roach = 0) {
   const COLS = 6, ROWS = 4;
   const pos = [], idx = [];
   for (let r = 0; r <= ROWS; r++) {
@@ -37,7 +41,9 @@ export function squareSail(headHalf, footHalf, hoist, belly) {
     const half = footHalf + (headHalf - footHalf) * v;
     for (let c = 0; c <= COLS; c++) {
       const u = c / COLS;
-      pos.push((u * 2 - 1) * half, hoist * v, belly * Math.sin(Math.PI * u) * Math.sin(Math.PI * v));
+      const cut = roach * Math.sin(Math.PI * u) * (1 - v) * (1 - v);
+      pos.push((u * 2 - 1) * half, hoist * v + cut,
+               belly * Math.sin(Math.PI * u) * Math.sin(Math.PI * v));
     }
   }
   for (let r = 0; r < ROWS; r++) {
