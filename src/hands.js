@@ -89,6 +89,15 @@ export function makeHands(company, crew, rig, ship, camera, dom) {
 
   const onDeck = (x, z) => [x, deckAt(z) + 0.05, z];
 
+  // The crosstrees at the topgallant masthead, where the lookout stands.
+  function atMasthead(mast) {
+    const s = rig.sails.find((x) => x.mast === mast && x.tier === 'royal');
+    if (!s || !s.yard) return null;
+    s.yard.getWorldPosition(V);
+    ship.worldToLocal(V);
+    return [V.x + 0.5, V.y - 1.2, V.z];
+  }
+
   // Every man's place this instant: his post if he has one, else his haunt.
   function whereEveryoneShouldBe() {
     const want = new Map();
@@ -102,6 +111,11 @@ export function makeHands(company, crew, rig, ship, camera, dom) {
     }
     for (const man of company.all) {
       if (want.has(man)) continue;
+      // A lookout keeps the crosstrees all day, whatever else is doing.
+      if (man.standing) {
+        const p = atMasthead(man.standing.split(' ')[0]);
+        if (p) { want.set(man, p); continue; }
+      }
       const [x, z] = spotIn(man.station, man.id);
       want.set(man, onDeck(x, z));
     }

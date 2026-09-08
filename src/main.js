@@ -24,6 +24,8 @@ import { makeWatchBill } from './watchbill.js';
 import { makeStores } from './stores.js';
 import { makeRepairs } from './repairs.js';
 import { makeHands } from './hands.js';
+import { makeWhalerDeck } from './whaler.js';
+import { makeLookouts } from './lookouts.js';
 
 const renderer = new THREE.WebGLRenderer({ antialias: true });
 renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
@@ -99,6 +101,8 @@ const ship = new THREE.Group();
 const hull = makeHull();
 const rig = makeRig();
 hull.add(rig.group);
+const whaler = makeWhalerDeck();
+hull.add(whaler.group);
 ship.add(hull);
 scene.add(ship);
 
@@ -151,6 +155,7 @@ const helm = { hold: (code) => held.add(code), release: (code) => held.delete(co
 const company = makeCompany();
 const crew = makeCrew(company);
 const stores = makeStores();
+const lookouts = makeLookouts(company);
 const boards = makeBoards(rig, crew, company);
 const readOut = makeInstruments();
 const passage = makePassage(rig);
@@ -341,11 +346,12 @@ function frame(now) {
   darken(warning ? warning.strength : 0);
   over = damage.tick(gameDt, weather.force);
 
+  lookouts.tick(gameSeconds, readClock(gameSeconds).onDeck);
   crew.tick(gameDt, readClock(gameSeconds).onDeck, weather.force, fell);
   sail(seen, gameDt, shown);
   rideTheSwell(shown);
   stores.tick(gameDt);
-  boards.update(gameSeconds, pace, { over, held: !!warning }, passage, stores);
+  boards.update(gameSeconds, pace, { over, held: !!warning }, passage, stores, lookouts);
   watchBill(gameSeconds);
   hands(seen);
 

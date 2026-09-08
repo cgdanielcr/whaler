@@ -80,7 +80,7 @@ export function makeBoards(rig, crew, company) {
     pace: clock.querySelector('.pace')
   };
 
-  const update = function (gameSeconds, pace, sea, passage, stores) {
+  const update = function (gameSeconds, pace, sea, passage, stores, lookouts) {
     put(lockerList, stores.all.map((s) =>
       `<dt>${s.said}</dt><dd class="${s.out ? 'out' : s.low ? 'low' : ''}">${s.reads}</dd>`).join(''));
     put(lockerWord, stores.word);
@@ -123,7 +123,8 @@ export function makeBoards(rig, crew, company) {
     const mate = company.mateOf(t.onDeck);
     put(hands, `<b>${crew.free}</b> of ${crew.onDeck} hands free &mdash; ` +
       `crew ${crew.weariness}${crew.allHands ? ' &mdash; <em>all hands on deck</em>' : ''}` +
-      (mate ? `<br>${mate.name}, ${mate.berth.toLowerCase()}, has the deck` : ''));
+      (mate ? `<br>${mate.name}, ${mate.berth.toLowerCase()}, has the deck` : '') +
+      (lookouts && lookouts.said ? `<br>At the mastheads: ${lookouts.said}` : ''));
 
     // What she is carrying away, and what she has already lost.
     const lost = rig.hurt();

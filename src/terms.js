@@ -250,6 +250,60 @@ export const TERMS = {
   'foremast hand': {
     say: 'A common sailor, berthed in the forecastle forward. The bulk of the crew.'
   },
+  // --- what makes her a whaler -------------------------------------------------
+
+  'whaleboat': {
+    say: 'A light cedar boat about twenty-eight feet long, sharp at both ends ' +
+         'so she can be backed off a whale as fast as she is pulled on to him. ' +
+         'Six men take her: a mate to steer and head her, a boatsteerer to dart ' +
+         'the iron, and four at the oars.'
+  },
+  'davit': {
+    say: 'One of the curved arms over her side that a boat hangs from, ready to ' +
+         'be dropped into the water at a word.'
+  },
+  'try-works': {
+    say: 'The brick furnace amidships with two iron pots in it, where the ' +
+         'blubber is boiled down to oil. It is the only fire allowed aboard a ' +
+         'wooden ship, and it is bricked up over a pen of water to keep her deck ' +
+         'from taking light.'
+  },
+  'try-pot': { say: 'One of the two great iron pots in the try-works. Each holds some two hundred gallons.' },
+  'trying-out': {
+    say: 'Boiling the blubber down into oil. It runs day and night for two or ' +
+         'three days after a whale, and the ship is a torch of smoke the whole time.'
+  },
+  'cutting-in': {
+    say: 'Stripping the blubber off a whale chained alongside, in one long ' +
+         'spiral blanket piece hoisted aboard by the cutting tackle at the ' +
+         'mainmast. A day\'s work for all hands.'
+  },
+  'cutting stage': {
+    say: 'Planks swung outboard over the whale, with a rail to lean against, ' +
+         'where the mates stand with their long spades to cut.'
+  },
+  'blubber': { say: 'The layer of fat under a whale\'s skin. It is what the oil is boiled out of.' },
+  'blanket piece': { say: 'The long strip of blubber peeled off the whale and hoisted aboard whole.' },
+  'masthead': {
+    say: 'The lookout station at the topgallant crosstrees. On a whaling ground ' +
+         'two men are up there from sunrise to sunset, relieved every two hours, ' +
+         'watching for a spout.'
+  },
+  'spout': {
+    say: 'The whale\'s breath, seen as a plume of vapour. A sperm whale\'s blows ' +
+         'forward and to the left, which is how you tell him from a mile off.'
+  },
+  'boatsteerer\'s': { say: 'Belonging to the boatsteerer, who darts the iron.' },
+  'boatheader': { say: 'The mate in the stern of a whaleboat, who steers her on to the whale and then lances him.' },
+  'lower': { say: 'To drop the boats into the water and go after a whale.' },
+  'loggerhead': {
+    say: 'The post in the stern of a whaleboat that the line takes a turn round ' +
+         'when the whale runs. It smokes with the friction, and is doused with water.'
+  },
+  'iron': { say: 'The harpoon. It is not what kills the whale: it only makes fast to him.' },
+  'lance': { say: 'The long thin spear the mate kills the whale with, once the boat is fast.' },
+  'barrel': { say: 'The measure of her voyage. A sperm whale might yield forty barrels, a big bull far more.' },
+
   'idler': {
     say: 'A man who keeps no watch, not a man who does no work. The cooper, ' +
          'carpenter, cook, steward and boy work through the day at their trades ' +
