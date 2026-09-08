@@ -5,27 +5,28 @@
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <title>Ship</title>
   <style>
-    html, body {
-      height: 100%;
-      margin: 0;
-    }
-    body {
-      background: #1d3b4f;
-      color: #e8dfc8;
-      display: flex;
-      align-items: center;
-      justify-content: center;
+    html, body { height: 100%; margin: 0; background: #1d3b4f; overflow: hidden; }
+    canvas { display: block; }
+    #hint {
+      position: fixed; left: 0; right: 0; bottom: 1.4rem;
+      text-align: center; pointer-events: none;
       font-family: Georgia, "Times New Roman", serif;
-    }
-    h1 {
-      font-size: clamp(3rem, 18vw, 9rem);
-      font-weight: normal;
-      letter-spacing: 0.15em;
-      margin: 0;
+      font-size: 0.95rem; letter-spacing: 0.05em;
+      color: #e8dfc8; opacity: 0.6;
+      text-shadow: 0 1px 3px rgba(0,0,0,0.6);
     }
   </style>
+  <script type="importmap">
+  {
+    "imports": {
+      "three": "https://cdn.jsdelivr.net/npm/three@0.185.1/build/three.module.js",
+      "three/addons/": "https://cdn.jsdelivr.net/npm/three@0.185.1/examples/jsm/"
+    }
+  }
+  </script>
 </head>
 <body>
-  <h1>Ship</h1>
+  <div id="hint">Drag to look about her &mdash; scroll to come closer</div>
+  <script type="module" src="./src/main.js"></script>
 </body>
 </html>
