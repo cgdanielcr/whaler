@@ -1,0 +1,127 @@
+// The ship's company: thirty hands under you, each with a name, a rating and
+// a watch.
+//
+// A whaleship's crew was the most mixed afloat. New Bedford and Nantucket
+// families, Azoreans and Cape Verdeans shipped on the outward passage, Black
+// New Englanders, Wampanoag men from Gay Head and the Vineyard, and islanders
+// taken up in the Pacific on earlier voyages. The names below are drawn from
+// the ordinary given names and family names of those communities in the
+// 1840s. They are plausible, not particular: no man here is meant to be any
+// real person, and nothing is quoted from any crew list.
+//
+// You are the master, and are not one of the thirty. A crew list of the period
+// names the master separately from the hands he ships.
+
+const NAMES = [
+  { weight: 5,   // New England whaling families
+    given: ['Obed', 'Seth', 'Ezra', 'Nathan', 'Amos', 'Elias', 'Jabez', 'Reuben',
+            'Silas', 'Zenas', 'Peleg', 'Owen', 'Josiah', 'Caleb', 'Enoch', 'Gideon',
+            'Hiram', 'Lemuel', 'Barzillai', 'Shubael', 'Tristram', 'Abner'],
+    family: ['Coffin', 'Starbuck', 'Macy', 'Folger', 'Swain', 'Chase', 'Hussey',
+             'Gardner', 'Bunker', 'Worth', 'Pease', 'Luce', 'Mayhew', 'Daggett',
+             'Norton', 'Tilton', 'Nickerson', 'Snow', 'Hallett', 'Doane', 'Crowell',
+             'Barnard', 'Coleman', 'Wyer', 'Paddack'] },
+
+  { weight: 3,   // Azores and Cape Verde, as the names were written down here
+    given: ['Manuel', 'Antone', 'José', 'John', 'Frank', 'Joseph', 'Antonio', 'Domingo'],
+    family: ['Silva', 'Rose', 'Correia', 'Fortes', 'Sylvia', 'Lopes', 'Gomes',
+             'Perry', 'Duarte', 'Ramos', 'Vieira', 'Tavares', 'Andrade'] },
+
+  { weight: 2,   // Black New England, chiefly New Bedford
+    given: ['Samuel', 'Isaac', 'Lewis', 'Alfred', 'William', 'Henry', 'David', 'Charles'],
+    family: ['Freeman', 'Johnson', 'Cuffe', 'Wainer', 'Phelps', 'Grimes', 'Hazzard',
+             'Piper', 'Bailey', 'Randall', 'Rodman'] },
+
+  { weight: 2,   // Wampanoag, from Gay Head and the Vineyard
+    given: ['Thomas', 'Simon', 'Zaccheus', 'Aaron', 'Joel', 'Ephraim', 'Solomon'],
+    family: ['Belain', 'Devine', 'Cooper', 'Weeks', 'Francis', 'Jeffers', 'Peters',
+             'Salisbury', 'Wamsley'] },
+
+  { weight: 1,   // shipped in the Pacific on an earlier voyage
+    given: ['Kanoa', 'Keoni', 'Mahoe', 'Nahoa', 'Pikai', 'Kahele', 'Manu'],
+    family: ['', '', '', ''] }        // often entered under one name only
+];
+
+const pick = (a) => a[Math.floor(Math.random() * a.length)];
+
+function nameMaker() {
+  const bag = [];
+  for (const g of NAMES) for (let i = 0; i < g.weight; i++) bag.push(g);
+  const used = new Set();
+
+  return function name() {
+    for (let tries = 0; tries < 40; tries++) {
+      const g = pick(bag);
+      const f = pick(g.family);
+      const made = f ? `${pick(g.given)} ${f}` : pick(g.given);
+      if (!used.has(made)) { used.add(made); return made; }
+    }
+    return `${pick(pick(bag).given)} ${used.size}`;
+  };
+}
+
+// What she ships, and in what numbers. Thirty hands all told.
+const BERTHS = [
+  { berth: 'First mate',    rate: 'mate',           station: 'the deck',  n: 1 },
+  { berth: 'Second mate',   rate: 'mate',           station: 'the deck',  n: 1 },
+  { berth: 'Third mate',    rate: 'mate',           station: 'the deck',  n: 1 },
+  { berth: 'Boatsteerer',   rate: 'boatsteerer',    station: 'topman',    n: 4 },
+  { berth: 'Cooper',        rate: 'tradesman',      station: 'day work',  n: 1 },
+  { berth: 'Carpenter',     rate: 'tradesman',      station: 'day work',  n: 1 },
+  { berth: 'Cook',          rate: 'tradesman',      station: 'day work',  n: 1 },
+  { berth: 'Steward',       rate: 'tradesman',      station: 'day work',  n: 1 },
+  { berth: 'Cabin boy',     rate: 'green hand',     station: 'waister',   n: 1 },
+  { berth: 'Foremast hand', rate: 'able seaman',    station: 'topman',    n: 5 },
+  { berth: 'Foremast hand', rate: 'ordinary seaman', station: 'afterguard', n: 6 },
+  { berth: 'Foremast hand', rate: 'green hand',     station: 'waister',   n: 7 }
+];
+
+const STRENGTH = ['weak', 'middling', 'middling', 'strong'];
+
+export function makeCompany() {
+  const name = nameMaker();
+  const all = [];
+  let id = 0;
+
+  for (const b of BERTHS) {
+    for (let i = 0; i < b.n; i++) {
+      all.push({
+        id: id++, name: name(), berth: b.berth, rate: b.rate,
+        station: b.station, strength: pick(STRENGTH), health: 'sound', watch: null
+      });
+    }
+  }
+
+  // The watch bill. The first mate takes the larboard watch and the second the
+  // starboard, as the custom was; the third mate goes with the first. The rest
+  // are dealt out turn and turn about so that each watch gets its share of the
+  // good men and the green ones.
+  const put = (man, watch) => { man.watch = watch; };
+  put(all.find((m) => m.berth === 'First mate'), 'larboard');
+  put(all.find((m) => m.berth === 'Third mate'), 'larboard');
+  put(all.find((m) => m.berth === 'Second mate'), 'starboard');
+
+  let turn = 0;
+  for (const m of all) {
+    if (m.watch) continue;
+    put(m, turn++ % 2 ? 'larboard' : 'starboard');
+  }
+
+  const of = (watch) => all.filter((m) => m.watch === watch);
+
+  return {
+    all,
+    watch: of,
+
+    // The officer who has the deck this watch.
+    mateOf(watch) {
+      return of(watch).find((m) => m.rate === 'mate') || null;
+    },
+
+    rename(man, to) {
+      const clean = String(to).replace(/\s+/g, ' ').trim().slice(0, 28);
+      man.name = clean || man.name;
+      return man.name;
+    }
+  };
+}

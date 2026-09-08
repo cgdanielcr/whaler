@@ -138,6 +138,54 @@
     }
     #orders-card .shut { margin: 0.7rem 0 0; font-size: 0.75rem; opacity: 0.4; }
 
+    /* --- the watch bill --------------------------------------------------- */
+
+    #watch-bill {
+      position: fixed; inset: 0; margin: auto; z-index: 9;
+      width: min(46rem, calc(100vw - 3rem)); height: fit-content;
+      max-height: calc(100vh - 3rem); overflow-y: auto;
+      padding: 1.5rem 1.8rem;
+      background: rgba(10, 22, 30, 0.95);
+      border: 1px solid rgba(232, 223, 200, 0.3);
+    }
+    #watch-bill h2 {
+      margin: 0 0 1rem; font-size: 0.7rem; font-weight: normal;
+      letter-spacing: 0.22em; text-transform: uppercase; opacity: 0.55;
+    }
+    #watch-bill .watches { display: flex; gap: 2.2rem; align-items: flex-start; }
+    #watch-bill .watch { flex: 1; min-width: 0; opacity: 0.5; }
+    #watch-bill .watch.up { opacity: 1; }
+    #watch-bill h3 {
+      margin: 0 0 0.5rem; font-size: 0.92rem; font-weight: normal;
+      text-transform: capitalize; color: #cfe7f2;
+      display: flex; justify-content: space-between; align-items: baseline;
+      border-bottom: 1px solid rgba(232, 223, 200, 0.16); padding-bottom: 0.35rem;
+    }
+    #watch-bill .where {
+      font-size: 0.68rem; letter-spacing: 0.16em; text-transform: uppercase; opacity: 0.5;
+    }
+    #watch-bill table { border-collapse: collapse; width: 100%; }
+    #watch-bill td { padding: 0.16rem 0; vertical-align: baseline; font-size: 0.84rem; }
+    #watch-bill .who { width: 42%; }
+    #watch-bill .rate { width: 30%; font-size: 0.76rem; opacity: 0.62; }
+    #watch-bill .post { font-size: 0.76rem; opacity: 0.5; }
+    #watch-bill .name {
+      cursor: text; border-bottom: 1px dotted rgba(232, 223, 200, 0.2);
+      display: inline-block; min-width: 5rem;
+    }
+    #watch-bill .name:hover { border-bottom-color: rgba(143, 208, 232, 0.7); }
+    #watch-bill .name:focus {
+      outline: none; color: #8fd0e8; border-bottom-color: #8fd0e8;
+    }
+    #watch-bill .tally {
+      margin: 0.5rem 0 0; font-size: 0.72rem; letter-spacing: 0.12em;
+      text-transform: uppercase; opacity: 0.4;
+    }
+    #watch-bill .note {
+      margin: 1.2rem 0 0; padding-top: 0.8rem; font-size: 0.82rem; line-height: 1.7;
+      opacity: 0.72; border-top: 1px solid rgba(232, 223, 200, 0.16);
+    }
+
     #right {
       position: fixed; top: 1.1rem; right: 1.1rem;
       display: flex; flex-direction: column; align-items: flex-end; gap: 0.7rem;

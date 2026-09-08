@@ -19,6 +19,8 @@ import { makeSquall } from './squall.js';
 import { makeDamage } from './damage.js';
 import { makePassage } from './passage.js';
 import { makeGlossary } from './glossary.js';
+import { makeCompany } from './company.js';
+import { makeWatchBill } from './watchbill.js';
 
 const renderer = new THREE.WebGLRenderer({ antialias: true });
 renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
@@ -77,6 +79,7 @@ function stand(where) {
 
 window.addEventListener('keydown', (e) => {
   if (e.metaKey || e.ctrlKey || e.altKey || e.repeat) return;
+  if (e.target.isContentEditable) return;
   if (e.key === 'c' || e.key === 'C') {
     stand(station === 'deck' ? 'quarterdeck' : 'deck');
     e.preventDefault();
@@ -142,10 +145,13 @@ const time = {
 const held = new Set();
 const helm = { hold: (code) => held.add(code), release: (code) => held.delete(code) };
 
+const company = makeCompany();
 const crew = makeCrew();
-const boards = makeBoards(rig, crew);
+const boards = makeBoards(rig, crew, company);
 const readOut = makeInstruments();
 const passage = makePassage(rig);
+
+const watchBill = makeWatchBill(company);
 makeGlossary(rig);
 
 
@@ -326,6 +332,7 @@ function frame(now) {
   sail(seen, gameDt, shown);
   rideTheSwell(shown);
   boards.update(gameSeconds, pace, { over, held: !!warning }, passage);
+  watchBill(gameSeconds);
 
 
   if (passage.arrived && !told) {

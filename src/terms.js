@@ -222,6 +222,60 @@ export const TERMS = {
     say: 'Both watches on deck at once — thirty men instead of fifteen. It gets ' +
          'the work done in half the time and wears the crew out.'
   },
+  'watch bill': {
+    say: 'The list dividing the company into two watches, and setting down what ' +
+         'each man is rated and where he goes when the hands are called.'
+  },
+  'mate': {
+    say: 'One of her three officers under you. The first mate runs the deck and ' +
+         'the crew; each mate also heads a whaleboat when she is on the ground.'
+  },
+  'boatsteerer': {
+    say: 'The harpooner. Rated the best seaman aboard, berthed apart from the ' +
+         'foremast hands, and the man who darts the iron and then changes ends ' +
+         'with the mate to steer while he lances.'
+  },
+  'able seaman': {
+    say: 'A trained sailor who can hand, reef and steer, and be trusted on a ' +
+         'yard in a blow. Three or four years at sea makes one.'
+  },
+  'ordinary seaman': {
+    say: 'A sailor with a year or two in him. He knows the ropes but is not yet ' +
+         'trusted with the worst of the work aloft.'
+  },
+  'green hand': {
+    say: 'A man who has never been to sea. A whaleship shipped a great many of ' +
+         'them, and half the voyage was spent making sailors out of them.'
+  },
+  'foremast hand': {
+    say: 'A common sailor, berthed in the forecastle forward. The bulk of the crew.'
+  },
+  'tradesman': {
+    say: 'The cooper, carpenter, cook and steward. They work at their trades by ' +
+         'day rather than keeping the deck, but turn out with the rest when all ' +
+         'hands are called.'
+  },
+  'cooper': {
+    say: 'He makes and mends the casks the oil is stowed in. On a whaler he is ' +
+         'as necessary as the mate, since a leaking cask is a lost whale.'
+  },
+  'carpenter': {
+    say: 'He fishes a sprung spar, plugs a shot boat and keeps her tight. Often ' +
+         'the cooper doubles the office.'
+  },
+  'steward': { say: 'He keeps the cabin and serves the master and mates.' },
+  'topman': {
+    say: 'A hand stationed aloft when the watch is called to work ship. The ' +
+         'young and active go up; the work on the yards is theirs.'
+  },
+  'afterguard': {
+    say: 'The hands stationed aft on deck, at the braces and the wheel. Older ' +
+         'and steadier men, and no climbing.'
+  },
+  'waister': {
+    say: 'A hand stationed in the waist, amidships, to haul on whatever wants ' +
+         'hauling. Where the green hands go until they are worth more.'
+  },
   'middle watch': { say: 'Midnight to four in the morning.' },
   'morning watch': { say: 'Four to eight in the morning.' },
   'forenoon watch': { say: 'Eight to noon.' },

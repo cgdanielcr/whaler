@@ -29,14 +29,14 @@ function panel(id, html, where) {
   return el;
 }
 
-export function makeBoards(rig, crew) {
+export function makeBoards(rig, crew, company) {
   const canvas = panel('canvas-board', '<h2>Canvas</h2><table></table>' +
     '<p class="note"><b>1</b>-<b>6</b> shorten &nbsp; shift to make sail' +
     '<br><b>a</b> make sail all round &nbsp; <b>f</b> shorten all round' +
     '<br><b>t</b> tack &nbsp; <b>w</b> wear &nbsp; <b>&larr; &rarr;</b> helm' +
     '<br><b>h</b> all hands &nbsp; <b>space</b> bring her to' +
     '<br><b>-</b> <b>=</b> slower and faster &nbsp; drag to look about' +
-    '<br><b>c</b> go on deck, or back to the quarterdeck &nbsp; <b>?</b> all orders</p>');
+    '<br><b>c</b> go on deck &nbsp; <b>b</b> the watch bill &nbsp; <b>?</b> all orders</p>');
 
   const rows = {};
   for (const t of TIERS) {
@@ -106,8 +106,11 @@ export function makeBoards(rig, crew) {
       if (bars[i]) bars[i].style.width = `${Math.round((o.elapsed / o.seconds) * 100)}%`;
     });
 
+    const t = readClock(gameSeconds);
+    const mate = company.mateOf(t.onDeck);
     put(hands, `<b>${crew.free}</b> of ${crew.onDeck} hands free &mdash; ` +
-      `crew ${crew.weariness}${crew.allHands ? ' &mdash; <em>all hands on deck</em>' : ''}`);
+      `crew ${crew.weariness}${crew.allHands ? ' &mdash; <em>all hands on deck</em>' : ''}` +
+      (mate ? `<br>${mate.name}, ${mate.berth.toLowerCase()}, has the deck` : ''));
 
     // What she is carrying away, and what she has already lost.
     const lost = rig.hurt();
@@ -117,7 +120,6 @@ export function makeBoards(rig, crew) {
       (strain ? `<span class="strain">${strain}</span>` : '') +
       (lost.length ? `<span class="lost">${lost.map((d) => `${d.name} &mdash; ${d.kind}`).join('<br>')}</span>` : ''));
 
-    const t = readClock(gameSeconds);
     out.time.textContent = t.time;
     put(out.watch, `${t.watch}, ${t.bells}<br>${t.onDeck} watch on deck`);
     // "her clock at ×1" rather than "running ×1": running is a point of sail,

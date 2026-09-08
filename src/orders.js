@@ -26,6 +26,8 @@ export function bindOrders({ rig, crew, time, manoeuvre, helm }) {
 
   window.addEventListener('keydown', (e) => {
     if (e.metaKey || e.ctrlKey || e.altKey || e.repeat) return;
+    // While a name is being typed on the watch bill, the keys are his, not hers.
+    if (e.target.isContentEditable) return;
 
     if (e.code === 'ArrowLeft' || e.code === 'ArrowRight') { helm.hold(e.code); e.preventDefault(); return; }
 
