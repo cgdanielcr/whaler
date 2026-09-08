@@ -231,13 +231,16 @@ Same rules as v1: in order, one session or less each, each ends live on GitHub P
 with a one-line test in plain language, and the next does not start until the owner has
 confirmed the last by playing. Numbering continues from M6.
 
-**M7 — The glossary.** Hover any sea term in the boards for Dana's definition; the part
-of the ship it names lights up.
-*Test: hover "topsail" in the sail board and see the three topsails glow.*
+**M7 — The glossary. BUILT, live 8 September.** Hover any sea term on the boards for its
+meaning; the part of the ship it names lights up. Replaced the scripted tutorial, which
+the owner did not like: his complaint was that it named things he could not find. `?`
+opens a card of every order with its cost in hands and minutes.
+*Test: hover "topsails" in the canvas board and see the three topsails glow.*
 
-**M8 — Standing rigging and the deck camera.** Shrouds, ratlines, stays, backstays, tops.
-A key switches to a deck-level view.
-*Test: press the camera key and see the shrouds rising past you from the rail.*
+**M8 — Standing rigging and the deck camera. BUILT, live 8 September.** Shrouds,
+ratlines, futtock and topmast shrouds, backstays, and the fore-and-aft stays. `c` puts
+you on the forecastle, on the weather side, at a seventy-degree view.
+*Test: press c and see the shrouds rising past you from the rail.*
 
 **M9 — The crew list.** Thirty named men with ratings and watches. A watch bill board.
 The counter in the crew board becomes a list of who is on deck. Names editable.
