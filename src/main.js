@@ -4,7 +4,7 @@ import * as THREE from 'three';
 import { OrbitControls } from 'three/addons/controls/OrbitControls.js';
 import { makeSky, HORIZON_COLOUR } from './sky.js';
 import { makeSea, waveHeight } from './sea.js';
-import { makeHull } from './hull.js';
+import { makeHull, deckAt } from './hull.js';
 import { makeRig } from './rig.js';
 import { makeWake } from './wake.js';
 import { makeCrew } from './crew.js';
@@ -43,6 +43,35 @@ controls.minDistance = 22;
 controls.maxDistance = 300;
 controls.maxPolarAngle = Math.PI / 2 - 0.04;
 controls.enablePan = false;
+
+// Where you stand. From the quarterdeck you see the whole sail plan and the
+// horizon; on deck you are among the rigging, with the shrouds going up past
+// you from the rail. c shifts your station.
+const VIEWS = {
+  quarterdeck: { at: [74, 22, 64], look: [0, 13, 0], near: 22, far: 300 },
+  // Forward on the forecastle, looking aft down the deck. The spanker fills
+  // the after end of her, so there is nowhere to stand right aft.
+  deck:        { at: [1.8, deckAt(14) + 2.5, 14.0], look: [0, deckAt(0) + 8.0, -1.0], near: 3, far: 56 }
+};
+let station = 'quarterdeck';
+
+function stand(where) {
+  const v = VIEWS[where];
+  station = where;
+  controls.minDistance = v.near;
+  controls.maxDistance = v.far;
+  controls.target.set(...v.look);
+  camera.position.set(...v.at);
+  controls.update();
+}
+
+window.addEventListener('keydown', (e) => {
+  if (e.metaKey || e.ctrlKey || e.altKey || e.repeat) return;
+  if (e.key === 'c' || e.key === 'C') {
+    stand(station === 'deck' ? 'quarterdeck' : 'deck');
+    e.preventDefault();
+  }
+});
 
 scene.add(makeSky());
 const sea = makeSea();

@@ -2,6 +2,7 @@
 // Heights are given in metres above her deck.
 import * as THREE from 'three';
 import { deckAt } from './hull.js';
+import { makeRigging } from './rigging.js';
 import { REEFABLE, PLAIN, hoistFor, spreadFor, CANVAS, squareSail, gaffSail, stayTriangle, furledBundle } from './sails.js';
 
 const SPAR = new THREE.MeshStandardMaterial({ color: '#6b5636', roughness: 0.85, flatShading: true });
@@ -262,6 +263,13 @@ export function makeRig() {
   }
   buildHeadsails(group, sails);
 
+  // The standing rigging goes on last, in her own frame rather than any
+  // mast's, because it never moves when the yards are braced round.
+  const rigging = makeRigging(
+    MASTS.map((m) => ({ key: m.key, z: m.z, deck: deckAt(m.z), truck: MAIN.truck * m.h })),
+    HEADSAILS);
+  group.add(rigging.group);
+
   const spanker = sails.find((s) => s.tier === 'spanker');
   const headsails = sails.filter((s) => s.tier === 'headsail');
 
@@ -286,8 +294,10 @@ export function makeRig() {
   const bright = (m) => {
     if (!brightOf.has(m)) {
       const c = m.clone();
-      c.emissive = new THREE.Color('#ffc257');
-      c.emissiveIntensity = 0.85;
+      // Cordage is drawn as plain lines, which take no light, so those are
+      // brightened in the colour itself.
+      if ('emissive' in c) { c.emissive = new THREE.Color('#ffc257'); c.emissiveIntensity = 0.85; }
+      else c.color = new THREE.Color('#ffc257');
       brightOf.set(m, c);
     }
     return brightOf.get(m);
@@ -296,7 +306,7 @@ export function makeRig() {
   let alight = [];
   const lit = new Set();
   const light = (o) => o.traverse((n) => {
-    if (!n.isMesh || lit.has(n)) return;
+    if (!(n.isMesh || n.isLine) || lit.has(n)) return;
     lit.add(n);
     alight.push([n, n.material]);
     n.material = bright(n.material);
@@ -320,6 +330,10 @@ export function makeRig() {
         }
       }
       if (part.yards) for (const y of parts.yards) light(y);
+      if (part.rigging) {
+        if (part.rigging === 'all') light(rigging.group);
+        else if (rigging.parts[part.rigging]) light(rigging.parts[part.rigging]);
+      }
       if (part.masts) for (const k in parts.sticks) light(parts.sticks[k]);
       if (part.mast) {
         if (parts.sticks[part.mast]) light(parts.sticks[part.mast]);

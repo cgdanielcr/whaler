@@ -35,7 +35,8 @@ export function makeBoards(rig, crew) {
     '<br><b>a</b> make sail all round &nbsp; <b>f</b> shorten all round' +
     '<br><b>t</b> tack &nbsp; <b>w</b> wear &nbsp; <b>&larr; &rarr;</b> helm' +
     '<br><b>h</b> all hands &nbsp; <b>space</b> bring her to' +
-    '<br><b>-</b> <b>=</b> slower and faster &nbsp; drag to look about</p>');
+    '<br><b>-</b> <b>=</b> slower and faster &nbsp; drag to look about' +
+    '<br><b>c</b> go on deck, or back to the quarterdeck &nbsp; <b>?</b> all orders</p>');
 
   const rows = {};
   for (const t of TIERS) {

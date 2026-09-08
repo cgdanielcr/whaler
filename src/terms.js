@@ -91,8 +91,63 @@ export const TERMS = {
   },
   'bowsprit': {
     say: 'The spar running forward from her bows, to which the headsail stays ' +
-         'are set up.'
+         'are set up.',
+    part: { rigging: 'stays' }
   },
+
+  // --- the standing rigging --------------------------------------------------
+
+  'standing rigging': {
+    say: 'All the cordage that holds the masts up and never moves: shrouds, ' +
+         'stays and backstays. The ropes that work the sails are the running rigging.',
+    part: { rigging: 'all' }
+  },
+  'shroud': {
+    say: 'One of the ropes running from a masthead down to the side of the ' +
+         'ship, holding the mast against falling sideways. They are crossed by ' +
+         'ratlines to make a ladder aloft.',
+    part: { rigging: 'shrouds' }
+  },
+  'ratline': {
+    say: 'A light line seized across the shrouds, about fifteen inches above ' +
+         'the last, so that the shrouds become a ladder. Said "ratlin".',
+    part: { rigging: 'ratlines' }
+  },
+  'stay': {
+    say: 'A heavy rope leading forward and down from a masthead, holding the ' +
+         'mast against falling aft. The headsails are set on the fore stays.',
+    part: { rigging: 'stays' }
+  },
+  'forestay': {
+    say: 'The stay leading from the foremast head down to her stem.',
+    part: { rigging: 'stays' }
+  },
+  'backstay': {
+    say: 'A rope from an upper masthead down and aft to her side, holding the ' +
+         'topmast and topgallant mast against falling forward.',
+    part: { rigging: 'backstays' }
+  },
+  'futtock shrouds': {
+    say: 'The short shrouds slanting from the rim of the top down and inward ' +
+         'to the lower mast. A man going aloft climbs them leaning backwards, ' +
+         'which is the part that frightens green hands.',
+    part: { rigging: 'shrouds' }
+  },
+  'top': {
+    say: 'The platform at the lower masthead, where the topmast rigging is ' +
+         'set up and a man can stand.'
+  },
+  'crosstrees': {
+    say: 'The light frame at the topmast head, above the top, spreading the ' +
+         'topgallant rigging.'
+  },
+  'channel': {
+    say: 'A ledge bolted outside her rail, spreading the shrouds clear of it ' +
+         'so they get a wider hold on the mast.',
+    part: { rigging: 'shrouds' }
+  },
+  'aloft': { say: 'Up in the masts and rigging, as opposed to on deck.' },
+  'lay aloft': { say: 'The order to go up the rigging.' },
   'gaff': {
     say: 'The spar along the head of the spanker, angled up from the mast.',
     part: { tier: 'spanker' }

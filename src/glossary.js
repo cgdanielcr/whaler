@@ -150,6 +150,9 @@ export function makeGlossary(rig) {
     '<b>a</b> makes sail all round, <b>f</b> shortens all round.<br>' +
     '<b>h</b> calls all hands: thirty men instead of fifteen, and it tires them.<br>' +
     '<b>&larr; &rarr;</b> put the helm over. <b>space</b> brings her to.<br>' +
+    '<b>c</b> takes you down on deck and back to the quarterdeck.<br>' +
+    'Her masts are held up by shrouds, stays and backstays. The ratlines ' +
+    'across the shrouds are the ladder her topmen go aloft by.<br>' +
     '<b>-</b> and <b>=</b> run her clock slower and faster.<br>' +
     'Canvas comes off from the top down: royals, topgallants, then reef the topsails.' +
     '</p><p class="shut">? or esc to close</p>';
