@@ -2,7 +2,7 @@
 // Heights are given in metres above her deck.
 import * as THREE from 'three';
 import { deckAt } from './hull.js';
-import { REEFABLE, PLAIN, hoistFor, CANVAS, squareSail, gaffSail, stayTriangle, furledBundle } from './sails.js';
+import { REEFABLE, PLAIN, hoistFor, spreadFor, CANVAS, squareSail, gaffSail, stayTriangle, furledBundle } from './sails.js';
 
 const SPAR = new THREE.MeshStandardMaterial({ color: '#6b5636', roughness: 0.85, flatShading: true });
 
@@ -73,18 +73,29 @@ function squareSailUnit(spec) {
   yard.add(bundle);
 
   return Object.assign(spec, {
-    state: 'set', mesh, bundle,
+    state: 'set', target: null, progress: 0, canvas: 1,
+    mesh, bundle,
     apply() {
-      const furled = this.state === 'furled', f = hoistFor(this.state);
-      const footY = footOf();
-      this.mesh.visible = !furled;
-      this.bundle.visible = furled;
-      this.mesh.position.y = footY;
-      this.yard.position.y = footY + hoist * f;
-      if (!furled) {
+      const to = this.target || this.state, p = this.target ? this.progress : 0;
+      const lerp = (a, b) => a + (b - a) * p;
+      const hoistF = lerp(hoistFor(this.state), hoistFor(to));
+      const spread = lerp(spreadFor(this.state), spreadFor(to));
+      this.canvas = hoistF * spread;
+
+      const footY = footOf(), yardY = footY + hoist * hoistF;
+      this.yard.position.y = yardY;
+
+      // She always hangs from her own yard: reefing brings the yard down to
+      // her, furling gathers her up to it.
+      const drop = hoist * hoistF * spread;
+      this.mesh.position.y = yardY - drop;
+      this.mesh.visible = spread > 0.02;
+      if (this.mesh.visible) {
         this.mesh.geometry.dispose();
-        this.mesh.geometry = squareSail(headHalf, footHalf, hoist * f, belly);
+        this.mesh.geometry = squareSail(headHalf, headHalf + (footHalf - headHalf) * spread, drop, belly * spread);
       }
+      this.bundle.visible = spread < 0.98;
+      this.bundle.scale.set(1 - spread, 1, 1 - spread);
     }
   });
 }
@@ -120,7 +131,7 @@ function buildMast(m, sails, braces) {
     const hoist = at[tier] - (below ? at[below] : foot);
     const unit = squareSailUnit({
       name: `${m.name} ${tier}`,
-      tier, mast: m.key, ladder: (tier === 'topsail' || tier === 'topgallant') ? REEFABLE : PLAIN,
+      tier, mast: m.key, ladder: tier === 'topsail' ? REEFABLE : PLAIN,
       footOf: below ? () => yards[below].position.y : () => foot,
       fullArea: hoist * (headHalf + footHalf),
       headHalf, footHalf, hoist, belly: BELLY[tier], yard
@@ -155,13 +166,21 @@ function buildSpanker(mastGroup, sails) {
   pivot.add(mesh);
 
   sails.push({
-    name: 'Spanker', tier: 'spanker', mast: 'mizzen', ladder: REEFABLE, state: 'set', mesh,
-    pivot, fullArea: 96,
+    name: 'Spanker', tier: 'spanker', mast: 'mizzen', ladder: REEFABLE, mesh,
+    state: 'set', target: null, progress: 0, canvas: 1, pivot, fullArea: 96,
     apply() {
-      const f = hoistFor(this.state);
-      this.mesh.visible = this.state !== 'furled';
+      const to = this.target || this.state, p = this.target ? this.progress : 0;
+      const mix = (a, b) => a + (b - a) * p;
+      const f = mix(hoistFor(this.state), hoistFor(to));
+      const spread = mix(spreadFor(this.state), spreadFor(to));
+      this.canvas = f * spread;
+
+      // Brailing draws her leech in to the mast; reefing rolls her foot up to
+      // the gaff.
+      const peakIn = lerp(throat, peak, spread), clewIn = lerp(tack, clew, spread);
+      this.mesh.visible = spread > 0.02;
       this.mesh.geometry.dispose();
-      this.mesh.geometry = gaffSail(throat, peak, lerp(peak, clew, f), lerp(throat, tack, f));
+      this.mesh.geometry = gaffSail(throat, peakIn, lerp(peakIn, clewIn, f), lerp(throat, tack, f));
     }
   });
 }
@@ -183,16 +202,27 @@ function buildHeadsails(group, sails) {
     const area = Math.abs((h.tack[2] - h.head[2]) * (h.clew[1] - h.head[1]) -
                           (h.clew[2] - h.head[2]) * (h.tack[1] - h.head[1])) / 2;
     sails.push({
-      name: h.name, tier: 'headsail', mast: 'fore', ladder: PLAIN, state: 'set', mesh,
-      fullArea: area, side: 0,
-      apply() { this.mesh.visible = this.state !== 'furled'; },
+      name: h.name, tier: 'headsail', mast: 'fore', ladder: PLAIN, mesh,
+      state: 'set', target: null, progress: 0, canvas: 1, fullArea: area, side: 0,
+      apply() {
+        const to = this.target || this.state, p = this.target ? this.progress : 0;
+        this.canvas = spreadFor(this.state) + (spreadFor(to) - spreadFor(this.state)) * p;
+        this.mesh.visible = this.canvas > 0.02;
+        this.draw();
+      },
       // Her clew is sheeted away to leeward, and she bellies the same way.
+      // Hauling her down draws the clew in along her stay until she is nothing.
+      draw() {
+        const side = this.side, s = this.canvas;
+        const full = [h.clew[0] - side * 2.6, h.clew[1], h.clew[2]];
+        const clew = h.tack.map((v, i) => v + (full[i] - v) * s);
+        this.mesh.geometry.dispose();
+        this.mesh.geometry = stayTriangle(h.head, h.tack, clew, -side * h.belly * s);
+      },
       trim(side) {
         if (side === this.side) return;
         this.side = side;
-        const clew = [h.clew[0] - side * 2.6, h.clew[1], h.clew[2]];
-        this.mesh.geometry.dispose();
-        this.mesh.geometry = stayTriangle(h.head, h.tack, clew, -side * h.belly);
+        this.draw();
       }
     });
   }
@@ -219,35 +249,37 @@ export function makeRig() {
   };
   applyAll();
 
-  const step = (tier, dir) => {
-    for (const s of sails) {
-      if (s.tier !== tier) continue;
-      const i = s.ladder.indexOf(s.state);
-      s.state = s.ladder[Math.max(0, Math.min(s.ladder.length - 1, i + dir))];
-    }
-    applyAll();
-  };
+  const of = (tier) => sails.filter((s) => s.tier === tier);
 
   return {
     group, sails,
-    takeIn: (tier) => step(tier, +1),
-    letOut: (tier) => step(tier, -1),
-    setAll(state) {
-      for (const s of sails) s.state = s.ladder.includes(state) ? state : s.ladder[0];
-      applyAll();
-    },
+
+    // Where a tier stands, and where one more step in either direction leads.
     stateOf(tier) {
-      const found = sails.filter((s) => s.tier === tier).map((s) => s.state);
+      const found = of(tier).map((s) => s.state);
       return found.every((s) => s === found[0]) ? found[0] : 'mixed';
     },
+    nextState(tier, dir) {
+      const s = of(tier)[0], i = s.ladder.indexOf(this.stateOf(tier));
+      if (i < 0) return null;
+      const j = i + dir;
+      return (j < 0 || j >= s.ladder.length) ? null : s.ladder[j];
+    },
+
+    // An evolution: the hands go to work, she changes as they do, and when
+    // they are done the new state stands.
+    begin(tier, target) { for (const s of of(tier)) { s.target = target; s.progress = 0; } applyAll(); },
+    progress(tier, p) { for (const s of of(tier)) s.progress = p; applyAll(); },
+    finish(tier) {
+      for (const s of of(tier)) { if (s.target) s.state = s.target; s.target = null; s.progress = 0; }
+      applyAll();
+    },
+    working: (tier) => of(tier).some((s) => s.target),
 
     // How much of her full plain sail she is showing, from nothing to one.
     canvas() {
       let set = 0, full = 0;
-      for (const s of sails) {
-        full += s.fullArea;
-        if (s.state !== 'furled') set += s.fullArea * hoistFor(s.state);
-      }
+      for (const s of sails) { full += s.fullArea; set += s.fullArea * s.canvas; }
       return set / full;
     },
 

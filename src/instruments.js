@@ -18,6 +18,7 @@ const DIAL = `
 export function makeInstruments() {
   const panel = document.createElement('div');
   panel.id = 'instruments';
+  panel.className = 'board';
   panel.innerHTML = DIAL +
     '<dl>' +
     '<dt>Wind</dt><dd id="i-wind"></dd>' +
@@ -25,7 +26,7 @@ export function makeInstruments() {
     '<dt>Point</dt><dd id="i-point"></dd>' +
     '<dt>Making</dt><dd id="i-speed"></dd>' +
     '</dl>';
-  document.body.appendChild(panel);
+  (document.getElementById('right') || document.body).appendChild(panel);
 
   const arrow = panel.querySelector('.wind-arrow');
   const shipMark = panel.querySelector('.dial-ship');

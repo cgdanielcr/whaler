@@ -7,45 +7,73 @@
   <style>
     html, body { height: 100%; margin: 0; background: #1d3b4f; overflow: hidden; }
     canvas { display: block; }
-    body {
-      font-family: Georgia, "Times New Roman", serif;
-      color: #e8dfc8;
-    }
-    #canvas-panel {
-      position: fixed; top: 1.2rem; left: 1.2rem;
-      padding: 0.85rem 1.1rem 0.7rem;
+    body { font-family: Georgia, "Times New Roman", serif; color: #e8dfc8; }
+
+    .board {
+      position: fixed;
+      padding: 0.8rem 1.05rem;
       background: rgba(12, 26, 34, 0.62);
       border: 1px solid rgba(232, 223, 200, 0.22);
       user-select: none; pointer-events: none;
     }
-    #canvas-panel h2 {
-      margin: 0 0 0.5rem; font-size: 0.72rem; font-weight: normal;
-      letter-spacing: 0.22em; text-transform: uppercase; opacity: 0.6;
+    .board h2 {
+      margin: 0 0 0.5rem; font-size: 0.7rem; font-weight: normal;
+      letter-spacing: 0.22em; text-transform: uppercase; opacity: 0.55;
     }
-    #canvas-panel table { border-collapse: collapse; font-size: 0.92rem; }
-    #canvas-panel td { padding: 0.12rem 0 0.12rem 0; }
-    #canvas-panel .name { padding-right: 1.4rem; }
-    #canvas-panel .state { padding-right: 1.4rem; color: #cfe3c8; }
-    #canvas-panel .state.reefed { color: #e8c98a; }
-    #canvas-panel .state.furled { color: #9aa6ac; }
-    #canvas-panel .key { opacity: 0.45; font-size: 0.8rem; }
-    #canvas-panel .note {
-      margin: 0.7rem 0 0; font-size: 0.78rem; opacity: 0.5; line-height: 1.5;
+
+    #canvas-board { top: 1.1rem; left: 1.1rem; }
+    #canvas-board table { border-collapse: collapse; font-size: 0.9rem; }
+    #canvas-board td { padding: 0.1rem 0; }
+    #canvas-board .name { padding-right: 1.3rem; }
+    #canvas-board .state { padding-right: 1.3rem; color: #cfe3c8; min-width: 7.6rem; }
+    #canvas-board .state.reefed { color: #e8c98a; }
+    #canvas-board .state.furled { color: #9aa6ac; }
+    #canvas-board .state.working { color: #8fd0e8; font-style: italic; }
+    #canvas-board .key { opacity: 0.42; font-size: 0.78rem; }
+    #canvas-board .note {
+      margin: 0.7rem 0 0; font-size: 0.76rem; opacity: 0.48; line-height: 1.6;
     }
-    #instruments {
-      position: fixed; bottom: 1.2rem; right: 1.2rem;
-      display: flex; align-items: center; gap: 1rem;
-      padding: 0.8rem 1.1rem;
-      background: rgba(12, 26, 34, 0.62);
-      border: 1px solid rgba(232, 223, 200, 0.22);
-      user-select: none; pointer-events: none;
+
+    #orders-board { bottom: 1.1rem; left: 1.1rem; width: 21rem; }
+    #orders-board ul { margin: 0; padding: 0; list-style: none; font-size: 0.88rem; }
+    #orders-board li { margin-bottom: 0.4rem; display: grid; grid-template-columns: 1fr auto; gap: 0 0.8rem; }
+    #orders-board li.idle, #orders-board li.held { opacity: 0.5; }
+    #orders-board .left { font-size: 0.8rem; opacity: 0.7; }
+    #orders-board .bar {
+      grid-column: 1 / -1; height: 3px; margin-top: 0.22rem;
+      background: rgba(232, 223, 200, 0.16);
     }
-    #instruments dl { margin: 0; display: grid; grid-template-columns: auto auto; gap: 0.16rem 1rem; }
+    #orders-board .bar i { display: block; height: 100%; background: #8fd0e8; }
+    #orders-board .hands {
+      margin: 0.7rem 0 0; padding-top: 0.6rem; font-size: 0.82rem; opacity: 0.72;
+      border-top: 1px solid rgba(232, 223, 200, 0.16);
+    }
+    #orders-board .hands em { color: #e8c98a; font-style: normal; }
+    #orders-board .word { margin: 0.45rem 0 0; font-size: 0.85rem; color: #e0a17e; min-height: 1.1em; }
+
+    #right {
+      position: fixed; top: 1.1rem; right: 1.1rem;
+      display: flex; flex-direction: column; align-items: flex-end; gap: 0.7rem;
+      pointer-events: none;
+    }
+    #right > * { position: static; }
+
+    #clock-board { text-align: right; }
+    #clock-board .time { font-size: 1.8rem; letter-spacing: 0.06em; line-height: 1.1; }
+    #clock-board .watch { font-size: 0.84rem; opacity: 0.66; line-height: 1.5; margin-top: 0.2rem; }
+    #clock-board .pace {
+      margin-top: 0.55rem; padding-top: 0.5rem; font-size: 0.8rem; opacity: 0.6;
+      border-top: 1px solid rgba(232, 223, 200, 0.16);
+    }
+    #clock-board .pace.paused { color: #e8c98a; opacity: 0.95; }
+
+    #instruments { display: flex; align-items: center; gap: 1rem; }
+    #instruments dl { margin: 0; display: grid; grid-template-columns: auto auto; gap: 0.15rem 0.9rem; }
     #instruments dt {
-      font-size: 0.68rem; letter-spacing: 0.18em; text-transform: uppercase;
+      font-size: 0.66rem; letter-spacing: 0.18em; text-transform: uppercase;
       opacity: 0.5; align-self: baseline;
     }
-    #instruments dd { margin: 0; font-size: 0.92rem; }
+    #instruments dd { margin: 0; font-size: 0.9rem; max-width: 11.5rem; }
     #instruments dd.stalled { color: #e0a17e; }
     .dial-face { fill: rgba(232, 223, 200, 0.05); stroke: rgba(232, 223, 200, 0.3); stroke-width: 1.5; }
     .dial-north { stroke: rgba(232, 223, 200, 0.55); stroke-width: 2.5; }
@@ -63,6 +91,7 @@
   </script>
 </head>
 <body>
+  <div id="right"></div>
   <script type="module" src="./src/main.js"></script>
 </body>
 </html>

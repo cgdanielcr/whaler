@@ -1,4 +1,4 @@
-// Ship -- M3: a wind, a heading you steer, and way through the water.
+// Ship -- M4: a clock, and orders that take real time and real hands.
 import * as THREE from 'three';
 import { OrbitControls } from 'three/addons/controls/OrbitControls.js';
 import { makeSky, HORIZON_COLOUR } from './sky.js';
@@ -6,8 +6,12 @@ import { makeSea, waveHeight } from './sea.js';
 import { makeHull } from './hull.js';
 import { makeRig } from './rig.js';
 import { makeWake } from './wake.js';
+import { makeCrew } from './crew.js';
+import { makeBoards } from './boards.js';
 import { bindOrders } from './orders.js';
 import { makeInstruments } from './instruments.js';
+import { MANOEUVRES } from './evolutions.js';
+import { GAME_SECONDS_PER_SECOND } from './clock.js';
 import { speed, pointOfSail, signedDiff, wrap } from './wind.js';
 
 const renderer = new THREE.WebGLRenderer({ antialias: true });
@@ -31,20 +35,17 @@ controls.enableDamping = true;
 controls.dampingFactor = 0.07;
 controls.minDistance = 22;
 controls.maxDistance = 300;
-controls.maxPolarAngle = Math.PI / 2 - 0.04;   // stay above the water
+controls.maxPolarAngle = Math.PI / 2 - 0.04;
 controls.enablePan = false;
 
 scene.add(makeSky());
-
 const sea = makeSea();
 scene.add(sea);
-
 const wake = makeWake();
 scene.add(wake);
 
-// She keeps her place at the middle of the scene; the sea runs past her instead.
-const ship = new THREE.Group();       // her heading
-const hull = makeHull();              // the swell works on her inside her own frame
+const ship = new THREE.Group();
+const hull = makeHull();
 const rig = makeRig();
 hull.add(rig.group);
 ship.add(hull);
@@ -66,25 +67,96 @@ scene.add(new THREE.HemisphereLight('#cfe0e8', '#16303d', 1.5));
 
 // --- her state ---------------------------------------------------------------
 
-const WIND_FROM = 315;                // the north-west, and steady until M5
-const FORCE = 4;                      // a fresh breeze
-const TURN = 9;                       // degrees a second with the helm hard over
-const KNOT = 0.5144;                  // metres a second
+const WIND_FROM = 315;         // the north-west, and steady until M5
+const FORCE = 4;               // a fresh breeze
+const TURN = 9;                // degrees a second of your time, helm hard over
+const KNOT = 0.5144;
+const WAY = 90;                // game seconds for her to gather or lose her way
 
-let heading = 170;                    // her head, as a bearing
-let runX = 0, runZ = 0;               // how far she has run over the sea, in metres
+let heading = 170;
+let runX = 0, runZ = 0;
 let knots = 0;
+let gameSeconds = 8 * 3600;    // she begins at eight in the morning
+let swing = null;              // a tack or a wear in progress
+
+const PACES = [1, 2, 4, 8];
+let paceStep = 0, hoveTo = false;
+const time = {
+  toggle: () => { hoveTo = !hoveTo; },
+  faster: () => { paceStep = Math.min(PACES.length - 1, paceStep + 1); },
+  slower: () => { paceStep = Math.max(0, paceStep - 1); },
+  get pace() { return hoveTo ? 0 : PACES[paceStep]; }
+};
 
 const held = new Set();
-window.addEventListener('keydown', (e) => {
-  if (e.code === 'ArrowLeft' || e.code === 'ArrowRight') { held.add(e.code); e.preventDefault(); }
-});
-window.addEventListener('keyup', (e) => held.delete(e.code));
+const helm = { hold: (code) => held.add(code), release: (code) => held.delete(code) };
 
-bindOrders(rig);
+const crew = makeCrew();
+const boards = makeBoards(rig, crew);
 const readOut = makeInstruments();
 
-// She lifts to the water under her, and pitches and rolls as it passes.
+// --- tacking and wearing -----------------------------------------------------
+
+// She comes round either through the wind, which is quick and can fail, or
+// away from it through her stern, which is slow, sure, and loses her ground.
+function manoeuvre(which) {
+  if (swing || [...crew.running, ...crew.waiting].some((o) => o.swing)) {
+    boards.say('She is already coming round.');
+    return;
+  }
+  const off = Math.abs(signedDiff(WIND_FROM, heading));
+  if (which === 'tack' && off > 95) {
+    boards.say('She lies too far off the wind to stay. Bring her by the wind, or wear her round.');
+    return;
+  }
+  if (which === 'tack' && off < 67) {
+    boards.say('She is inside six points already. Wear her round.');
+    return;
+  }
+
+  const e = MANOEUVRES[which];
+  crew.issue({
+    name: e.name, hands: e.hands, minutes: e.minutes, swing: true,
+    onStart() {
+      const rel = signedDiff(WIND_FROM, heading);
+      const side = Math.sign(rel) || 1;
+      let delta;
+      if (which === 'tack') {
+        // Below four knots she is very apt to miss stays and hang in irons.
+        const risk = knots >= 4 ? 0.05 : 0.05 + 0.9 * Math.pow((4 - knots) / 4, 1.5);
+        this.missed = Math.random() < risk;
+        delta = this.missed ? rel : 2 * rel;    // missing stays leaves her head to wind
+      } else {
+        delta = Math.abs(rel) < 67 ? rel - side * 115 : 2 * rel - 360 * side;
+      }
+      swing = { from: heading, delta, knots0: knots, missed: this.missed };
+    },
+    onProgress(p) { if (swing) heading = wrap(swing.from + swing.delta * p); },
+    onDone() {
+      const missed = swing && swing.missed;
+      if (swing) heading = wrap(swing.from + swing.delta);
+      swing = null;
+      if (!missed) return;
+
+      knots = 0;
+      boards.say('She missed stays, and lies in irons.');
+      // Five to ten minutes hanging there before she pays off on the old tack.
+      const back = -Math.sign(signedDiff(WIND_FROM, heading) || 1) * 75;
+      crew.issue({
+        name: 'In irons, waiting for her to pay off', hands: 0,
+        minutes: 5 + Math.random() * 5, swing: true,
+        onStart() { swing = { from: heading, delta: signedDiff(WIND_FROM, heading) - back, knots0: 0 }; },
+        onProgress(p) { if (swing) heading = wrap(swing.from + swing.delta * p); },
+        onDone() { if (swing) heading = wrap(swing.from + swing.delta); swing = null; }
+      });
+    }
+  });
+}
+
+bindOrders({ rig, crew, time, manoeuvre, helm });
+
+// --- the working of her -------------------------------------------------------
+
 function rideTheSwell(t) {
   const c = Math.cos(heading * Math.PI / 180), s = Math.sin(heading * Math.PI / 180);
   const at = (dx, dz) => waveHeight(runX + dx * c + dz * s, runZ - dx * s + dz * c, t);
@@ -94,26 +166,30 @@ function rideTheSwell(t) {
   hull.rotation.z = Math.atan2(starboard - larboard, 8) * 1.4;
 }
 
-function sail(dt, t) {
-  // The wind's bearing relative to her head tells us everything else.
+function sail(seen, gameDt, t) {
   const relative = signedDiff(WIND_FROM, heading);
-  const offWind = Math.abs(relative);
-  const side = relative >= 0 ? 1 : -1;          // +1 with the wind over her starboard side
-  const point = pointOfSail(offWind);
+  const off = Math.abs(relative);
+  const side = relative >= 0 ? 1 : -1;
+  const point = pointOfSail(off);
 
-  knots = speed(offWind, rig.canvas(), FORCE);
-  rig.trim(offWind, side);
+  // She does not gather or lose her way in an instant, and she carries some of
+  // it round with her through a tack.
+  let want = speed(off, rig.canvas(), FORCE);
+  if (swing) want = Math.max(want, swing.knots0 * 0.6);
+  knots += (want - knots) * (1 - Math.exp(-gameDt / WAY));
 
-  // She will not answer her helm without way on, though never quite so little
-  // that you cannot get her round again.
-  const authority = 0.25 + 0.75 * Math.min(1, knots / 3);
-  if (held.has('ArrowLeft')) heading = wrap(heading - TURN * authority * dt);
-  if (held.has('ArrowRight')) heading = wrap(heading + TURN * authority * dt);
+  rig.trim(off, side);
+
+  // The helm is not yours while she is coming round.
+  if (!swing) {
+    const authority = Math.min(1, knots / 3);
+    if (held.has('ArrowLeft')) heading = wrap(heading - TURN * authority * seen);
+    if (held.has('ArrowRight')) heading = wrap(heading + TURN * authority * seen);
+  }
   ship.rotation.y = heading * Math.PI / 180;
 
-  // Close-hauled she crabs to leeward, so her course is not quite her heading.
   const course = (heading - side * point.leeway) * Math.PI / 180;
-  const metres = knots * KNOT * dt;
+  const metres = knots * KNOT * seen;
   runX += Math.sin(course) * metres;
   runZ += Math.cos(course) * metres;
 
@@ -122,15 +198,23 @@ function sail(dt, t) {
   readOut({ heading, windFrom: WIND_FROM, force: FORCE, point: point.name, knots });
 }
 
-let time = 0;
+let shown = 0;
 let last = performance.now();
 
 function frame(now) {
-  const dt = Math.min((now - last) / 1000, 0.1);
+  const real = Math.min((now - last) / 1000, 0.1);
   last = now;
-  time += dt;
-  sail(dt, time);
-  rideTheSwell(time);
+  const pace = time.pace;
+  const seen = real * pace;                          // what your eye sees
+  const gameDt = seen * GAME_SECONDS_PER_SECOND;     // what her clock counts
+
+  shown += seen;
+  gameSeconds += gameDt;
+  crew.tick(gameDt);
+  sail(seen, gameDt, shown);
+  rideTheSwell(shown);
+  boards.update(gameSeconds, pace);
+
   controls.update();
   renderer.render(scene, camera);
   requestAnimationFrame(frame);
@@ -142,3 +226,4 @@ window.addEventListener('resize', () => {
   camera.updateProjectionMatrix();
   renderer.setSize(window.innerWidth, window.innerHeight);
 });
+

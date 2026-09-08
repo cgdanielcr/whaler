@@ -7,12 +7,18 @@ import * as THREE from 'three';
 export const REEFABLE = ['set', '1st reef', '2nd reef', 'close-reefed', 'furled'];
 export const PLAIN    = ['set', 'furled'];   // courses, royals and headsails do not reef
 
-// How much of her full hoist a sail shows in each state. A reef takes a band
-// out near the head, so the yard comes down and the sail shortens.
+// Two numbers describe a sail. HOIST is where her yard rides: a reef takes a
+// band out near the head, so the yard comes down and the sail shortens.
+// SPREAD is how much canvas hangs from that yard: furling gathers her up to
+// the yard until none of her is showing.
 const HOIST = {
   'set': 1.00, '1st reef': 0.80, '2nd reef': 0.62, 'close-reefed': 0.45, 'furled': 1.00
 };
+const SPREAD = {
+  'set': 1, '1st reef': 1, '2nd reef': 1, 'close-reefed': 1, 'furled': 0
+};
 export const hoistFor = (state) => HOIST[state];
+export const spreadFor = (state) => SPREAD[state];
 
 export const CANVAS = new THREE.MeshStandardMaterial({
   color: '#cfc6b0', roughness: 0.94, metalness: 0, side: THREE.DoubleSide
