@@ -104,7 +104,11 @@ export function makeBoards(rig, crew, company) {
       ? crew.running.map((o) =>
           `<li><span class="what">${o.name}</span>` +
           `<span class="left">${crew.remaining(o)} min</span>` +
-          `<span class="bar"><i></i></span></li>`).join('') +
+          `<span class="bar"><i></i></span>` +
+          (o.posted || []).map((p) =>
+            `<span class="post"><b>${p.at}</b> &mdash; ` +
+            `${p.men.map((m) => m.name).join(', ')}</span>`).join('') +
+          '</li>').join('') +
         crew.waiting.map((o) =>
           `<li class="held"><span class="what">${o.name}</span>` +
           `<span class="left">wants ${o.hands} hands</span></li>`).join('')

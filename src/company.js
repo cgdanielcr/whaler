@@ -127,7 +127,9 @@ export function makeCompany() {
     watch: of,
 
     // How many she can muster: one watch, or every hand aboard.
-    get watchStrength() { return of('starboard').filter(sound).length; },
+    get watchStrength() {
+      return Math.min(of('starboard').filter(sound).length, of('larboard').filter(sound).length);
+    },
     get allHands() { return all.filter(sound).length; },
 
     // The officer who has the deck this watch.

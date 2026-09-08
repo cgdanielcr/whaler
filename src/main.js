@@ -219,6 +219,13 @@ function manoeuvre(which) {
 const repairs = makeRepairs({ rig, crew, stores, company, say: boards.say });
 bindOrders({ rig, crew, time, manoeuvre, helm, say: boards.say, repairs });
 
+// A man off a yard in a hard blow. It was rare, and it was remembered.
+function fell(man, where) {
+  boards.say(man.health === 'lost'
+    ? `${man.name} is gone from ${where}, and nothing to be done for him.`
+    : `${man.name} has come down off ${where} badly hurt.`);
+}
+
 // --- what carries away --------------------------------------------------------
 
 const SAID = {
@@ -332,7 +339,7 @@ function frame(now) {
   darken(warning ? warning.strength : 0);
   over = damage.tick(gameDt, weather.force);
 
-  crew.tick(gameDt);
+  crew.tick(gameDt, readClock(gameSeconds).onDeck, weather.force, fell);
   sail(seen, gameDt, shown);
   rideTheSwell(shown);
   stores.tick(gameDt);
