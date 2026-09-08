@@ -1,11 +1,14 @@
-// Ship -- M2: hull, sea, and a full rig whose sails can be set, reefed and furled.
+// Ship -- M3: a wind, a heading you steer, and way through the water.
 import * as THREE from 'three';
 import { OrbitControls } from 'three/addons/controls/OrbitControls.js';
 import { makeSky, HORIZON_COLOUR } from './sky.js';
 import { makeSea, waveHeight } from './sea.js';
 import { makeHull } from './hull.js';
 import { makeRig } from './rig.js';
+import { makeWake } from './wake.js';
 import { bindOrders } from './orders.js';
+import { makeInstruments } from './instruments.js';
+import { speed, pointOfSail, signedDiff, wrap } from './wind.js';
 
 const renderer = new THREE.WebGLRenderer({ antialias: true });
 renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
@@ -36,13 +39,17 @@ scene.add(makeSky());
 const sea = makeSea();
 scene.add(sea);
 
-const ship = makeHull();
-const rig = makeRig();
-ship.add(rig.group);
-scene.add(ship);
-bindOrders(rig);
+const wake = makeWake();
+scene.add(wake);
 
-// Light: a low afternoon sun, plus sky and sea bounce.
+// She keeps her place at the middle of the scene; the sea runs past her instead.
+const ship = new THREE.Group();       // her heading
+const hull = makeHull();              // the swell works on her inside her own frame
+const rig = makeRig();
+hull.add(rig.group);
+ship.add(hull);
+scene.add(ship);
+
 const sun = new THREE.DirectionalLight('#ffe9c9', 2.4);
 sun.position.set(72, 52, 26);
 sun.castShadow = true;
@@ -57,25 +64,72 @@ sun.shadow.bias = -0.0015;
 scene.add(sun);
 scene.add(new THREE.HemisphereLight('#cfe0e8', '#16303d', 1.5));
 
-// She rides the swell: lifted by the water under her, pitching bow to stern and
-// rolling from side to side as the waves pass beneath.
+// --- her state ---------------------------------------------------------------
+
+const WIND_FROM = 315;                // the north-west, and steady until M5
+const FORCE = 4;                      // a fresh breeze
+const TURN = 9;                       // degrees a second with the helm hard over
+const KNOT = 0.5144;                  // metres a second
+
+let heading = 170;                    // her head, as a bearing
+let runX = 0, runZ = 0;               // how far she has run over the sea, in metres
+let knots = 0;
+
+const held = new Set();
+window.addEventListener('keydown', (e) => {
+  if (e.code === 'ArrowLeft' || e.code === 'ArrowRight') { held.add(e.code); e.preventDefault(); }
+});
+window.addEventListener('keyup', (e) => held.delete(e.code));
+
+bindOrders(rig);
+const readOut = makeInstruments();
+
+// She lifts to the water under her, and pitches and rolls as it passes.
 function rideTheSwell(t) {
-  const bow    = waveHeight(0, 15, t);
-  const stern  = waveHeight(0, -15, t);
-  const larb   = waveHeight(-4, 0, t);
-  const stbd   = waveHeight(4, 0, t);
-  ship.position.y = (bow + stern + larb + stbd) / 4 - 0.15;
-  ship.rotation.x = -Math.atan2(bow - stern, 30) * 1.5;
-  ship.rotation.z = Math.atan2(stbd - larb, 8) * 1.4;
+  const c = Math.cos(heading * Math.PI / 180), s = Math.sin(heading * Math.PI / 180);
+  const at = (dx, dz) => waveHeight(runX + dx * c + dz * s, runZ - dx * s + dz * c, t);
+  const bow = at(0, 15), stern = at(0, -15), larboard = at(-4, 0), starboard = at(4, 0);
+  ship.position.y = (bow + stern + larboard + starboard) / 4 - 0.15;
+  hull.rotation.x = -Math.atan2(bow - stern, 30) * 1.5;
+  hull.rotation.z = Math.atan2(starboard - larboard, 8) * 1.4;
+}
+
+function sail(dt, t) {
+  // The wind's bearing relative to her head tells us everything else.
+  const relative = signedDiff(WIND_FROM, heading);
+  const offWind = Math.abs(relative);
+  const side = relative >= 0 ? 1 : -1;          // +1 with the wind over her starboard side
+  const point = pointOfSail(offWind);
+
+  knots = speed(offWind, rig.canvas(), FORCE);
+  rig.trim(offWind, side);
+
+  // She will not answer her helm without way on, though never quite so little
+  // that you cannot get her round again.
+  const authority = 0.25 + 0.75 * Math.min(1, knots / 3);
+  if (held.has('ArrowLeft')) heading = wrap(heading - TURN * authority * dt);
+  if (held.has('ArrowRight')) heading = wrap(heading + TURN * authority * dt);
+  ship.rotation.y = heading * Math.PI / 180;
+
+  // Close-hauled she crabs to leeward, so her course is not quite her heading.
+  const course = (heading - side * point.leeway) * Math.PI / 180;
+  const metres = knots * KNOT * dt;
+  runX += Math.sin(course) * metres;
+  runZ += Math.cos(course) * metres;
+
+  sea.userData.update(t, runX, runZ);
+  wake.userData.update(t, runX, runZ, course, knots);
+  readOut({ heading, windFrom: WIND_FROM, force: FORCE, point: point.name, knots });
 }
 
 let time = 0;
 let last = performance.now();
 
 function frame(now) {
-  time += Math.min((now - last) / 1000, 0.1);
+  const dt = Math.min((now - last) / 1000, 0.1);
   last = now;
-  sea.userData.update(time);
+  time += dt;
+  sail(dt, time);
   rideTheSwell(time);
   controls.update();
   renderer.render(scene, camera);
@@ -88,4 +142,3 @@ window.addEventListener('resize', () => {
   camera.updateProjectionMatrix();
   renderer.setSize(window.innerWidth, window.innerHeight);
 });
-

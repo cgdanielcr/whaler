@@ -89,11 +89,16 @@ function squareSailUnit(spec) {
   });
 }
 
-function buildMast(m, sails) {
+function buildMast(m, sails, braces) {
   const g = new THREE.Group();
   g.position.set(0, deckAt(m.z), m.z);
   const truck = MAIN.truck * m.h;
   g.add(mastStick(truck));
+
+  // All the yards on a mast swing together when she is braced round.
+  const brace = new THREE.Group();
+  braces.push(brace);
+  g.add(brace);
 
   const at = {}, half = {};
   for (const t of TIERS) { at[t] = MAIN.yard[t] * m.h; half[t] = MAIN.half[t] * m.w; }
@@ -105,21 +110,22 @@ function buildMast(m, sails) {
     const yard = makeYard(half[tier]);
     yard.position.y = at[tier];
     yards[tier] = yard;
-    g.add(yard);
+    brace.add(yard);
 
     if (tier === 'course' && !m.course) continue;   // the crossjack carries no sail
 
     const below = BELOW[tier];
+    const headHalf = half[tier] * 0.94;
+    const footHalf = below ? half[below] * 0.94 : half.course * 0.90;
+    const hoist = at[tier] - (below ? at[below] : foot);
     const unit = squareSailUnit({
       name: `${m.name} ${tier}`,
       tier, mast: m.key, ladder: (tier === 'topsail' || tier === 'topgallant') ? REEFABLE : PLAIN,
-      headHalf: half[tier] * 0.94,
-      footHalf: below ? half[below] * 0.94 : half.course * 0.90,
       footOf: below ? () => yards[below].position.y : () => foot,
-      hoist: at[tier] - (below ? at[below] : foot),
-      belly: BELLY[tier], yard
+      fullArea: hoist * (headHalf + footHalf),
+      headHalf, footHalf, hoist, belly: BELLY[tier], yard
     });
-    g.add(unit.mesh);
+    brace.add(unit.mesh);
     sails.push(unit);
   }
   return g;
@@ -132,20 +138,25 @@ function buildSpanker(mastGroup, sails) {
   const tack = [0, 2.9, -0.7], clew = [0, 3.4, -9.9];
   const lerp = (a, b, f) => a.map((v, i) => v + (b[i] - v) * f);
 
+  // Gaff, boom and sail swing out to leeward together.
+  const pivot = new THREE.Group();
+  mastGroup.add(pivot);
+
   for (const [a, b, r] of [[throat, peak, 0.15], [tack, clew, 0.16]]) {
     const spar = new THREE.Mesh(new THREE.CylinderGeometry(r, r, Math.hypot(b[1] - a[1], b[2] - a[2]), 6), SPAR);
     spar.position.set(0, (a[1] + b[1]) / 2, (a[2] + b[2]) / 2);
     spar.rotation.x = Math.atan2(b[2] - a[2], b[1] - a[1]);
     spar.castShadow = true;
-    mastGroup.add(spar);
+    pivot.add(spar);
   }
 
   const mesh = new THREE.Mesh(gaffSail(throat, peak, clew, tack), CANVAS);
   mesh.castShadow = true;
-  mastGroup.add(mesh);
+  pivot.add(mesh);
 
   sails.push({
     name: 'Spanker', tier: 'spanker', mast: 'mizzen', ladder: REEFABLE, state: 'set', mesh,
+    pivot, fullArea: 96,
     apply() {
       const f = hoistFor(this.state);
       this.mesh.visible = this.state !== 'furled';
@@ -168,23 +179,38 @@ function buildHeadsails(group, sails) {
     const mesh = new THREE.Mesh(stayTriangle(h.head, h.tack, h.clew, h.belly), CANVAS);
     mesh.castShadow = true;
     group.add(mesh);
+    // Half the base times the height, worked out in her fore-and-aft plane.
+    const area = Math.abs((h.tack[2] - h.head[2]) * (h.clew[1] - h.head[1]) -
+                          (h.clew[2] - h.head[2]) * (h.tack[1] - h.head[1])) / 2;
     sails.push({
       name: h.name, tier: 'headsail', mast: 'fore', ladder: PLAIN, state: 'set', mesh,
-      apply() { this.mesh.visible = this.state !== 'furled'; }
+      fullArea: area, side: 0,
+      apply() { this.mesh.visible = this.state !== 'furled'; },
+      // Her clew is sheeted away to leeward, and she bellies the same way.
+      trim(side) {
+        if (side === this.side) return;
+        this.side = side;
+        const clew = [h.clew[0] - side * 2.6, h.clew[1], h.clew[2]];
+        this.mesh.geometry.dispose();
+        this.mesh.geometry = stayTriangle(h.head, h.tack, clew, -side * h.belly);
+      }
     });
   }
 }
 
 export function makeRig() {
   const group = new THREE.Group();
-  const sails = [];
+  const sails = [], braces = [];
 
   for (const m of MASTS) {
-    const mastGroup = buildMast(m, sails);
+    const mastGroup = buildMast(m, sails, braces);
     if (m.key === 'mizzen') buildSpanker(mastGroup, sails);
     group.add(mastGroup);
   }
   buildHeadsails(group, sails);
+
+  const spanker = sails.find((s) => s.tier === 'spanker');
+  const headsails = sails.filter((s) => s.tier === 'headsail');
 
   // Always redraw from the deck up: a lowered yard carries everything above it down.
   const order = { course: 0, topsail: 1, topgallant: 2, royal: 3 };
@@ -213,6 +239,29 @@ export function makeRig() {
     stateOf(tier) {
       const found = sails.filter((s) => s.tier === tier).map((s) => s.state);
       return found.every((s) => s === found[0]) ? found[0] : 'mixed';
+    },
+
+    // How much of her full plain sail she is showing, from nothing to one.
+    canvas() {
+      let set = 0, full = 0;
+      for (const s of sails) {
+        full += s.fullArea;
+        if (s.state !== 'furled') set += s.fullArea * hoistFor(s.state);
+      }
+      return set / full;
+    },
+
+    // Brace her round. offWind is her angle from the wind in degrees; side is
+    // +1 with the wind over her starboard side, -1 over her larboard.
+    // The weather yardarm comes forward, and the lee yardarm goes aft.
+    trim(offWind, side) {
+      const yardAngle = Math.min(40, Math.max(0, (180 - offWind) / 2));
+      for (const b of braces) b.rotation.y = -side * yardAngle * Math.PI / 180;
+
+      const boomAngle = Math.min(70, Math.max(6, (offWind - 45) * 0.55));
+      if (spanker) spanker.pivot.rotation.y = side * boomAngle * Math.PI / 180;
+
+      for (const h of headsails) h.trim(side);
     }
   };
 }

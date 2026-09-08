@@ -17,7 +17,9 @@ function buildPanel() {
   panel.id = 'canvas-panel';
   panel.innerHTML = '<h2>Canvas</h2><table></table>' +
     '<p class="note">shift and the key to let her out again' +
-    '<br><b>a</b> all plain sail &nbsp; <b>f</b> furl all</p>';
+    '<br><b>a</b> all plain sail &nbsp; <b>f</b> furl all' +
+    '<br><b>&larr; &rarr;</b> put the helm over' +
+    '<br>drag to look about her</p>';
   document.body.appendChild(panel);
 
   const table = panel.querySelector('table');

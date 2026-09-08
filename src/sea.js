@@ -37,10 +37,12 @@ export function makeSea() {
   const normal = geometry.attributes.normal;
   const slope = { x: 0, z: 0 };
 
-  mesh.userData.update = (t) => {
+  // ox and oz are how far she has run: the swell streams past her instead of
+  // her sailing away across a plane that has to end somewhere.
+  mesh.userData.update = (t, ox, oz) => {
     for (let i = 0; i < position.count; i++) {
-      const x = position.getX(i);
-      const z = position.getZ(i);
+      const x = position.getX(i) + ox;
+      const z = position.getZ(i) + oz;
       position.setY(i, waveHeight(x, z, t));
       waveSlope(x, z, t, slope);
       const len = Math.hypot(slope.x, 1, slope.z);
