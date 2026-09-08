@@ -39,6 +39,19 @@ export function makeWeather(baseFrom, baseForce) {
   }
 
   return {
+    // Hold the weather quiet a while. The tutorial wants the first squall on
+    // its own cue, not the weather's.
+    quiet(minutes) { nextSquall = Math.max(nextSquall, clock + minutes * MINUTE); },
+
+    // Raise one now, with a warning of your choosing.
+    summon(warningMinutes) {
+      if (squall) return false;
+      squall = raise(false);
+      squall.warning = warningMinutes * MINUTE;
+      nextSquall = clock + 90 * MINUTE;
+      return true;
+    },
+
     tick(gameDt, hourOfDay) {
       clock += gameDt;
       if (squall) {
