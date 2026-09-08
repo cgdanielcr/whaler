@@ -7,7 +7,7 @@ stand. But it does override SPEC §3. The owner has now asked for the things §3
 v1 boundary, not the project boundary.
 
 It is a direction, turned into numbered milestones one at a time, each ending live and
-testable, exactly as v1 was. **M7 to M10 are built and live** as of 8 September 2026;
+testable, exactly as v1 was. **M7 to M16 are all built and live** as of 8 September 2026;
 see §6, where each milestone says so. The rest is not built.
 
 The owner played the live game on 8 September and confirmed the rigging and the deck view
@@ -255,33 +255,33 @@ want all hands, as they did. Spare canvas, spars, cordage, provisions and water 
 stores board. `m` sets the hands to mend, worst first, out of her stores.
 *Test: split a sail in a squall, press m, and sail on under a new one.*
 
-**M11 — Stations.** Each evolution names its stations. Men are picked for them by rating
+**M11 — Stations. BUILT, live 8 September.** Each evolution names its stations. Men are picked for them by rating
 and condition; the time to finish depends on who went. A green hand aloft in a gale is a
 risk.
 *Test: single-reef the topsails and see, in the orders board, which six men are on each
 yard.*
 
-**M12 — Sprites.** The men are visible on deck, go to their stations when an order is
+**M12 — Sprites. BUILT, live 8 September.** The men are visible on deck, go to their stations when an order is
 given, lay aloft on the ratlines and out on the yards. Hover for a name.
 *Test: order the royals in and watch four figures climb.*
 
-**M13 — A whaler's deck.** Boats on davits, try-works, cutting stage. Masthead lookouts
+**M13 — A whaler's deck. BUILT, live 8 September.** Boats on davits, try-works, cutting stage. Masthead lookouts
 as a standing station on the cruising ground.
 *Test: two men are aloft at the mastheads from sunrise and the crew board says so.*
 
-**M14 — Lowering.** "There she blows." Lower away; eighteen men leave; the ship is worked
+**M14 — Lowering. BUILT, live 8 September.** "There she blows." Lower away; eighteen men leave; the ship is worked
 short-handed until the boats return.
 *Test: lower three boats and try to tack with twelve men. You cannot.*
 
-**M14b — The chase.** The boats are seen pulling for the whale; the outcome is drawn at
+**M14b — The chase. BUILT, live 8 September.** The boats are seen pulling for the whale; the outcome is drawn at
 random from the list in §2 and plays out on the sea. Sperm whales only.
 *Test: lower twice on the same day and get two different endings.*
 
-**M15 — Cutting-in and trying-out.** The whale alongside, the multi-day evolutions, the
+**M15 — Cutting-in and trying-out. BUILT, live 8 September.** The whale alongside, the multi-day evolutions, the
 casks stowed down.
 *Test: bring a whale alongside and see the ship a torch of smoke through the night.*
 
-**M16 — A cruise.** The voyage frame: weeks on the ground, barrels as the score, the
+**M16 — A cruise. BUILT, live 8 September.** The voyage frame: weeks on the ground, barrels as the score, the
 account at the end written up man by man.
 *Test: finish a cruise and read what each man did.*
 
