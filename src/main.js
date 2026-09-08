@@ -28,6 +28,8 @@ import { makeWhalerDeck } from './whaler.js';
 import { makeLookouts } from './lookouts.js';
 import { makeHunt } from './hunt.js';
 import { makeAfloat, makeWhale } from './afloat.js';
+import { makeCruise, remember } from './cruise.js';
+import { makeWorkUp } from './workup.js';
 
 const renderer = new THREE.WebGLRenderer({ antialias: true });
 renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
@@ -260,14 +262,34 @@ function onScene(what, howMany) {
   if (what === 'gone' && whaleInSight) { afloat.drop(whaleInSight); whaleInSight = null; }
 }
 
+const cruise = makeCruise({ company, stores });
 const hunt = makeHunt({ company, crew, stores, say: boards.say, onScene });
-bindOrders({ rig, crew, time, manoeuvre, helm, say: boards.say, repairs, hunt });
+const workUp = makeWorkUp({
+  crew, hunt, cruise, stores, say: boards.say,
+  onFire: (lit) => { whaler.smoke.visible = lit; }
+});
+bindOrders({ rig, crew, time, manoeuvre, helm, say: boards.say, repairs, hunt, workUp });
 
 // A man off a yard in a hard blow. It was rare, and it was remembered.
 function fell(man, where) {
+  const day = Math.floor(gameSeconds / 86400) + 1;
+  remember(man, man.health === 'lost'
+    ? `lost off ${where} on the ${day}th day`
+    : `hurt off ${where} on the ${day}th day`);
   boards.say(man.health === 'lost'
     ? `${man.name} is gone from ${where}, and nothing to be done for him.`
     : `${man.name} has come down off ${where} badly hurt.`);
+}
+
+// What the men did, written down as they do it. Kept to a few lines a man,
+// because a record of forty entries is a list and a record of three is a life.
+function noteWork(order) {
+  if (weather.force < 6) return;
+  const gale = weather.force >= 8 ? 'the whole gale' : weather.force >= 7 ? 'the strong gale' : 'the gale';
+  for (const post of order.posted || []) {
+    if (!post.aloft) continue;
+    for (const m of post.men) remember(m, `was out on ${post.at} in ${gale}`);
+  }
 }
 
 // --- what carries away --------------------------------------------------------
@@ -389,8 +411,8 @@ function frame(now) {
   const real = Math.min((now - last) / 1000, 0.1);
   last = now;
   // Once she is in, the clock stops and only the sea keeps moving.
-  const pace = passage.arrived ? 0 : time.pace;
-  const seen = real * (passage.arrived ? 1 : pace);   // what your eye sees
+  const pace = cruise.over ? 0 : time.pace;
+  const seen = real * (cruise.over ? 1 : pace);   // what your eye sees
   const gameDt = pace * real * GAME_SECONDS_PER_SECOND;   // what her clock counts
 
   shown += seen;
@@ -404,19 +426,25 @@ function frame(now) {
 
   hunt.tick(gameDt, (gameSeconds / 3600) % 24);
   lookouts.tick(gameSeconds, readClock(gameSeconds).onDeck);
-  crew.tick(gameDt, readClock(gameSeconds).onDeck, weather.force, fell);
+  crew.tick(gameDt, readClock(gameSeconds).onDeck, weather.force, fell, noteWork);
   sail(seen, gameDt, shown);
   rideTheSwell(shown);
   stores.tick(gameDt);
-  boards.update(gameSeconds, pace, { over, held: !!warning }, passage, stores, lookouts, hunt);
+  boards.update(gameSeconds, pace, { over, held: !!warning }, passage, stores,
+                lookouts, hunt, cruise, workUp);
   watchBill(gameSeconds);
   hands(seen);
+  whaler.smoke.userData.update(shown);
 
-
+  // She runs her distance, and then she is on the ground and the cruise
+  // begins. It ends when her water will not stretch any further.
   if (passage.arrived && !told) {
     told = true;
-    boards.account(passage.arrived, readClock(gameSeconds).time);
+    cruise.raise(gameSeconds);
+    boards.say('She has raised the cruising ground. Keep a good lookout.');
   }
+  const ended = cruise.tick(gameSeconds);
+  if (ended) boards.account(ended, cruise, passage.arrived, readClock(gameSeconds).time);
 
   controls.update();
   renderer.render(scene, camera);

@@ -145,6 +145,34 @@ const BOATS = [
   { key: 'starboard quarter',  side: -1, z: -8.6 }
 ];
 
+// The smoke of the try-works. A ship trying out could be seen for miles by
+// the smoke of her, and smelt further.
+function makeSmoke() {
+  const g = new THREE.Group();
+  const puffs = [];
+  for (let i = 0; i < 14; i++) {
+    const m = new THREE.Sprite(new THREE.SpriteMaterial({
+      color: '#3a352f', transparent: true, opacity: 0.5, depthWrite: false
+    }));
+    m.userData.at = i / 14;
+    g.add(m);
+    puffs.push(m);
+  }
+  g.visible = false;
+  g.userData.update = (t) => {
+    if (!g.visible) return;
+    for (const p of puffs) {
+      const u = (p.userData.at + t * 0.12) % 1;
+      const size = 1.2 + u * 7;
+      p.scale.set(size, size, 1);
+      p.position.set(Math.sin(u * 5 + p.userData.at * 9) * u * 5.5, 2.2 + u * 22,
+                     -u * 7 + Math.cos(u * 4) * u * 2);
+      p.material.opacity = 0.55 * (1 - u) * (1 - u);
+    }
+  };
+  return g;
+}
+
 export function makeWhalerDeck() {
   const group = new THREE.Group();
   const boats = {};
@@ -170,5 +198,9 @@ export function makeWhalerDeck() {
   stage.position.set(-beamAt(0.5), deckAt(0.5) + 0.4, 0.5);
   group.add(stage);
 
-  return { group, boats };
+  const smoke = makeSmoke();
+  smoke.position.set(0, deckAt(5.2) + 1.6, 5.2);
+  group.add(smoke);
+
+  return { group, boats, smoke };
 }

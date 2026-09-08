@@ -36,7 +36,7 @@ export function makeBoards(rig, crew, company) {
     '<br><b>t</b> tack &nbsp; <b>w</b> wear &nbsp; <b>&larr; &rarr;</b> helm' +
     '<br><b>h</b> all hands &nbsp; <b>space</b> bring her to' +
     '<br><b>-</b> <b>=</b> slower and faster &nbsp; drag to look about' +
-    '<br><b>m</b> mend what is broken &nbsp; <b>c</b> go on deck<br><b>b</b> the watch bill &nbsp; <b>l</b> lower for a whale &nbsp; <b>?</b> all orders</p>');
+    '<br><b>m</b> mend what is broken &nbsp; <b>c</b> go on deck<br><b>b</b> the watch bill &nbsp; <b>?</b> all orders<br><b>l</b> lower for a whale &nbsp; <b>o</b> cut in and try out</p>');
 
   const rows = {};
   for (const t of TIERS) {
@@ -81,14 +81,18 @@ export function makeBoards(rig, crew, company) {
     pace: clock.querySelector('.pace')
   };
 
-  const update = function (gameSeconds, pace, sea, passage, stores, lookouts, hunt) {
+  const update = function (gameSeconds, pace, sea, passage, stores, lookouts, hunt, cruise, workUp) {
     put(lockerList, stores.all.map((s) =>
       `<dt>${s.said}</dt><dd class="${s.out ? 'out' : s.low ? 'low' : ''}">${s.reads}</dd>`).join(''));
     put(lockerWord, stores.word);
 
-    reckoning.toRun.textContent = `${passage.toRun.toFixed(1)} miles`;
+    reckoning.toRun.textContent = cruise && cruise.onGround
+      ? `day ${Math.floor(cruise.days(gameSeconds)) + 1} on the ground`
+      : `${passage.toRun.toFixed(1)} miles`;
     reckoning.bear.textContent = `${passage.bearingSaid} — ${Math.round(passage.bearing)}°`;
-    reckoning.made.textContent = `${passage.made.toFixed(1)} of ${DESTINATION.miles} miles`;
+    reckoning.made.textContent = cruise && cruise.onGround
+      ? `${cruise.barrels} barrels, ${cruise.whales} whale${cruise.whales === 1 ? '' : 's'}`
+      : `${passage.made.toFixed(1)} of ${DESTINATION.miles} miles`;
     reckoning.sailed.textContent = `${passage.sailed.toFixed(1)} miles`;
 
     for (const t of TIERS) {
@@ -126,7 +130,7 @@ export function makeBoards(rig, crew, company) {
       `crew ${crew.weariness}${crew.allHands ? ' &mdash; <em>all hands on deck</em>' : ''}` +
       (mate ? `<br>${mate.name}, ${mate.berth.toLowerCase()}, has the deck` : '') +
       (lookouts && lookouts.said ? `<br>At the mastheads: ${lookouts.said}` : ''));
-    put(chase, hunt && hunt.said ? `<span class="cry">${hunt.said}</span>` : '');
+    put(chase, [hunt && hunt.said, workUp && workUp.said].filter(Boolean).join('<br>'));
 
     // What she is carrying away, and what she has already lost.
     const lost = rig.hurt();
@@ -152,24 +156,36 @@ export function makeBoards(rig, crew, company) {
     saying = setTimeout(() => { word.textContent = ''; }, 6000);
   };
 
-  // The account of the passage, written up when she comes to her anchorage.
-  const account = (arrived, clockAt) => {
-    const spars = arrived.lost.length
-      ? `<p>She did not come by it whole: ${arrived.lost.map((d) => `${d.name.toLowerCase()} &mdash; ${d.kind}`).join('; ')}.</p>`
-      : '<p>She came by it with every sail and every spar she began with.</p>';
+  // The account of the whole voyage, written up when she turns for home.
+  // A whaling voyage was reckoned in barrels, and in who came home.
+  const account = (ended, cruise, arrived, clockAt) => {
+    const spars = rig.hurt().length
+      ? `<p>She is not whole: ${rig.hurt().map((d) => `${d.name.toLowerCase()} &mdash; ${d.kind}`).join('; ')}.</p>`
+      : '<p>She has every sail and every spar she began with.</p>';
+
+    const men = cruise.muster();
+    const gone = men.filter((m) => m.health === 'lost');
+    const hurt = men.filter((m) => m.health === 'hurt');
+
+    const roll = men.map((m) =>
+      `<li class="${m.health}"><b>${m.name}</b>, ${m.berth.toLowerCase()}` +
+      (m.health === 'lost' ? ' &mdash; <em>lost</em>' : m.health === 'hurt' ? ' &mdash; <em>hurt</em>' : '') +
+      (m.deeds ? `<span>${m.deeds.join('; ')}</span>` : '') + '</li>').join('');
 
     landfall.innerHTML =
-      '<h2>The passage</h2>' +
-      `<p class="took">${DESTINATION.miles} miles to the ${compassPoint(DESTINATION.bearing)}, ` +
-      `made good in <b>${arrived.took}</b>.</p>` +
+      '<h2>The voyage</h2>' +
+      `<p class="took"><b>${cruise.barrels}</b> barrels of sperm oil stowed down, ` +
+      `out of ${cruise.whales} whale${cruise.whales === 1 ? '' : 's'} taken.</p>` +
       '<dl>' +
-      `<dt>Made good</dt><dd>${arrived.made.toFixed(1)} miles</dd>` +
-      `<dt>Sailed through the water</dt><dd>${arrived.sailed.toFixed(1)} miles</dd>` +
-      `<dt>Of every mile sailed, made good</dt><dd>${Math.round(arrived.worth * 100)}%</dd>` +
-      `<dt>Averaged</dt><dd>${arrived.average.toFixed(1)} knots</dd>` +
-      `<dt>Landfall at</dt><dd>${clockAt}</dd>` +
+      `<dt>Days on the ground</dt><dd>${Math.round(ended.days)}</dd>` +
+      `<dt>Sailed through the water</dt><dd>${arrived ? arrived.sailed.toFixed(0) : '—'} miles</dd>` +
+      `<dt>Men brought home sound</dt><dd>${men.length - gone.length - hurt.length} of ${men.length}</dd>` +
+      `<dt>She turned for home because</dt><dd>${ended.why}</dd>` +
+      `<dt>At</dt><dd>${clockAt}</dd>` +
       '</dl>' + spars +
-      '<p class="again">Reload the page to sail her again.</p>';
+      (gone.length ? `<p class="toll">${gone.map((m) => m.name).join(' and ')} did not come home.</p>` : '') +
+      '<h3>The company</h3><ul class="roll">' + roll + '</ul>' +
+      '<p class="again">Reload the page to ship a new crew and sail her again.</p>';
 
     // The passage is over; the working boards have nothing left to say.
     for (const b of document.querySelectorAll('#canvas-board, #orders-board, #right')) {

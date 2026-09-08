@@ -80,7 +80,7 @@ export function makeCrew(company) {
     wantsAllHands: (n) => n > company.watchStrength,
 
     // onHurt is called with the man and the place, when one of them falls.
-    tick(gameSeconds, onDeckWatch, atForce, onHurt) {
+    tick(gameSeconds, onDeckWatch, atForce, onHurt, onEach) {
       if (onDeckWatch) watchUp = onDeckWatch;
       if (atForce !== undefined) force = atForce;
 
@@ -92,6 +92,7 @@ export function makeCrew(company) {
         order.elapsed += gameSeconds;
         if (order.elapsed >= order.seconds) {
           running.splice(i, 1);
+          if (onEach) onEach(order);
           release(order, onHurt);
           if (order.onDone) order.onDone();
         } else if (order.onProgress) {

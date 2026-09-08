@@ -154,6 +154,10 @@ export function makeGlossary(rig) {
     '<b>&larr; &rarr;</b> put the helm over. <b>space</b> brings her to.<br>' +
     '<b>c</b> takes you down on deck and back to the quarterdeck.<br>' +
     '<b>b</b> opens the watch bill: who is in which watch, and what he is rated.<br>' +
+    '<b>l</b> lowers three boats for a whale the mastheads have raised. Eighteen ' +
+    'men go, and the watch on deck falls from twelve to three.<br>' +
+    '<b>o</b> sets the hands on a whale alongside: cutting in first, which is ' +
+    'all hands and most of a day, then trying out, which runs day and night.<br>' +
     '<b>m</b> sets the hands to mend whatever has carried away, out of her stores. ' +
     'A split sail wants a bolt of canvas; a sprung yard or topmast wants a spare ' +
     'spar and the carpenter.<br>' +

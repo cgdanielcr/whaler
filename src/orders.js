@@ -8,7 +8,7 @@ const BY_DIGIT = {
 };
 const ALL_TIERS = ['royal', 'topgallant', 'topsail', 'course', 'spanker', 'headsail'];
 
-export function bindOrders({ rig, crew, time, manoeuvre, helm, say, repairs, hunt }) {
+export function bindOrders({ rig, crew, time, manoeuvre, helm, say, repairs, hunt, workUp }) {
   // dir is +1 to shorten sail, -1 to make more.
   function give(tier, dir) {
     const from = rig.stateOf(tier);
@@ -44,6 +44,7 @@ export function bindOrders({ rig, crew, time, manoeuvre, helm, say, repairs, hun
     else if (e.code === 'KeyH') crew.call(!crew.allHands);
     else if (e.code === 'KeyM') repairs.turnTo();
     else if (e.code === 'KeyL') hunt.lower();
+    else if (e.code === 'KeyO') workUp.turnTo();
     else if (e.code === 'KeyT') manoeuvre('tack');
     else if (e.code === 'KeyW') manoeuvre('wear');
     else if (e.code === 'Space') time.toggle();
