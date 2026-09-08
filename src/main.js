@@ -1,9 +1,11 @@
-// Ship -- M1: a hull on the open sea, with the camera free to walk around her.
+// Ship -- M2: hull, sea, and a full rig whose sails can be set, reefed and furled.
 import * as THREE from 'three';
 import { OrbitControls } from 'three/addons/controls/OrbitControls.js';
 import { makeSky, HORIZON_COLOUR } from './sky.js';
 import { makeSea, waveHeight } from './sea.js';
 import { makeHull } from './hull.js';
+import { makeRig } from './rig.js';
+import { bindOrders } from './orders.js';
 
 const renderer = new THREE.WebGLRenderer({ antialias: true });
 renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
@@ -18,14 +20,14 @@ const scene = new THREE.Scene();
 scene.fog = new THREE.Fog(HORIZON_COLOUR, 240, 660);
 
 const camera = new THREE.PerspectiveCamera(48, window.innerWidth / window.innerHeight, 0.5, 8000);
-camera.position.set(56, 11, 48);
+camera.position.set(74, 22, 64);
 
 const controls = new OrbitControls(camera, renderer.domElement);
-controls.target.set(0, 3, 0);
+controls.target.set(0, 13, 0);
 controls.enableDamping = true;
 controls.dampingFactor = 0.07;
 controls.minDistance = 22;
-controls.maxDistance = 220;
+controls.maxDistance = 300;
 controls.maxPolarAngle = Math.PI / 2 - 0.04;   // stay above the water
 controls.enablePan = false;
 
@@ -35,19 +37,22 @@ const sea = makeSea();
 scene.add(sea);
 
 const ship = makeHull();
+const rig = makeRig();
+ship.add(rig.group);
 scene.add(ship);
+bindOrders(rig);
 
 // Light: a low afternoon sun, plus sky and sea bounce.
 const sun = new THREE.DirectionalLight('#ffe9c9', 2.4);
 sun.position.set(72, 52, 26);
 sun.castShadow = true;
-sun.shadow.mapSize.set(1024, 1024);
-sun.shadow.camera.left = -34;
-sun.shadow.camera.right = 34;
-sun.shadow.camera.top = 34;
-sun.shadow.camera.bottom = -34;
+sun.shadow.mapSize.set(2048, 2048);
+sun.shadow.camera.left = -46;
+sun.shadow.camera.right = 46;
+sun.shadow.camera.top = 52;
+sun.shadow.camera.bottom = -46;
 sun.shadow.camera.near = 20;
-sun.shadow.camera.far = 180;
+sun.shadow.camera.far = 220;
 sun.shadow.bias = -0.0015;
 scene.add(sun);
 scene.add(new THREE.HemisphereLight('#cfe0e8', '#16303d', 1.5));

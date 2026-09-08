@@ -141,3 +141,8 @@ export function makeHull() {
 
   return ship;
 }
+
+// How high her deck stands above the waterline at a given point along her length.
+// The masts need this to know where to stand.
+export const deckAt = (z) => sheerAt(Math.max(-1, Math.min(1, 2 * z / LENGTH)));
+export const ON_DECK = LENGTH;
