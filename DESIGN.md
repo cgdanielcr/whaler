@@ -6,12 +6,13 @@ stand. But it does override SPEC §3. The owner has now asked for the things §3
 — sailors you can see, named crew, and eventually whaling — so from here on §3 is the
 v1 boundary, not the project boundary.
 
-Nothing in this document is built. It is a direction, to be turned into numbered
-milestones one at a time, each ending live and testable, exactly as v1 was.
+It is a direction, turned into numbered milestones one at a time, each ending live and
+testable, exactly as v1 was. **M7, M8 and M9 are built and live** as of 8 September 2026;
+see §6, where each milestone says so. The rest is not built.
 
-**Gate before any of it:** the owner has not yet played M2–M6 in a working browser (see
-the handover notes). Play the live game through one passage first. If v1 is wrong, v2
-built on top of it will be wrong twice.
+The owner played the live game on 8 September and confirmed the rigging and the deck view
+by eye. He had not seen M2–M6 before that, so the sailing model itself is still only
+lightly played.
 
 ---
 
@@ -242,7 +243,7 @@ ratlines, futtock and topmast shrouds, backstays, and the fore-and-aft stays. `c
 you on the forecastle, on the weather side, at a seventy-degree view.
 *Test: press c and see the shrouds rising past you from the rail.*
 
-**M9 — The crew list.** Thirty named men with ratings and watches. A watch bill board.
+**M9 — The crew list. BUILT, live 8 September.** Thirty named men with ratings and watches. A watch bill board.
 The counter in the crew board becomes a list of who is on deck. Names editable.
 *Test: open the watch bill, rename a man, and see his name in the crew board.*
 
