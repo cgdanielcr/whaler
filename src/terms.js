@@ -250,6 +250,55 @@ export const TERMS = {
   'foremast hand': {
     say: 'A common sailor, berthed in the forecastle forward. The bulk of the crew.'
   },
+  'idler': {
+    say: 'A man who keeps no watch, not a man who does no work. The cooper, ' +
+         'carpenter, cook, steward and boy work through the day at their trades ' +
+         'and sleep the night out, and turn to with the rest when all hands are called.'
+  },
+  'day work': { say: 'What an idler is at when nothing else calls him.' },
+
+  // --- her stores and mending her ---------------------------------------------
+
+  'stores': {
+    say: 'What she carries below against the day she needs it. Three years from ' +
+         'home she cannot send ashore for anything, so what is in her is all there is.',
+    board: 'stores-board'
+  },
+  'spare canvas': {
+    say: 'Bolts of sailcloth in the sail locker. A split sail is unbent and a ' +
+         'new one bent in its place out of these.',
+    board: 'stores-board'
+  },
+  'bolt': { say: 'A roll of sailcloth, enough to make good one sail.' },
+  'spare spars': {
+    say: 'Rough sticks lashed on the skids overhead. A sprung yard is fished ' +
+         'with one; a sprung topmast is replaced by one.',
+    board: 'stores-board'
+  },
+  'cordage': { say: 'Coils of rope in her hold, for everything rope is wanted for.' },
+  'provisions': {
+    say: 'Salt beef, salt pork and bread, reckoned in days. Water always runs ' +
+         'out before the food does, and it is water that turns a ship for home.',
+    board: 'stores-board'
+  },
+  'bend': {
+    say: 'To make a sail fast to its yard or stay. A new sail is bent in place ' +
+         'of one blown out. The opposite is to unbend her.'
+  },
+  'fish': {
+    say: 'To splint a sprung spar: a spare stick lashed alongside the crack and ' +
+         'woolded round with rope until it will bear a strain again. The ' +
+         'carpenter\'s work.'
+  },
+  'send up': { say: 'To hoist a spar aloft and rig it in place. A topmast is sent up.' },
+  'send down': { say: 'To strike a spar down on deck, the opposite of sending it up.' },
+  'sail locker': { say: 'Where her spare canvas is stowed.' },
+  'skids': { say: 'The beams over her deck that spare spars and spare boats rest on.' },
+  'pump': {
+    say: 'Every wooden ship leaks. The pumps are worked so many strokes a watch, ' +
+         'and how many tells you how she is.'
+  },
+
   'tradesman': {
     say: 'The cooper, carpenter, cook and steward. They work at their trades by ' +
          'day rather than keeping the deck, but turn out with the rest when all ' +

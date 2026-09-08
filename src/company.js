@@ -60,20 +60,28 @@ function nameMaker() {
   };
 }
 
-// What she ships, and in what numbers. Thirty hands all told.
+// What she ships, and in what numbers. Twenty-nine hands under you, which
+// with yourself makes the thirty souls the spec counts.
+//
+// Twenty-four of them keep watches, twelve to a watch. The other five are
+// idlers: they work through the day at their trades and keep no night watch
+// at all, which is what the word meant -- not that they were idle, but that
+// they did not stand a watch. They turn out with everyone else when all hands
+// are called.
 const BERTHS = [
-  { berth: 'First mate',    rate: 'mate',           station: 'the deck',  n: 1 },
-  { berth: 'Second mate',   rate: 'mate',           station: 'the deck',  n: 1 },
-  { berth: 'Third mate',    rate: 'mate',           station: 'the deck',  n: 1 },
-  { berth: 'Boatsteerer',   rate: 'boatsteerer',    station: 'topman',    n: 4 },
-  { berth: 'Cooper',        rate: 'tradesman',      station: 'day work',  n: 1 },
-  { berth: 'Carpenter',     rate: 'tradesman',      station: 'day work',  n: 1 },
-  { berth: 'Cook',          rate: 'tradesman',      station: 'day work',  n: 1 },
-  { berth: 'Steward',       rate: 'tradesman',      station: 'day work',  n: 1 },
-  { berth: 'Cabin boy',     rate: 'green hand',     station: 'waister',   n: 1 },
-  { berth: 'Foremast hand', rate: 'able seaman',    station: 'topman',    n: 5 },
+  { berth: 'First mate',    rate: 'mate',            station: 'the deck',   n: 1 },
+  { berth: 'Second mate',   rate: 'mate',            station: 'the deck',   n: 1 },
+  { berth: 'Third mate',    rate: 'mate',            station: 'the deck',   n: 1 },
+  { berth: 'Boatsteerer',   rate: 'boatsteerer',     station: 'topman',     n: 4 },
+  { berth: 'Foremast hand', rate: 'able seaman',     station: 'topman',     n: 5 },
   { berth: 'Foremast hand', rate: 'ordinary seaman', station: 'afterguard', n: 6 },
-  { berth: 'Foremast hand', rate: 'green hand',     station: 'waister',   n: 7 }
+  { berth: 'Foremast hand', rate: 'green hand',      station: 'waister',    n: 6 },
+
+  { berth: 'Cooper',    rate: 'tradesman',  idler: 'the casks',        n: 1 },
+  { berth: 'Carpenter', rate: 'tradesman',  idler: 'her woodwork',     n: 1 },
+  { berth: 'Cook',      rate: 'tradesman',  idler: 'the coppers',      n: 1 },
+  { berth: 'Steward',   rate: 'tradesman',  idler: 'the cabin',        n: 1 },
+  { berth: 'Cabin boy', rate: 'green hand', idler: 'fetching and carrying', n: 1 }
 ];
 
 const STRENGTH = ['weak', 'middling', 'middling', 'strong'];
@@ -87,7 +95,10 @@ export function makeCompany() {
     for (let i = 0; i < b.n; i++) {
       all.push({
         id: id++, name: name(), berth: b.berth, rate: b.rate,
-        station: b.station, strength: pick(STRENGTH), health: 'sound', watch: null
+        station: b.idler ? 'day work' : b.station,
+        idler: b.idler || null,          // what he is at when nothing else calls
+        job: null,                       // what you have set him to instead
+        strength: pick(STRENGTH), health: 'sound', watch: null
       });
     }
   }
@@ -95,7 +106,7 @@ export function makeCompany() {
   // The watch bill. The first mate takes the larboard watch and the second the
   // starboard, as the custom was; the third mate goes with the first. The rest
   // are dealt out turn and turn about so that each watch gets its share of the
-  // good men and the green ones.
+  // good men and the green ones. The idlers keep no watch.
   const put = (man, watch) => { man.watch = watch; };
   put(all.find((m) => m.berth === 'First mate'), 'larboard');
   put(all.find((m) => m.berth === 'Third mate'), 'larboard');
@@ -103,20 +114,36 @@ export function makeCompany() {
 
   let turn = 0;
   for (const m of all) {
-    if (m.watch) continue;
+    if (m.watch || m.idler) continue;
     put(m, turn++ % 2 ? 'larboard' : 'starboard');
   }
 
   const of = (watch) => all.filter((m) => m.watch === watch);
+  const idlers = all.filter((m) => m.idler);
+  const sound = (m) => m.health === 'sound';
 
   return {
-    all,
+    all, idlers,
     watch: of,
+
+    // How many she can muster: one watch, or every hand aboard.
+    get watchStrength() { return of('starboard').filter(sound).length; },
+    get allHands() { return all.filter(sound).length; },
 
     // The officer who has the deck this watch.
     mateOf(watch) {
       return of(watch).find((m) => m.rate === 'mate') || null;
     },
+
+    // The tradesman whose trade a piece of work wants. Nothing is fished
+    // without the carpenter.
+    tradesman(berth) {
+      return all.find((m) => m.berth === berth && sound(m)) || null;
+    },
+
+    // Set a man to a piece of work, or let him go back to his own.
+    setJob(man, job) { man.job = job; },
+    clearJob(job) { for (const m of all) if (m.job === job) m.job = null; },
 
     rename(man, to) {
       const clean = String(to).replace(/\s+/g, ' ').trim().slice(0, 28);

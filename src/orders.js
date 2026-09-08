@@ -8,7 +8,7 @@ const BY_DIGIT = {
 };
 const ALL_TIERS = ['royal', 'topgallant', 'topsail', 'course', 'spanker', 'headsail'];
 
-export function bindOrders({ rig, crew, time, manoeuvre, helm }) {
+export function bindOrders({ rig, crew, time, manoeuvre, helm, say, repairs }) {
   // dir is +1 to shorten sail, -1 to make more.
   function give(tier, dir) {
     const from = rig.stateOf(tier);
@@ -16,6 +16,12 @@ export function bindOrders({ rig, crew, time, manoeuvre, helm }) {
     if (!to) return;
     const e = evolution(tier, from, to, dir);
     if (!e) return;
+    // A watch of twelve cannot reef topsails. She never could: that is why
+    // reefing was always an all-hands job.
+    if (!crew.allHands && crew.wantsAllHands(e.hands)) {
+      say(`${e.name} wants ${e.hands} hands, and the watch has ${crew.onDeck}. Call all hands.`);
+      return;
+    }
     crew.issue({
       name: e.name, hands: e.hands, minutes: e.minutes, tier,
       onStart: () => rig.begin(tier, to),
@@ -36,6 +42,7 @@ export function bindOrders({ rig, crew, time, manoeuvre, helm }) {
     else if (e.code === 'KeyF') for (const t of ALL_TIERS) give(t, +1);
     else if (e.code === 'KeyA') for (const t of ALL_TIERS) give(t, -1);
     else if (e.code === 'KeyH') crew.call(!crew.allHands);
+    else if (e.code === 'KeyM') repairs.turnTo();
     else if (e.code === 'KeyT') manoeuvre('tack');
     else if (e.code === 'KeyW') manoeuvre('wear');
     else if (e.code === 'Space') time.toggle();

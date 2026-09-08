@@ -4,20 +4,20 @@
 // off, so about fifteen are on deck at any moment. Calling all hands gets you
 // thirty -- and tires them, which makes every evolution slower.
 
-const WATCH = 15;
-const ALL_HANDS = 30;
 const TIRES_IN = 6 * 3600;    // game seconds of all hands on deck to wear them out
 const RESTS_IN = 8 * 3600;
 
 const WEARINESS = [[0.15, 'fresh'], [0.4, 'willing'], [0.7, 'tiring'], [0.9, 'weary'], [2, 'spent']];
 
-export function makeCrew() {
+// How many she can muster comes from the company itself now: one watch of
+// twelve, or every sound hand aboard when all hands are called.
+export function makeCrew(company) {
   let allHands = false;
   let fatigue = 0;
   const running = [], waiting = [];
 
   const busy = () => running.reduce((n, o) => n + o.hands, 0);
-  const onDeck = () => (allHands ? ALL_HANDS : WATCH);
+  const onDeck = () => (allHands ? company.allHands : company.watchStrength);
 
   function start(order) {
     // Weary men take longer over the same work.
@@ -44,6 +44,11 @@ export function makeCrew() {
       waiting.push(order);
       return true;
     },
+
+    // Whether the hands now on deck could ever man a piece of work. Reefing
+    // topsails and tacking ship want more than one watch can find, which is
+    // why both were called for all hands.
+    wantsAllHands: (n) => n > company.watchStrength,
 
     tick(gameSeconds) {
       fatigue = Math.max(0, Math.min(1, fatigue +

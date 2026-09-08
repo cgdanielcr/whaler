@@ -36,7 +36,7 @@ export function makeBoards(rig, crew, company) {
     '<br><b>t</b> tack &nbsp; <b>w</b> wear &nbsp; <b>&larr; &rarr;</b> helm' +
     '<br><b>h</b> all hands &nbsp; <b>space</b> bring her to' +
     '<br><b>-</b> <b>=</b> slower and faster &nbsp; drag to look about' +
-    '<br><b>c</b> go on deck &nbsp; <b>b</b> the watch bill &nbsp; <b>?</b> all orders</p>');
+    '<br><b>m</b> mend what is broken &nbsp; <b>c</b> go on deck<br><b>b</b> the watch bill &nbsp; <b>?</b> all orders</p>');
 
   const rows = {};
   for (const t of TIERS) {
@@ -67,6 +67,11 @@ export function makeBoards(rig, crew, company) {
     sailed: track.querySelector('.sailed')
   };
 
+  // What she has left below. She cannot send ashore for any of it.
+  const locker = panel('stores-board', '<h2>Stores</h2><dl></dl><p class="short"></p>', 'right');
+  const lockerList = locker.querySelector('dl');
+  const lockerWord = locker.querySelector('.short');
+
   const landfall = panel('landfall', '');
   landfall.style.display = 'none';
   const out = {
@@ -75,7 +80,11 @@ export function makeBoards(rig, crew, company) {
     pace: clock.querySelector('.pace')
   };
 
-  const update = function (gameSeconds, pace, sea, passage) {
+  const update = function (gameSeconds, pace, sea, passage, stores) {
+    put(lockerList, stores.all.map((s) =>
+      `<dt>${s.said}</dt><dd class="${s.out ? 'out' : s.low ? 'low' : ''}">${s.reads}</dd>`).join(''));
+    put(lockerWord, stores.word);
+
     reckoning.toRun.textContent = `${passage.toRun.toFixed(1)} miles`;
     reckoning.bear.textContent = `${passage.bearingSaid} — ${Math.round(passage.bearing)}°`;
     reckoning.made.textContent = `${passage.made.toFixed(1)} of ${DESTINATION.miles} miles`;

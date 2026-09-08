@@ -36,14 +36,29 @@ export function makeWatchBill(company) {
       `</table><p class="tally">${men.length} hands</p></div>`;
   }
 
+  // The idlers keep no watch. They work through the day at their trades, and
+  // turn out with the rest when all hands are called.
+  function idlerColumn() {
+    return '<div class="watch idlers"><h3>Idlers<span class="where">no watch</span></h3>' +
+      '<table>' + company.idlers.map((m) =>
+        `<tr><td class="who"><span class="name" contenteditable="true" ` +
+        `spellcheck="false" data-id="${m.id}">${m.name}</span></td>` +
+        `<td class="rate">${m.berth.toLowerCase()}</td>` +
+        `<td class="post${m.job ? ' set' : ''}">${m.job || m.idler}</td></tr>`).join('') +
+      `</table><p class="tally">${company.idlers.length} hands</p></div>`;
+  }
+
   function draw(gameSeconds) {
     const onDeck = readClock(gameSeconds).onDeck;
     panel.innerHTML =
       '<h2>The watch bill</h2>' +
-      '<div class="watches">' + column('starboard', onDeck) + column('larboard', onDeck) + '</div>' +
-      '<p class="note">Thirty hands under you. She is divided in two, four hours ' +
-      'on deck and four below, so about half of them are up at any moment. ' +
-      'Calling all hands turns out both watches at once.<br>' +
+      '<div class="watches">' + column('starboard', onDeck) + column('larboard', onDeck) +
+      idlerColumn() + '</div>' +
+      '<p class="note">Twenty-nine hands under you. Twenty-four keep watches, ' +
+      'twelve to a watch, four hours on deck and four below. The five idlers ' +
+      'keep no watch and work at their trades through the day.<br>' +
+      'A watch of twelve cannot reef topsails or tack ship on its own. Both ' +
+      'want all hands, and always did.<br>' +
       'Click a name to change it. <b>b</b> or <b>esc</b> to close.</p>';
 
     for (const el of panel.querySelectorAll('.name')) {
@@ -81,13 +96,15 @@ export function makeWatchBill(company) {
     panel.style.display = to ? '' : 'none';
   }
 
-  // The bill is redrawn only when the watch changes, so that a name being
-  // typed is not swept away under the cursor.
-  let lastWatch = '';
+  // The bill is redrawn only when the watch turns over or a man is set to a
+  // new piece of work, so that a name being typed is not swept away under the
+  // cursor.
+  let last = '';
   return function tick(gameSeconds) {
     clockAt = gameSeconds;
-    const now = readClock(gameSeconds).onDeck;
-    if (showing() && now !== lastWatch) draw(gameSeconds);
-    lastWatch = now;
+    const now = readClock(gameSeconds).onDeck +
+      company.idlers.map((m) => m.job || '').join('|');
+    if (showing() && now !== last) draw(gameSeconds);
+    last = now;
   };
 }

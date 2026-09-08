@@ -149,10 +149,14 @@ export function makeGlossary(rig) {
     '</table><p class="note">' +
     'Hold <b>shift</b> with a number to make sail instead of shortening it.<br>' +
     '<b>a</b> makes sail all round, <b>f</b> shortens all round.<br>' +
-    '<b>h</b> calls all hands: thirty men instead of fifteen, and it tires them.<br>' +
+    '<b>h</b> calls all hands: every hand aboard instead of the watch of twelve, ' +
+    'and it tires them. Reefing topsails and tacking ship both want it.<br>' +
     '<b>&larr; &rarr;</b> put the helm over. <b>space</b> brings her to.<br>' +
     '<b>c</b> takes you down on deck and back to the quarterdeck.<br>' +
     '<b>b</b> opens the watch bill: who is in which watch, and what he is rated.<br>' +
+    '<b>m</b> sets the hands to mend whatever has carried away, out of her stores. ' +
+    'A split sail wants a bolt of canvas; a sprung yard or topmast wants a spare ' +
+    'spar and the carpenter.<br>' +
     'Her masts are held up by shrouds, stays and backstays. The ratlines ' +
     'across the shrouds are the ladder her topmen go aloft by.<br>' +
     '<b>-</b> and <b>=</b> run her clock slower and faster.<br>' +

@@ -21,6 +21,8 @@ import { makePassage } from './passage.js';
 import { makeGlossary } from './glossary.js';
 import { makeCompany } from './company.js';
 import { makeWatchBill } from './watchbill.js';
+import { makeStores } from './stores.js';
+import { makeRepairs } from './repairs.js';
 
 const renderer = new THREE.WebGLRenderer({ antialias: true });
 renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
@@ -146,7 +148,8 @@ const held = new Set();
 const helm = { hold: (code) => held.add(code), release: (code) => held.delete(code) };
 
 const company = makeCompany();
-const crew = makeCrew();
+const crew = makeCrew(company);
+const stores = makeStores();
 const boards = makeBoards(rig, crew, company);
 const readOut = makeInstruments();
 const passage = makePassage(rig);
@@ -213,7 +216,8 @@ function manoeuvre(which) {
   });
 }
 
-bindOrders({ rig, crew, time, manoeuvre, helm });
+const repairs = makeRepairs({ rig, crew, stores, company, say: boards.say });
+bindOrders({ rig, crew, time, manoeuvre, helm, say: boards.say, repairs });
 
 // --- what carries away --------------------------------------------------------
 
@@ -331,7 +335,8 @@ function frame(now) {
   crew.tick(gameDt);
   sail(seen, gameDt, shown);
   rideTheSwell(shown);
-  boards.update(gameSeconds, pace, { over, held: !!warning }, passage);
+  stores.tick(gameDt);
+  boards.update(gameSeconds, pace, { over, held: !!warning }, passage, stores);
   watchBill(gameSeconds);
 
 

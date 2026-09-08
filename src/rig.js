@@ -366,7 +366,10 @@ export function makeRig() {
     nextState(tier, dir) {
       const s = of(tier)[0];
       if (!s) return null;
-      const i = s.ladder.indexOf(this.stateOf(tier));
+      // If the tier is somehow of two minds, go by the first sail in it; the
+      // order will bring the rest into line with her.
+      const where = this.stateOf(tier);
+      const i = s.ladder.indexOf(where === 'mixed' ? s.state : where);
       if (i < 0) return null;
       const j = i + dir;
       return (j < 0 || j >= s.ladder.length) ? null : s.ladder[j];
@@ -374,6 +377,33 @@ export function makeRig() {
 
     // What she has lost, and to what.
     hurt: () => sails.filter((s) => s.gone).map((s) => ({ name: s.name, kind: s.gone })),
+
+    // The sails themselves, for the hands who are to put them right.
+    broken: () => sails.filter((s) => s.gone),
+
+    // A sail bent anew, a yard fished, a topmast sent up. A sprung topmast
+    // takes the whole mast's upper canvas with it, so mending it gives all of
+    // them back at once. Whatever is mended comes back furled, ready to set.
+    mend(sail) {
+      const kind = sail.gone;
+      const back = kind === 'sprung topmast'
+        ? sails.filter((s) => s.mast === sail.mast && s.gone === 'sprung topmast')
+        : [sail];
+      for (const s of back) {
+        // She comes back trimmed like her sisters on the other two masts. If
+        // she came back furled while they were set, the tier would be neither
+        // one thing nor the other and would answer no order at all.
+        const sister = sails.find((o) => o.tier === s.tier && !o.gone && o !== s);
+        s.gone = null;
+        s.state = sister ? sister.state : 'furled';
+        s.target = null;
+        s.progress = 0;
+        if (s.yard) s.yard.rotation.z = 0;
+      }
+      if (kind === 'sprung topmast' && uppers[sail.mast]) uppers[sail.mast].rotation.z = 0;
+      applyAll();
+      return back.map((s) => s.name);
+    },
 
     // Something carries away. A sprung topmast takes everything above the
     // lower masthead on that mast with it.
