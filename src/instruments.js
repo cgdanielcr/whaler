@@ -2,6 +2,10 @@
 // of sail she is on, and what she is making.
 import { FORCE_NAMES, compassPoint, wrap } from './wind.js';
 
+// Only write when the words have changed, so a glossary term you are hovering
+// is not rebuilt under the mouse every frame.
+const putText = (el, text) => { if (el.__said !== text) { el.__said = text; el.textContent = text; } };
+
 const DIAL = `
 <svg viewBox="-50 -50 100 100" width="86" height="86">
   <circle r="44" class="dial-face"/>
@@ -47,10 +51,10 @@ export function makeInstruments() {
     arrow.setAttribute('transform', `rotate(${wrap(windFrom).toFixed(1)})`);
 
     const named = FORCE_NAMES[Math.max(0, Math.min(9, Math.round(force)))];
-    out.wind.textContent = `${named}, from the ${compassPoint(windFrom)}`;
+    putText(out.wind, `${named}, from the ${compassPoint(windFrom)}`);
     out.head.textContent = `${compassPoint(heading)} — ${Math.round(wrap(heading))}°`;
-    out.point.textContent = point;
-    out.speed.textContent = knots < 0.05 ? 'no way on her' : `${knots.toFixed(1)} knots`;
+    putText(out.point, point);
+    putText(out.speed, knots < 0.05 ? 'no way on her' : `${knots.toFixed(1)} knots`);
     out.speed.className = knots < 0.05 ? 'stalled' : '';
 
     out.squall.style.display = out.squallLabel.style.display = squall ? '' : 'none';

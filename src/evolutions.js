@@ -5,7 +5,7 @@
 // marked (inferred) fill gaps the table does not cover; the relative costs are
 // what matter, and they can be tuned.
 
-const TAKE_IN = {
+export const TAKE_IN = {
   royal:      { name: 'Take in the royals',        hands: 4,  minutes: 3 },   // Dana
   topgallant: { name: 'Take in the topgallants',   hands: 6,  minutes: 5 },   // Dana
   course:     { name: 'Furl the courses',          hands: 8,  minutes: 10 },  // Dana
@@ -13,7 +13,7 @@ const TAKE_IN = {
   headsail:   { name: 'Haul down the jibs',        hands: 4,  minutes: 3 }    // inferred
 };
 
-const LET_OUT = {
+export const LET_OUT = {
   royal:      { name: 'Set the royals',            hands: 4,  minutes: 3 },   // inferred
   topgallant: { name: 'Set the topgallants',       hands: 6,  minutes: 4 },   // inferred
   course:     { name: 'Set the courses',           hands: 8,  minutes: 8 },   // Dana
@@ -22,7 +22,7 @@ const LET_OUT = {
 };
 
 // The topsails are the heart of it, and the only sails she reefs.
-const TOPSAIL = {
+export const TOPSAIL = {
   'set>1st reef':          { name: 'Single-reef the topsails', hands: 14, minutes: 12 },  // Dana
   '1st reef>2nd reef':     { name: 'Second reef the topsails', hands: 14, minutes: 15 },  // Dana
   '2nd reef>close-reefed': { name: 'Close-reef the topsails',  hands: 16, minutes: 20 },  // Dana
@@ -33,7 +33,7 @@ const TOPSAIL = {
   '1st reef>set':          { name: 'Shake out a reef',         hands: 10, minutes: 8 }    // Dana
 };
 
-const SPANKER_REEF = { name: 'Reef the spanker', hands: 8, minutes: 7 };      // inferred
+export const SPANKER_REEF = { name: 'Reef the spanker', hands: 8, minutes: 7 };      // inferred
 const SPANKER_SHAKE = { name: 'Shake out the spanker', hands: 6, minutes: 5 }; // inferred
 
 export const MANOEUVRES = {

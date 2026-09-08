@@ -18,7 +18,7 @@ import { makeWeather } from './weather.js';
 import { makeSquall } from './squall.js';
 import { makeDamage } from './damage.js';
 import { makePassage } from './passage.js';
-import { makeTutorial } from './tutorial.js';
+import { makeGlossary } from './glossary.js';
 
 const renderer = new THREE.WebGLRenderer({ antialias: true });
 renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
@@ -107,11 +107,8 @@ const crew = makeCrew();
 const boards = makeBoards(rig, crew);
 const readOut = makeInstruments();
 const passage = makePassage(rig);
-const tutorial = makeTutorial();
+makeGlossary(rig);
 
-// Whether you have yet walked your eye round her.
-const stood = camera.position.clone();
-let looked = false;
 
 // --- tacking and wearing -----------------------------------------------------
 
@@ -291,10 +288,6 @@ function frame(now) {
   rideTheSwell(shown);
   boards.update(gameSeconds, pace, { over, held: !!warning }, passage);
 
-  if (!looked && camera.position.distanceTo(stood) > 14) looked = true;
-  if (!passage.arrived) {
-    tutorial(real, { heading, pace, over, looked, rig, crew, weather });
-  }
 
   if (passage.arrived && !told) {
     told = true;

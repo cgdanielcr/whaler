@@ -83,30 +83,60 @@
     #landfall p { margin: 0 0 0.8rem; font-size: 0.92rem; line-height: 1.55; }
     #landfall .again { margin: 0; font-size: 0.8rem; opacity: 0.45; }
 
-    #tutor {
-      position: fixed; bottom: 1.4rem; left: 50%; transform: translateX(-50%);
-      width: min(25rem, calc(100vw - 2.8rem));
-      padding: 1rem 1.25rem 0.85rem;
-      background: rgba(12, 26, 34, 0.86);
-      border: 1px solid rgba(143, 208, 232, 0.4);
+    /* --- the glossary ----------------------------------------------------- */
+
+    /* The boards let the mouse through so you can drag to look about her.
+       Only the terms themselves catch it. */
+    .term {
+      pointer-events: auto; cursor: help;
+      border-bottom: 1px dotted rgba(143, 208, 232, 0.5);
+    }
+    .term:hover { color: #8fd0e8; border-bottom-color: #8fd0e8; }
+
+    #gloss {
+      position: fixed; z-index: 10; width: min(21rem, calc(100vw - 2rem));
+      padding: 0.7rem 0.9rem;
+      background: rgba(10, 22, 30, 0.95);
+      border: 1px solid rgba(143, 208, 232, 0.45);
       pointer-events: none; user-select: none;
-      transition: border-color 0.5s, background 0.5s;
     }
-    #tutor.done { border-color: rgba(160, 214, 160, 0.75); background: rgba(20, 40, 34, 0.88); }
-    #tutor .of {
-      font-size: 0.64rem; letter-spacing: 0.2em; text-transform: uppercase; opacity: 0.42;
+    #gloss h4 {
+      margin: 0 0 0.35rem; font-size: 0.94rem; font-weight: normal;
+      color: #cfe7f2; letter-spacing: 0.02em;
     }
-    #tutor h3 {
-      margin: 0.3rem 0 0.45rem; font-size: 1.06rem; font-weight: normal;
-      letter-spacing: 0.02em; color: #cfe7f2;
+    #gloss p { margin: 0; font-size: 0.86rem; line-height: 1.5; opacity: 0.85; }
+
+    /* A board the hovered term is pointing at. */
+    .board.lit {
+      border-color: rgba(143, 208, 232, 0.85);
+      background: rgba(16, 38, 50, 0.8);
     }
-    #tutor.done h3::after { content: ' Å4 well enough.'; color: #a8d6a8; font-size: 0.92rem; }
-    #tutor p { margin: 0 0 0.7rem; font-size: 0.9rem; line-height: 1.55; opacity: 0.86; }
-    #tutor .press {
-      font-size: 0.86rem; letter-spacing: 0.04em; color: #8fd0e8;
-      padding-top: 0.55rem; border-top: 1px solid rgba(232, 223, 200, 0.16);
+
+    #orders-card {
+      position: fixed; inset: 0; margin: auto; z-index: 9;
+      width: min(34rem, calc(100vw - 3rem)); height: fit-content;
+      max-height: calc(100vh - 3rem); overflow-y: auto;
+      padding: 1.5rem 1.8rem;
+      background: rgba(10, 22, 30, 0.95);
+      border: 1px solid rgba(232, 223, 200, 0.3);
+      user-select: none;
     }
-    #tutor .skip { margin-top: 0.35rem; font-size: 0.72rem; opacity: 0.35; }
+    #orders-card h2 {
+      margin: 0 0 0.9rem; font-size: 0.7rem; font-weight: normal;
+      letter-spacing: 0.22em; text-transform: uppercase; opacity: 0.55;
+    }
+    #orders-card table { border-collapse: collapse; width: 100%; }
+    #orders-card td { padding: 0.3rem 0; vertical-align: top; }
+    #orders-card .k {
+      width: 4.2rem; color: #8fd0e8; font-size: 0.86rem; white-space: nowrap;
+    }
+    #orders-card .w { width: 8rem; font-size: 0.92rem; }
+    #orders-card .d { font-size: 0.82rem; opacity: 0.72; line-height: 1.55; }
+    #orders-card .note {
+      margin: 1rem 0 0; padding-top: 0.8rem; font-size: 0.84rem; line-height: 1.7;
+      opacity: 0.8; border-top: 1px solid rgba(232, 223, 200, 0.16);
+    }
+    #orders-card .shut { margin: 0.7rem 0 0; font-size: 0.75rem; opacity: 0.4; }
 
     #right {
       position: fixed; top: 1.1rem; right: 1.1rem;

@@ -6,6 +6,9 @@ import { REEFABLE, PLAIN, hoistFor, spreadFor, CANVAS, squareSail, gaffSail, sta
 
 const SPAR = new THREE.MeshStandardMaterial({ color: '#6b5636', roughness: 0.85, flatShading: true });
 
+// Her bow points along +z, so with y up her starboard side lies along -x.
+const STARBOARD_X = -1;
+
 // The mainmast, from which the other two are scaled.
 const MAIN = {
   truck: 33.0,
@@ -61,6 +64,7 @@ function makeYard(half) {
     arm.rotation.z = -s * Math.PI / 2;
     arm.position.x = s * half / 2;
     arm.castShadow = true;
+    arm.userData.side = s * STARBOARD_X;   // +1 starboard, -1 larboard
     g.add(arm);
   }
   g.position.z = 0.34;   // yards ride on the forward side of the mast
@@ -112,13 +116,14 @@ function squareSailUnit(spec) {
   });
 }
 
-function buildMast(m, sails, braces, uppers) {
+function buildMast(m, sails, braces, uppers, parts) {
   const g = new THREE.Group();
   g.position.set(0, deckAt(m.z), m.z);
   const truck = MAIN.truck * m.h;
   const stick = mastStick(truck);
   g.add(stick);
   uppers[m.key] = stick.userData.upper;
+  parts.sticks[m.key] = stick;
 
   // All the yards on a mast swing together when she is braced round.
   const brace = new THREE.Group();
@@ -135,6 +140,7 @@ function buildMast(m, sails, braces, uppers) {
     const yard = makeYard(half[tier]);
     yard.position.y = at[tier];
     yards[tier] = yard;
+    parts.yards.push(yard);
     brace.add(yard);
 
     if (tier === 'course' && !m.course) continue;   // the crossjack carries no sail
@@ -247,9 +253,10 @@ function buildHeadsails(group, sails) {
 export function makeRig() {
   const group = new THREE.Group();
   const sails = [], braces = [], uppers = {};
+  const parts = { yards: [], sticks: {} };
 
   for (const m of MASTS) {
-    const mastGroup = buildMast(m, sails, braces, uppers);
+    const mastGroup = buildMast(m, sails, braces, uppers, parts);
     if (m.key === 'mizzen') buildSpanker(mastGroup, sails);
     group.add(mastGroup);
   }
@@ -268,8 +275,68 @@ export function makeRig() {
   // Only the sails she still has answer an order.
   const of = (tier) => sails.filter((s) => s.tier === tier && !s.gone);
 
+  // --- lighting a part up, for the glossary ---------------------------------
+  //
+  // The spars all share one material and the sails another, so recolouring a
+  // material in place would light the whole ship. Instead each mesh is handed
+  // a bright copy of its own material, and given the shared one back
+  // afterwards. Nothing in apply() touches materials, so a highlight survives
+  // an evolution working through.
+  const brightOf = new Map();
+  const bright = (m) => {
+    if (!brightOf.has(m)) {
+      const c = m.clone();
+      c.emissive = new THREE.Color('#ffc257');
+      c.emissiveIntensity = 0.85;
+      brightOf.set(m, c);
+    }
+    return brightOf.get(m);
+  };
+
+  let alight = [];
+  const lit = new Set();
+  const light = (o) => o.traverse((n) => {
+    if (!n.isMesh || lit.has(n)) return;
+    lit.add(n);
+    alight.push([n, n.material]);
+    n.material = bright(n.material);
+  });
+
   return {
     group, sails,
+
+    // Light whatever a term names: a tier of sails, the yards, the masts, one
+    // mast, or everything down one side of her.
+    mark(part) {
+      this.unmark();
+      if (!part) return;
+      // A tier lights its canvas, and its yards with it.
+      if (part.tier) {
+        for (const s of sails) {
+          if (s.tier !== part.tier) continue;
+          light(s.mesh);
+          if (s.yard) light(s.yard);
+          if (s.pivot) light(s.pivot);
+        }
+      }
+      if (part.yards) for (const y of parts.yards) light(y);
+      if (part.masts) for (const k in parts.sticks) light(parts.sticks[k]);
+      if (part.mast) {
+        if (parts.sticks[part.mast]) light(parts.sticks[part.mast]);
+        for (const s of sails) if (s.mast === part.mast) light(s.mesh);
+      }
+      if (part.side) {
+        for (const y of parts.yards) {
+          for (const arm of y.children) if (arm.userData.side === part.side) light(arm);
+        }
+      }
+    },
+
+    unmark() {
+      for (const [mesh, was] of alight) mesh.material = was;
+      alight = [];
+      lit.clear();
+    },
 
     // Where a tier stands, and where one more step in either direction leads.
     stateOf(tier) {

@@ -13,6 +13,12 @@ const TIERS = [
   { tier: 'headsail',   label: 'Headsails',   key: '6' }
 ];
 
+// Only write when the words have actually changed. The boards are redrawn
+// every frame, and rebuilding a line you are hovering would sweep the glossary
+// term out from under the mouse sixty times a second.
+const put = (el, html) => { if (el.__said !== html) { el.__said = html; el.innerHTML = html; } };
+const putText = (el, text) => { if (el.__said !== text) { el.__said = text; el.textContent = text; } };
+
 function panel(id, html, where) {
   const el = document.createElement('div');
   el.id = id;
@@ -77,41 +83,46 @@ export function makeBoards(rig, crew) {
     for (const t of TIERS) {
       const state = rig.stateOf(t.tier);
       const cell = rows[t.tier];
-      cell.textContent = rig.working(t.tier) ? `${state} …` : state;
+      putText(cell, rig.working(t.tier) ? `${state} …` : state);
       cell.className = 'state' + (state === 'gone' ? ' lost' : rig.working(t.tier) ? ' working'
         : state === 'furled' ? ' furled' : state === 'set' ? '' : ' reefed');
     }
 
-    list.innerHTML = crew.running.map((o) => {
-      const done = Math.round((o.elapsed / o.seconds) * 100);
-      return `<li><span class="what">${o.name}</span>` +
-             `<span class="left">${crew.remaining(o)} min</span>` +
-             `<span class="bar"><i style="width:${done}%"></i></span></li>`;
-    }).join('') + crew.waiting.map((o) =>
-      `<li class="held"><span class="what">${o.name}</span>` +
-      `<span class="left">wants ${o.hands} hands</span></li>`
-    ).join('');
+    // The bar creeps along every frame, so it is moved on its own and the
+    // words around it are left alone unless they have really changed.
+    put(list, crew.running.length || crew.waiting.length
+      ? crew.running.map((o) =>
+          `<li><span class="what">${o.name}</span>` +
+          `<span class="left">${crew.remaining(o)} min</span>` +
+          `<span class="bar"><i></i></span></li>`).join('') +
+        crew.waiting.map((o) =>
+          `<li class="held"><span class="what">${o.name}</span>` +
+          `<span class="left">wants ${o.hands} hands</span></li>`).join('')
+      : '<li class="idle">nothing in hand</li>');
 
-    if (!crew.running.length && !crew.waiting.length) {
-      list.innerHTML = '<li class="idle">nothing in hand</li>';
-    }
+    const bars = list.querySelectorAll('.bar i');
+    crew.running.forEach((o, i) => {
+      if (bars[i]) bars[i].style.width = `${Math.round((o.elapsed / o.seconds) * 100)}%`;
+    });
 
-    hands.innerHTML = `<b>${crew.free}</b> of ${crew.onDeck} hands free &mdash; ` +
-      `crew ${crew.weariness}${crew.allHands ? ' &mdash; <em>all hands on deck</em>' : ''}`;
+    put(hands, `<b>${crew.free}</b> of ${crew.onDeck} hands free &mdash; ` +
+      `crew ${crew.weariness}${crew.allHands ? ' &mdash; <em>all hands on deck</em>' : ''}`);
 
     // What she is carrying away, and what she has already lost.
     const lost = rig.hurt();
     const strain = sea.over > 1 ? 'She is dangerously over-pressed for this wind.'
       : sea.over === 1 ? 'She is carrying more than this wind will bear.' : '';
-    hurt.innerHTML =
+    put(hurt,
       (strain ? `<span class="strain">${strain}</span>` : '') +
-      (lost.length ? `<span class="lost">${lost.map((d) => `${d.name} &mdash; ${d.kind}`).join('<br>')}</span>` : '');
+      (lost.length ? `<span class="lost">${lost.map((d) => `${d.name} &mdash; ${d.kind}`).join('<br>')}</span>` : ''));
 
     const t = readClock(gameSeconds);
     out.time.textContent = t.time;
-    out.watch.innerHTML = `${t.watch}, ${t.bells}<br>${t.onDeck} watch on deck`;
-    out.pace.innerHTML = (pace === 0 ? 'hove to — she waits on you' : `running ×${pace}`) +
-      (sea.held ? '<br><span class="held-back">no speeding up with a squall in sight</span>' : '');
+    put(out.watch, `${t.watch}, ${t.bells}<br>${t.onDeck} watch on deck`);
+    // "her clock at ×1" rather than "running ×1": running is a point of sail,
+    // and the glossary would offer the wrong meaning for it here.
+    put(out.pace, (pace === 0 ? 'hove to — she waits on you' : `her clock at ×${pace}`) +
+      (sea.held ? '<br><span class="held-back">no speeding up with a squall in sight</span>' : ''));
     out.pace.className = 'pace' + (pace === 0 ? ' paused' : '');
   };
 
