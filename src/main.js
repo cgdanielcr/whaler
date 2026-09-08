@@ -26,6 +26,8 @@ import { makeRepairs } from './repairs.js';
 import { makeHands } from './hands.js';
 import { makeWhalerDeck } from './whaler.js';
 import { makeLookouts } from './lookouts.js';
+import { makeHunt } from './hunt.js';
+import { makeAfloat, makeWhale } from './afloat.js';
 
 const renderer = new THREE.WebGLRenderer({ antialias: true });
 renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
@@ -130,6 +132,7 @@ const KNOT = 0.5144;
 const WAY = 90;                // game seconds for her to gather or lose her way
 
 let heading = 170;
+let lastHeading = 170;
 let runX = 0, runZ = 0;
 let knots = 0;
 let gameSeconds = 8 * 3600;    // she begins at eight in the morning
@@ -224,7 +227,41 @@ function manoeuvre(which) {
 }
 
 const repairs = makeRepairs({ rig, crew, stores, company, say: boards.say });
-bindOrders({ rig, crew, time, manoeuvre, helm, say: boards.say, repairs });
+
+// --- the boats ----------------------------------------------------------------
+
+// The whale and the boats swim in her own frame, and are carried astern by
+// her run. The boats she lowers are taken off her davits and put in the water.
+const afloat = makeAfloat(scene);
+let whaleInSight = null;
+const boatsAfloat = [];
+
+function onScene(what, howMany) {
+  if (what === 'down') {
+    const keys = Object.keys(whaler.boats).slice(0, howMany);
+    keys.forEach((key, i) => {
+      const b = whaler.boats[key];
+      b.boat.visible = false;
+      const copy = b.boat.clone();
+      copy.visible = true;
+      copy.rotation.y = 0.2 - i * 0.2;
+      afloat.add(copy, b.side * (10 + i * 6), -4 + i * 9);
+      boatsAfloat.push({ copy, key });
+    });
+    if (!whaleInSight) {
+      whaleInSight = afloat.add(makeWhale(), hunt.whale.side.startsWith('lar') ? 190 : -170, 260);
+    }
+  }
+  if (what === 'aboard') {
+    for (const b of boatsAfloat) { afloat.drop(b.copy); whaler.boats[b.key].boat.visible = true; }
+    boatsAfloat.length = 0;
+    if (whaleInSight && !hunt.barrels) { afloat.drop(whaleInSight); whaleInSight = null; }
+  }
+  if (what === 'gone' && whaleInSight) { afloat.drop(whaleInSight); whaleInSight = null; }
+}
+
+const hunt = makeHunt({ company, crew, stores, say: boards.say, onScene });
+bindOrders({ rig, crew, time, manoeuvre, helm, say: boards.say, repairs, hunt });
 
 // A man off a yard in a hard blow. It was rare, and it was remembered.
 function fell(man, where) {
@@ -302,6 +339,25 @@ function sail(seen, gameDt, t) {
   sea.userData.update(t, runX, runZ);
   wake.userData.update(t, runX, runZ, course, knots);
 
+  // Her run carries the boats and the whale astern; her turning swings them
+  // round her, since she is the one thing in the scene that never moves.
+  afloat.tick(metres, heading - lastHeading, t);
+  lastHeading = heading;
+  if (whaleInSight && hunt.state === 'alongside') {
+    // Made fast alongside on the starboard side, under the cutting stage.
+    const put = afloat.where(whaleInSight);
+    if (put) { put.x = -9.5; put.z = 0; }
+    whaleInSight.rotation.y = Math.PI / 2;
+  }
+  for (const b of boatsAfloat) {
+    if (hunt.state === 'down' || hunt.state === 'chasing') {
+      afloat.steer(b.copy, whaleInSight ? afloat.where(whaleInSight).x : 120,
+                   whaleInSight ? afloat.where(whaleInSight).z : 160, 2.2, seen);
+    } else if (hunt.state === 'back') {
+      afloat.steer(b.copy, 0, 0, 2.6, seen);
+    }
+  }
+
   // What your eye sees runs at life speed; her reckoning runs on her own clock.
   passage.run(gameDt, knots, course);
 
@@ -346,12 +402,13 @@ function frame(now) {
   darken(warning ? warning.strength : 0);
   over = damage.tick(gameDt, weather.force);
 
+  hunt.tick(gameDt, (gameSeconds / 3600) % 24);
   lookouts.tick(gameSeconds, readClock(gameSeconds).onDeck);
   crew.tick(gameDt, readClock(gameSeconds).onDeck, weather.force, fell);
   sail(seen, gameDt, shown);
   rideTheSwell(shown);
   stores.tick(gameDt);
-  boards.update(gameSeconds, pace, { over, held: !!warning }, passage, stores, lookouts);
+  boards.update(gameSeconds, pace, { over, held: !!warning }, passage, stores, lookouts, hunt);
   watchBill(gameSeconds);
   hands(seen);
 

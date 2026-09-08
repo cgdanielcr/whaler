@@ -36,7 +36,7 @@ export function makeBoards(rig, crew, company) {
     '<br><b>t</b> tack &nbsp; <b>w</b> wear &nbsp; <b>&larr; &rarr;</b> helm' +
     '<br><b>h</b> all hands &nbsp; <b>space</b> bring her to' +
     '<br><b>-</b> <b>=</b> slower and faster &nbsp; drag to look about' +
-    '<br><b>m</b> mend what is broken &nbsp; <b>c</b> go on deck<br><b>b</b> the watch bill &nbsp; <b>?</b> all orders</p>');
+    '<br><b>m</b> mend what is broken &nbsp; <b>c</b> go on deck<br><b>b</b> the watch bill &nbsp; <b>l</b> lower for a whale &nbsp; <b>?</b> all orders</p>');
 
   const rows = {};
   for (const t of TIERS) {
@@ -47,11 +47,12 @@ export function makeBoards(rig, crew, company) {
   }
 
   const orders = panel("orders-board",
-    "<h2>Orders</h2><ul></ul><p class='hands'></p><p class='hurt'></p><p class='word'></p>");
+    "<h2>Orders</h2><ul></ul><p class='hands'></p><p class='chase'></p><p class='hurt'></p><p class='word'></p>");
   const list = orders.querySelector('ul');
   const hands = orders.querySelector(".hands");
   const hurt = orders.querySelector(".hurt");
   const word = orders.querySelector('.word');
+  const chase = orders.querySelector('.chase');
   let saying = 0;
 
   const clock = panel('clock-board', '<div class="time"></div><div class="watch"></div><div class="pace"></div>', 'right');
@@ -80,7 +81,7 @@ export function makeBoards(rig, crew, company) {
     pace: clock.querySelector('.pace')
   };
 
-  const update = function (gameSeconds, pace, sea, passage, stores, lookouts) {
+  const update = function (gameSeconds, pace, sea, passage, stores, lookouts, hunt) {
     put(lockerList, stores.all.map((s) =>
       `<dt>${s.said}</dt><dd class="${s.out ? 'out' : s.low ? 'low' : ''}">${s.reads}</dd>`).join(''));
     put(lockerWord, stores.word);
@@ -125,6 +126,7 @@ export function makeBoards(rig, crew, company) {
       `crew ${crew.weariness}${crew.allHands ? ' &mdash; <em>all hands on deck</em>' : ''}` +
       (mate ? `<br>${mate.name}, ${mate.berth.toLowerCase()}, has the deck` : '') +
       (lookouts && lookouts.said ? `<br>At the mastheads: ${lookouts.said}` : ''));
+    put(chase, hunt && hunt.said ? `<span class="cry">${hunt.said}</span>` : '');
 
     // What she is carrying away, and what she has already lost.
     const lost = rig.hurt();

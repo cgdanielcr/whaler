@@ -26,7 +26,7 @@ export function makeCrew(company) {
 
   // Every sound man who could be called on this minute.
   const muster = () => company.all.filter((m) =>
-    m.health === 'sound' && (allHands || m.watch === watchUp));
+    m.health === 'sound' && !m.inBoat && (allHands || m.watch === watchUp));
   const idle = () => muster().filter((m) => !m.employed);
 
   function start(order) {
