@@ -1,6 +1,8 @@
 // The boards she is conned by: what canvas she carries, what the hands are
 // working at, and what o'clock it is.
 import { readClock } from './clock.js';
+import { DESTINATION } from './passage.js';
+import { compassPoint } from './wind.js';
 
 const TIERS = [
   { tier: 'royal',      label: 'Royals',      key: '4' },
@@ -46,13 +48,32 @@ export function makeBoards(rig, crew) {
   let saying = 0;
 
   const clock = panel('clock-board', '<div class="time"></div><div class="watch"></div><div class="pace"></div>', 'right');
+  const track = panel('track-board', '<h2>Passage</h2><dl>' +
+    '<dt>To run</dt><dd class="to-run"></dd>' +
+    '<dt>Bearing</dt><dd class="to-bear"></dd>' +
+    '<dt>Made good</dt><dd class="made"></dd>' +
+    '<dt>Sailed</dt><dd class="sailed"></dd></dl>', 'right');
+  const reckoning = {
+    toRun: track.querySelector('.to-run'),
+    bear: track.querySelector('.to-bear'),
+    made: track.querySelector('.made'),
+    sailed: track.querySelector('.sailed')
+  };
+
+  const landfall = panel('landfall', '');
+  landfall.style.display = 'none';
   const out = {
     time: clock.querySelector('.time'),
     watch: clock.querySelector('.watch'),
     pace: clock.querySelector('.pace')
   };
 
-  const update = function (gameSeconds, pace, sea) {
+  const update = function (gameSeconds, pace, sea, passage) {
+    reckoning.toRun.textContent = `${passage.toRun.toFixed(1)} miles`;
+    reckoning.bear.textContent = `${passage.bearingSaid} — ${Math.round(passage.bearing)}°`;
+    reckoning.made.textContent = `${passage.made.toFixed(1)} of ${DESTINATION.miles} miles`;
+    reckoning.sailed.textContent = `${passage.sailed.toFixed(1)} miles`;
+
     for (const t of TIERS) {
       const state = rig.stateOf(t.tier);
       const cell = rows[t.tier];
@@ -101,5 +122,32 @@ export function makeBoards(rig, crew) {
     saying = setTimeout(() => { word.textContent = ''; }, 6000);
   };
 
-  return { update, say };
+  // The account of the passage, written up when she comes to her anchorage.
+  const account = (arrived, clockAt) => {
+    const spars = arrived.lost.length
+      ? `<p>She did not come by it whole: ${arrived.lost.map((d) => `${d.name.toLowerCase()} &mdash; ${d.kind}`).join('; ')}.</p>`
+      : '<p>She came by it with every sail and every spar she began with.</p>';
+
+    landfall.innerHTML =
+      '<h2>The passage</h2>' +
+      `<p class="took">${DESTINATION.miles} miles to the ${compassPoint(DESTINATION.bearing)}, ` +
+      `made good in <b>${arrived.took}</b>.</p>` +
+      '<dl>' +
+      `<dt>Made good</dt><dd>${arrived.made.toFixed(1)} miles</dd>` +
+      `<dt>Sailed through the water</dt><dd>${arrived.sailed.toFixed(1)} miles</dd>` +
+      `<dt>Of every mile sailed, made good</dt><dd>${Math.round(arrived.worth * 100)}%</dd>` +
+      `<dt>Averaged</dt><dd>${arrived.average.toFixed(1)} knots</dd>` +
+      `<dt>Landfall at</dt><dd>${clockAt}</dd>` +
+      '</dl>' + spars +
+      '<p class="again">Reload the page to sail her again.</p>';
+
+    // The passage is over; the working boards have nothing left to say.
+    for (const b of document.querySelectorAll('#canvas-board, #orders-board, #right')) {
+      b.style.transition = 'opacity 1.2s';
+      b.style.opacity = 0;
+    }
+    landfall.style.display = '';
+  };
+
+  return { update, say, account };
 }

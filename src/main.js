@@ -1,5 +1,5 @@
-// Ship -- M5: weather that rises and falls, squalls out of the horizon, and
-// canvas that carries away when you ask too much of it.
+// Ship -- M6: a passage of sixty miles, and an account of how she came by it.
+
 import * as THREE from 'three';
 import { OrbitControls } from 'three/addons/controls/OrbitControls.js';
 import { makeSky, HORIZON_COLOUR } from './sky.js';
@@ -12,11 +12,12 @@ import { makeBoards } from './boards.js';
 import { bindOrders } from './orders.js';
 import { makeInstruments } from './instruments.js';
 import { MANOEUVRES } from './evolutions.js';
-import { GAME_SECONDS_PER_SECOND } from './clock.js';
+import { GAME_SECONDS_PER_SECOND, readClock } from './clock.js';
 import { speed, pointOfSail, signedDiff, wrap } from './wind.js';
 import { makeWeather } from './weather.js';
 import { makeSquall } from './squall.js';
 import { makeDamage } from './damage.js';
+import { makePassage } from './passage.js';
 
 const renderer = new THREE.WebGLRenderer({ antialias: true });
 renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
@@ -104,6 +105,7 @@ const helm = { hold: (code) => held.add(code), release: (code) => held.delete(co
 const crew = makeCrew();
 const boards = makeBoards(rig, crew);
 const readOut = makeInstruments();
+const passage = makePassage(rig);
 
 // --- tacking and wearing -----------------------------------------------------
 
@@ -233,6 +235,10 @@ function sail(seen, gameDt, t) {
 
   sea.userData.update(t, runX, runZ);
   wake.userData.update(t, runX, runZ, course, knots);
+
+  // What your eye sees runs at life speed; her reckoning runs on her own clock.
+  passage.run(gameDt, knots, course);
+
   readOut({
     heading, windFrom: weather.windFrom, force: weather.force,
     point: point.name, knots, squall: weather.warning
@@ -254,14 +260,16 @@ function darken(strength) {
 }
 
 let shown = 0;
+let told = false;
 let last = performance.now();
 
 function frame(now) {
   const real = Math.min((now - last) / 1000, 0.1);
   last = now;
-  const pace = time.pace;
-  const seen = real * pace;                          // what your eye sees
-  const gameDt = seen * GAME_SECONDS_PER_SECOND;     // what her clock counts
+  // Once she is in, the clock stops and only the sea keeps moving.
+  const pace = passage.arrived ? 0 : time.pace;
+  const seen = real * (passage.arrived ? 1 : pace);   // what your eye sees
+  const gameDt = pace * real * GAME_SECONDS_PER_SECOND;   // what her clock counts
 
   shown += seen;
   gameSeconds += gameDt;
@@ -275,7 +283,12 @@ function frame(now) {
   crew.tick(gameDt);
   sail(seen, gameDt, shown);
   rideTheSwell(shown);
-  boards.update(gameSeconds, pace, { over, held: !!warning });
+  boards.update(gameSeconds, pace, { over, held: !!warning }, passage);
+
+  if (passage.arrived && !told) {
+    told = true;
+    boards.account(passage.arrived, readClock(gameSeconds).time);
+  }
 
   controls.update();
   renderer.render(scene, camera);

@@ -57,6 +57,32 @@
     #instruments .warn { color: #e8c98a; opacity: 1; }
     #clock-board .held-back { color: #e8c98a; }
 
+    #track-board dl { margin: 0; display: grid; grid-template-columns: auto auto; gap: 0.15rem 0.9rem; }
+    #track-board dt {
+      font-size: 0.66rem; letter-spacing: 0.18em; text-transform: uppercase;
+      opacity: 0.5; align-self: baseline;
+    }
+    #track-board dd { margin: 0; font-size: 0.9rem; text-align: right; }
+
+    #landfall {
+      position: fixed; inset: 0; margin: auto;
+      width: min(30rem, calc(100vw - 3rem)); height: fit-content;
+      padding: 1.8rem 2rem;
+      background: rgba(10, 22, 30, 0.93);
+      border: 1px solid rgba(232, 223, 200, 0.3);
+      pointer-events: none;
+    }
+    #landfall h2 {
+      margin: 0 0 0.9rem; font-size: 0.72rem; font-weight: normal;
+      letter-spacing: 0.24em; text-transform: uppercase; opacity: 0.55;
+    }
+    #landfall .took { margin: 0 0 1.1rem; font-size: 1.15rem; line-height: 1.5; }
+    #landfall dl { margin: 0 0 1.1rem; display: grid; grid-template-columns: 1fr auto; gap: 0.3rem 1.2rem; }
+    #landfall dt { font-size: 0.86rem; opacity: 0.62; }
+    #landfall dd { margin: 0; font-size: 0.95rem; text-align: right; }
+    #landfall p { margin: 0 0 0.8rem; font-size: 0.92rem; line-height: 1.55; }
+    #landfall .again { margin: 0; font-size: 0.8rem; opacity: 0.45; }
+
     #right {
       position: fixed; top: 1.1rem; right: 1.1rem;
       display: flex; flex-direction: column; align-items: flex-end; gap: 0.7rem;

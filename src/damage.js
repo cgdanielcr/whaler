@@ -43,14 +43,17 @@ export function makeDamage(rig, onBreak) {
       }
 
       if (worst <= 0) {
-        strain = Math.max(0, strain - gameDt / 60);
+        strain = Math.max(-5, strain - gameDt / 60);
         return 0;
       }
 
-      // One step over is risky; two is very likely to break something.
-      strain += Math.pow(worst, 1.7) * gameDt / 60;
+      // One step over is risky; two is very likely to break something. A step
+      // over will cost you something in half an hour; two steps in nine minutes.
+      strain += Math.pow(worst, 1.7) * gameDt / 170;
       if (strain >= BREAKING) {
-        strain = 0;
+        // When the weakest thing goes it takes the strain with it, and the
+        // rest of her holds a while longer.
+        strain = -5;
         onBreak(victims[Math.floor(Math.random() * victims.length)],
                 LADDER[Math.min(LADDER.length - 1, worst - 1)]);
       }
