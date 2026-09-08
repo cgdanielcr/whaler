@@ -23,6 +23,7 @@ import { makeCompany } from './company.js';
 import { makeWatchBill } from './watchbill.js';
 import { makeStores } from './stores.js';
 import { makeRepairs } from './repairs.js';
+import { makeHands } from './hands.js';
 
 const renderer = new THREE.WebGLRenderer({ antialias: true });
 renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
@@ -155,6 +156,7 @@ const readOut = makeInstruments();
 const passage = makePassage(rig);
 
 const watchBill = makeWatchBill(company);
+const hands = makeHands(company, crew, rig, hull, camera, renderer.domElement);
 makeGlossary(rig);
 
 
@@ -345,6 +347,7 @@ function frame(now) {
   stores.tick(gameDt);
   boards.update(gameSeconds, pace, { over, held: !!warning }, passage, stores);
   watchBill(gameSeconds);
+  hands(seen);
 
 
   if (passage.arrived && !told) {
