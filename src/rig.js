@@ -36,14 +36,20 @@ function cylinder(rTop, rBottom, height, y) {
 function mastStick(truck) {
   const g = new THREE.Group();
   g.add(cylinder(0.36, 0.48, 0.44 * truck, 0));
-  g.add(cylinder(0.22, 0.30, 0.32 * truck, 0.39 * truck));
-  g.add(cylinder(0.07, 0.18, 0.32 * truck, 0.68 * truck));
+
+  // Everything above the lower masthead, kept together so that it can spring.
+  const upper = new THREE.Group();
+  upper.add(cylinder(0.22, 0.30, 0.32 * truck, 0.39 * truck));
+  upper.add(cylinder(0.07, 0.18, 0.32 * truck, 0.68 * truck));
+  g.add(upper);
+
   for (const [at, r] of [[0.42, 1.55], [0.70, 0.95]]) {
     const p = new THREE.Mesh(new THREE.CylinderGeometry(r, r, 0.16, 8), SPAR);
     p.position.set(0, at * truck, 0.25);
     p.castShadow = true;
-    g.add(p);
+    (at > 0.5 ? upper : g).add(p);
   }
+  g.userData.upper = upper;
   return g;
 }
 
@@ -76,6 +82,12 @@ function squareSailUnit(spec) {
     state: 'set', target: null, progress: 0, canvas: 1,
     mesh, bundle,
     apply() {
+      if (this.gone) {
+        this.mesh.visible = false;
+        this.bundle.visible = false;
+        this.canvas = 0;
+        return;
+      }
       const to = this.target || this.state, p = this.target ? this.progress : 0;
       const lerp = (a, b) => a + (b - a) * p;
       const hoistF = lerp(hoistFor(this.state), hoistFor(to));
@@ -100,11 +112,13 @@ function squareSailUnit(spec) {
   });
 }
 
-function buildMast(m, sails, braces) {
+function buildMast(m, sails, braces, uppers) {
   const g = new THREE.Group();
   g.position.set(0, deckAt(m.z), m.z);
   const truck = MAIN.truck * m.h;
-  g.add(mastStick(truck));
+  const stick = mastStick(truck);
+  g.add(stick);
+  uppers[m.key] = stick.userData.upper;
 
   // All the yards on a mast swing together when she is braced round.
   const brace = new THREE.Group();
@@ -169,6 +183,7 @@ function buildSpanker(mastGroup, sails) {
     name: 'Spanker', tier: 'spanker', mast: 'mizzen', ladder: REEFABLE, mesh,
     state: 'set', target: null, progress: 0, canvas: 1, pivot, fullArea: 96,
     apply() {
+      if (this.gone) { this.mesh.visible = false; this.canvas = 0; return; }
       const to = this.target || this.state, p = this.target ? this.progress : 0;
       const mix = (a, b) => a + (b - a) * p;
       const f = mix(hoistFor(this.state), hoistFor(to));
@@ -205,6 +220,7 @@ function buildHeadsails(group, sails) {
       name: h.name, tier: 'headsail', mast: 'fore', ladder: PLAIN, mesh,
       state: 'set', target: null, progress: 0, canvas: 1, fullArea: area, side: 0,
       apply() {
+        if (this.gone) { this.mesh.visible = false; this.canvas = 0; return; }
         const to = this.target || this.state, p = this.target ? this.progress : 0;
         this.canvas = spreadFor(this.state) + (spreadFor(to) - spreadFor(this.state)) * p;
         this.mesh.visible = this.canvas > 0.02;
@@ -230,10 +246,10 @@ function buildHeadsails(group, sails) {
 
 export function makeRig() {
   const group = new THREE.Group();
-  const sails = [], braces = [];
+  const sails = [], braces = [], uppers = {};
 
   for (const m of MASTS) {
-    const mastGroup = buildMast(m, sails, braces);
+    const mastGroup = buildMast(m, sails, braces, uppers);
     if (m.key === 'mizzen') buildSpanker(mastGroup, sails);
     group.add(mastGroup);
   }
@@ -249,7 +265,8 @@ export function makeRig() {
   };
   applyAll();
 
-  const of = (tier) => sails.filter((s) => s.tier === tier);
+  // Only the sails she still has answer an order.
+  const of = (tier) => sails.filter((s) => s.tier === tier && !s.gone);
 
   return {
     group, sails,
@@ -257,13 +274,38 @@ export function makeRig() {
     // Where a tier stands, and where one more step in either direction leads.
     stateOf(tier) {
       const found = of(tier).map((s) => s.state);
+      if (!found.length) return 'gone';
       return found.every((s) => s === found[0]) ? found[0] : 'mixed';
     },
     nextState(tier, dir) {
-      const s = of(tier)[0], i = s.ladder.indexOf(this.stateOf(tier));
+      const s = of(tier)[0];
+      if (!s) return null;
+      const i = s.ladder.indexOf(this.stateOf(tier));
       if (i < 0) return null;
       const j = i + dir;
       return (j < 0 || j >= s.ladder.length) ? null : s.ladder[j];
+    },
+
+    // What she has lost, and to what.
+    hurt: () => sails.filter((s) => s.gone).map((s) => ({ name: s.name, kind: s.gone })),
+
+    // Something carries away. A sprung topmast takes everything above the
+    // lower masthead on that mast with it.
+    damage(sail, kind) {
+      const hit = kind === 'sprung topmast'
+        ? sails.filter((s) => s.mast === sail.mast && ['topsail', 'topgallant', 'royal'].includes(s.tier))
+        : [sail];
+      for (const s of hit) {
+        if (s.gone) continue;
+        s.gone = kind;
+        s.target = null;
+        s.progress = 0;
+        s.state = 'furled';
+        if (s.yard && kind !== 'split sail') s.yard.rotation.z = 0.26;
+      }
+      if (kind === 'sprung topmast' && uppers[sail.mast]) uppers[sail.mast].rotation.z = 0.19;
+      applyAll();
+      return hit.map((s) => s.name);
     },
 
     // An evolution: the hands go to work, she changes as they do, and when

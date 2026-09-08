@@ -37,9 +37,11 @@ export function makeBoards(rig, crew) {
     rows[t.tier] = tr.querySelector('.state');
   }
 
-  const orders = panel('orders-board', '<h2>Orders</h2><ul></ul><p class="hands"></p><p class="word"></p>');
+  const orders = panel("orders-board",
+    "<h2>Orders</h2><ul></ul><p class='hands'></p><p class='hurt'></p><p class='word'></p>");
   const list = orders.querySelector('ul');
-  const hands = orders.querySelector('.hands');
+  const hands = orders.querySelector(".hands");
+  const hurt = orders.querySelector(".hurt");
   const word = orders.querySelector('.word');
   let saying = 0;
 
@@ -50,12 +52,12 @@ export function makeBoards(rig, crew) {
     pace: clock.querySelector('.pace')
   };
 
-  const update = function (gameSeconds, pace) {
+  const update = function (gameSeconds, pace, sea) {
     for (const t of TIERS) {
       const state = rig.stateOf(t.tier);
       const cell = rows[t.tier];
       cell.textContent = rig.working(t.tier) ? `${state} …` : state;
-      cell.className = 'state' + (rig.working(t.tier) ? ' working'
+      cell.className = 'state' + (state === 'gone' ? ' lost' : rig.working(t.tier) ? ' working'
         : state === 'furled' ? ' furled' : state === 'set' ? '' : ' reefed');
     }
 
@@ -76,10 +78,19 @@ export function makeBoards(rig, crew) {
     hands.innerHTML = `<b>${crew.free}</b> of ${crew.onDeck} hands free &mdash; ` +
       `crew ${crew.weariness}${crew.allHands ? ' &mdash; <em>all hands on deck</em>' : ''}`;
 
+    // What she is carrying away, and what she has already lost.
+    const lost = rig.hurt();
+    const strain = sea.over > 1 ? 'She is dangerously over-pressed for this wind.'
+      : sea.over === 1 ? 'She is carrying more than this wind will bear.' : '';
+    hurt.innerHTML =
+      (strain ? `<span class="strain">${strain}</span>` : '') +
+      (lost.length ? `<span class="lost">${lost.map((d) => `${d.name} &mdash; ${d.kind}`).join('<br>')}</span>` : '');
+
     const t = readClock(gameSeconds);
     out.time.textContent = t.time;
     out.watch.innerHTML = `${t.watch}, ${t.bells}<br>${t.onDeck} watch on deck`;
-    out.pace.textContent = pace === 0 ? 'hove to — she waits on you' : `running ×${pace}`;
+    out.pace.innerHTML = (pace === 0 ? 'hove to — she waits on you' : `running ×${pace}`) +
+      (sea.held ? '<br><span class="held-back">no speeding up with a squall in sight</span>' : '');
     out.pace.className = 'pace' + (pace === 0 ? ' paused' : '');
   };
 

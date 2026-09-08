@@ -25,6 +25,7 @@ export function makeInstruments() {
     '<dt>Her head</dt><dd id="i-head"></dd>' +
     '<dt>Point</dt><dd id="i-point"></dd>' +
     '<dt>Making</dt><dd id="i-speed"></dd>' +
+    '<dt class="warn" id="i-squall-label">Squall</dt><dd id="i-squall" class="warn"></dd>' +
     '</dl>';
   (document.getElementById('right') || document.body).appendChild(panel);
 
@@ -34,19 +35,29 @@ export function makeInstruments() {
     wind: panel.querySelector('#i-wind'),
     head: panel.querySelector('#i-head'),
     point: panel.querySelector('#i-point'),
-    speed: panel.querySelector('#i-speed')
+    speed: panel.querySelector('#i-speed'),
+    squall: panel.querySelector('#i-squall'),
+    squallLabel: panel.querySelector('#i-squall-label')
   };
 
   // The dial is drawn with north up, her hull swinging round inside it and the
   // arrow flying with the wind -- pointing the way the wind is going.
-  return function update({ heading, windFrom, force, point, knots }) {
+  return function update({ heading, windFrom, force, point, knots, squall }) {
     shipMark.setAttribute('transform', `rotate(${wrap(heading).toFixed(1)})`);
     arrow.setAttribute('transform', `rotate(${wrap(windFrom).toFixed(1)})`);
 
-    out.wind.textContent = `${FORCE_NAMES[force]}, from the ${compassPoint(windFrom)}`;
+    const named = FORCE_NAMES[Math.max(0, Math.min(9, Math.round(force)))];
+    out.wind.textContent = `${named}, from the ${compassPoint(windFrom)}`;
     out.head.textContent = `${compassPoint(heading)} — ${Math.round(wrap(heading))}°`;
     out.point.textContent = point;
     out.speed.textContent = knots < 0.05 ? 'no way on her' : `${knots.toFixed(1)} knots`;
     out.speed.className = knots < 0.05 ? 'stalled' : '';
+
+    out.squall.style.display = out.squallLabel.style.display = squall ? '' : 'none';
+    if (squall) {
+      out.squall.textContent = squall.here
+        ? `on her, out of the ${compassPoint(squall.bearing)}`
+        : `to the ${compassPoint(squall.bearing)}, ${Math.max(1, Math.round(squall.minutes))} min off`;
+    }
   };
 }

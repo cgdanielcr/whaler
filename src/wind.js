@@ -27,9 +27,16 @@ export const MAX_SPEED = 9;   // knots, at her best point with all plain sail in
 // She scales with her point of sail, with how much canvas she shows, and with
 // the force. Canvas counts less than proportionally: close-reefed in a whole
 // gale she still runs off at six knots.
+// The force runs smoothly as the weather rises and falls, so read between the
+// whole numbers of the table.
+function drive(force) {
+  const f = Math.max(0, Math.min(9, force)), i = Math.floor(f);
+  return DRIVE[i] + (DRIVE[Math.min(9, i + 1)] - DRIVE[i]) * (f - i);
+}
+
 export function speed(offWind, canvas, force) {
   if (canvas <= 0) return 0;
-  return MAX_SPEED * pointOfSail(offWind).factor * Math.pow(canvas, 0.4) * DRIVE[force];
+  return MAX_SPEED * pointOfSail(offWind).factor * Math.pow(canvas, 0.4) * drive(force);
 }
 
 const COMPASS = [
