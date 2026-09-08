@@ -7,7 +7,7 @@ stand. But it does override SPEC §3. The owner has now asked for the things §3
 v1 boundary, not the project boundary.
 
 It is a direction, turned into numbered milestones one at a time, each ending live and
-testable, exactly as v1 was. **M7, M8 and M9 are built and live** as of 8 September 2026;
+testable, exactly as v1 was. **M7 to M10 are built and live** as of 8 September 2026;
 see §6, where each milestone says so. The rest is not built.
 
 The owner played the live game on 8 September and confirmed the rigging and the deck view
@@ -247,20 +247,23 @@ you on the forecastle, on the weather side, at a seventy-degree view.
 The counter in the crew board becomes a list of who is on deck. Names editable.
 *Test: open the watch bill, rename a man, and see his name in the crew board.*
 
-**M10 — Stations.** Each evolution names its stations. Men are picked for them by rating
+**M10 — The idlers, her stores, and repair. BUILT, live 8 September.** Brought forward
+from M12 at the owner's request, together with the idlers and the stores. The cooper,
+carpenter, cook, steward and boy keep no watch and work at their trades; the watch bill
+shows them and what each is at. Watches are twelve, so reefing topsails and tacking both
+want all hands, as they did. Spare canvas, spars, cordage, provisions and water on a
+stores board. `m` sets the hands to mend, worst first, out of her stores.
+*Test: split a sail in a squall, press m, and sail on under a new one.*
+
+**M11 — Stations.** Each evolution names its stations. Men are picked for them by rating
 and condition; the time to finish depends on who went. A green hand aloft in a gale is a
 risk.
 *Test: single-reef the topsails and see, in the orders board, which six men are on each
 yard.*
 
-**M11 — Sprites.** The men are visible on deck, go to their stations when an order is
+**M12 — Sprites.** The men are visible on deck, go to their stations when an order is
 given, lay aloft on the ratlines and out on the yards. Hover for a name.
 *Test: order the royals in and watch four figures climb.*
-
-**M12 — Repair.** The gap left by v1. Spare canvas in the sail locker; bending a new
-topsail is an evolution; the carpenter fishes a sprung yard. A split sail is no longer
-gone for good.
-*Test: split a topsail in a squall, order it replaced, and sail on under it.*
 
 **M13 — A whaler's deck.** Boats on davits, try-works, cutting stage. Masthead lookouts
 as a standing station on the cruising ground.
