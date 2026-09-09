@@ -128,8 +128,11 @@ float vnoise(vec2 p) {
   return mix(mix(hash21(i), hash21(i + vec2(1.0, 0.0)), f.x),
              mix(hash21(i + vec2(0.0, 1.0)), hash21(i + vec2(1.0, 1.0)), f.x), f.y);
 }
+// Two octaves, not three. Noise is the one genuinely expensive thing on this
+// screen -- it runs per pixel, where everything else runs per vertex -- so it
+// is kept as cheap as it can be and skipped entirely where there is no foam.
 float fbm(vec2 p) {
-  return 0.54 * vnoise(p) + 0.28 * vnoise(p * 2.13) + 0.18 * vnoise(p * 4.41);
+  return 0.62 * vnoise(p) + 0.38 * vnoise(p * 2.90);
 }
 `;
 
@@ -191,14 +194,17 @@ export function makeSea() {
         float fres = pow(1.0 - clamp(dot(normalize(vWorldN), V), 0.0, 1.0), 4.0);
         water = mix(water, uSky, fres * 0.62);
 
-        // The foam is torn up by noise so it reads as froth, not as paint,
-        // and it drifts a little slower than the water it sits on.
-        vec2 fp = vWorld.xz * 0.34 + vec2(uTime * 0.06, uTime * -0.04);
-        float lace = fbm(fp) * 0.62 + fbm(fp * 3.9 + 11.0) * 0.38;
-        float foam = smoothstep(0.30, 0.80, vFoam * (0.50 + 1.20 * lace));
-        // A thinner wash of it lying in the flat water astern of the crests.
-        foam = max(foam, smoothstep(0.55, 0.95, vFoam) * smoothstep(0.34, 0.72, lace));
-        water = mix(water, vec3(0.88, 0.93, 0.92), foam);
+        // The foam is torn up by noise so it reads as froth, not as paint.
+        // Most of the sea has none, and pays nothing for it.
+        float foam = 0.0;
+        if (vFoam > 0.02) {
+          vec2 fp = vWorld.xz * 0.34 + vec2(uTime * 0.06, uTime * -0.04);
+          float lace = fbm(fp);
+          foam = smoothstep(0.30, 0.80, vFoam * (0.50 + 1.20 * lace));
+          // A thinner wash of it lying in the flat water astern of the crests.
+          foam = max(foam, smoothstep(0.55, 0.95, vFoam) * smoothstep(0.34, 0.72, lace));
+          water = mix(water, vec3(0.88, 0.93, 0.92), foam);
+        }
 
         diffuseColor.rgb *= water;
         vFoamOut = foam;

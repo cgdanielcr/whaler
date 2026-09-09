@@ -11,6 +11,7 @@ export function makeWeather(baseFrom, baseForce) {
   let clock = 0;
   let squall = null;
   let nextSquall = rand(18, 40) * MINUTE;
+  let held = null;      // the wind set by hand, while you have the glass
 
   // She never blows quite steady: two slow swells in the force, hours apart.
   const steady = () => baseForce
@@ -65,12 +66,22 @@ export function makeWeather(baseFrom, baseForce) {
       }
     },
 
+    // Set the wind by hand, or give it back to the weather. While it is held
+    // the squalls still come up and still darken the day, but they no longer
+    // move the wind, so you can look at one sea for as long as you like.
+    hold(force, from) { held = { force, from }; },
+    release() { held = null; },
+    get held() { return !!held; },
+    get base() { return { force: baseForce, from: baseFrom }; },
+
     // What she is blowing now, and from where.
     get force() {
+      if (held) return held.force;
       const s = squall ? strength(squall) : 0;
       return Math.max(0, Math.min(9, steady() + (squall ? squall.jump * s : 0)));
     },
     get windFrom() {
+      if (held) return held.from;
       const s = squall ? strength(squall) : 0;
       return baseFrom + (squall ? squall.shift * s : 0);
     },

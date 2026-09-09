@@ -30,6 +30,7 @@ import { makeHunt } from './hunt.js';
 import { makeAfloat, makeWhale } from './afloat.js';
 import { makeCruise, remember } from './cruise.js';
 import { makeWorkUp } from './workup.js';
+import { makeTrim } from './trim.js';
 
 const renderer = new THREE.WebGLRenderer({ antialias: true });
 renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
@@ -125,7 +126,8 @@ sun.shadow.camera.near = 20;
 sun.shadow.camera.far = 220;
 sun.shadow.bias = -0.0015;
 scene.add(sun);
-scene.add(new THREE.HemisphereLight('#cfe0e8', '#16303d', 1.5));
+const hemi = new THREE.HemisphereLight('#cfe0e8', '#16303d', 1.5);
+scene.add(hemi);
 
 // The sea needs to know which way the light is travelling, to know when you
 // are looking at a wave with the sun behind it.
@@ -171,6 +173,7 @@ const passage = makePassage(rig);
 
 const watchBill = makeWatchBill(company);
 const hands = makeHands(company, crew, rig, hull, camera, renderer.domElement);
+const trim = makeTrim({ weather, sun, sea, hemi });
 makeGlossary(rig);
 
 
@@ -442,6 +445,7 @@ function frame(now) {
                 lookouts, hunt, cruise, workUp);
   watchBill(gameSeconds);
   hands(seen);
+  trim();
   whaler.smoke.userData.update(shown);
 
   // She runs her distance, and then she is on the ground and the cruise
