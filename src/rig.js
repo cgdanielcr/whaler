@@ -97,6 +97,12 @@ function squareSailUnit(spec) {
         this.mesh.visible = false;
         this.bundle.visible = false;
         this.canvas = 0;
+        // A sprung yard is still crossed on the mast: it is fished where it
+        // hangs, not sent down. Left wherever it happened to be at the moment
+        // it went -- halfway down, if she was close-reefed -- every sail
+        // sheeted above it would come down with it and stay down, and after
+        // a few of those the whole rig settles into a heap.
+        this.yard.position.y = footOf() + hoist;
         return;
       }
       const to = this.target || this.state, p = this.target ? this.progress : 0;
