@@ -96,7 +96,8 @@ window.addEventListener('keydown', (e) => {
   }
 });
 
-scene.add(makeSky());
+const sky = makeSky();
+scene.add(sky);
 const sea = makeSea();
 scene.add(sea);
 const wake = makeWake();
@@ -434,6 +435,7 @@ function frame(now) {
   const warning = weather.warning;
   squallLine.userData.update(warning);
   darken(warning ? warning.strength : 0);
+  sky.userData.update(shown, weather.windFrom, warning ? warning.strength : 0);
   over = damage.tick(gameDt, weather.force);
 
   hunt.tick(gameDt, (gameSeconds / 3600) % 24);
