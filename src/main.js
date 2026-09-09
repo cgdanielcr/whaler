@@ -127,6 +127,10 @@ sun.shadow.bias = -0.0015;
 scene.add(sun);
 scene.add(new THREE.HemisphereLight('#cfe0e8', '#16303d', 1.5));
 
+// The sea needs to know which way the light is travelling, to know when you
+// are looking at a wave with the sun behind it.
+sea.userData.sun(new THREE.Vector3().copy(sun.position).multiplyScalar(-1));
+
 // --- her state ---------------------------------------------------------------
 
 const TURN = 9;                // degrees a second of your time, helm hard over
@@ -327,8 +331,12 @@ function rideTheSwell(t) {
   const at = (dx, dz) => waveHeight(runX + dx * c + dz * s, runZ - dx * s + dz * c, t);
   const bow = at(0, 15), stern = at(0, -15), larboard = at(-4, 0), starboard = at(4, 0);
   ship.position.y = (bow + stern + larboard + starboard) / 4 - 0.15;
-  hull.rotation.x = -Math.atan2(bow - stern, 30) * 1.5;
-  hull.rotation.z = Math.atan2(starboard - larboard, 8) * 1.4;
+  // She is a deep, stiff, three-hundred-and-fifty-ton ship, not a dinghy. A
+  // big sea lifts her more than it heels her, so both are held inside what a
+  // hull of her burthen would really do.
+  const hold = (v, most) => Math.max(-most, Math.min(most, v));
+  hull.rotation.x = hold(-Math.atan2(bow - stern, 30) * 0.85, 0.21);
+  hull.rotation.z = hold(Math.atan2(starboard - larboard, 8) * 0.55, 0.30);
 }
 
 function sail(seen, gameDt, t) {
@@ -358,7 +366,7 @@ function sail(seen, gameDt, t) {
   runX += Math.sin(course) * metres;
   runZ += Math.cos(course) * metres;
 
-  sea.userData.update(t, runX, runZ);
+  sea.userData.update(t, runX, runZ, weather.force);
   wake.userData.update(t, runX, runZ, course, knots);
 
   // Her run carries the boats and the whale astern; her turning swings them
@@ -392,8 +400,8 @@ function sail(seen, gameDt, t) {
 // When a squall comes over her the light goes out of the day.
 const CLEAR_FOG = HORIZON_COLOUR.clone();
 const DARK_FOG = new THREE.Color('#5e6a6d');
-const CLEAR_SEA = new THREE.Color('#1c4257');
-const DARK_SEA = new THREE.Color('#14303e');
+const CLEAR_SEA = new THREE.Color('#ffffff');   // the sea paints itself now; this only dims it
+const DARK_SEA = new THREE.Color('#5a6d76');
 
 function darken(strength) {
   scene.fog.color.copy(CLEAR_FOG).lerp(DARK_FOG, strength);
