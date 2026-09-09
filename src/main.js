@@ -31,14 +31,17 @@ import { makeAfloat, makeWhale } from './afloat.js';
 import { makeCruise, remember } from './cruise.js';
 import { makeWorkUp } from './workup.js';
 import { makeTrim } from './trim.js';
+import { HUE, weather as weather2, gloomFor } from './palette.js';
 
 const renderer = new THREE.WebGLRenderer({ antialias: true });
 renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
 renderer.setSize(window.innerWidth, window.innerHeight);
-renderer.shadowMap.enabled = true;
-renderer.shadowMap.type = THREE.PCFShadowMap;
-renderer.toneMapping = THREE.ACESFilmicToneMapping;
-renderer.toneMappingExposure = 1.05;
+// No shadows and no tone mapping. She is drawn, not photographed: a colour
+// must come out of the screen as the colour that was written down, and the
+// reference casts no shadows at all. Both are also the two largest things we
+// can simply stop paying for.
+renderer.shadowMap.enabled = false;
+renderer.toneMapping = THREE.NoToneMapping;
 document.body.appendChild(renderer.domElement);
 
 const scene = new THREE.Scene();
@@ -98,7 +101,7 @@ window.addEventListener('keydown', (e) => {
 
 const sky = makeSky();
 scene.add(sky);
-const sea = makeSea();
+let sea = makeSea();
 scene.add(sea);
 const wake = makeWake();
 scene.add(wake);
@@ -115,24 +118,18 @@ scene.add(ship);
 const squallLine = makeSquall();
 scene.add(squallLine);
 
-const sun = new THREE.DirectionalLight('#ffe9c9', 2.4);
+// One sun to tell one face of a thing from another, and a good deal of
+// ambient so the shaded side is a flat mid tone rather than black.
+const sun = new THREE.DirectionalLight('#fff4de', 1.35);
 sun.position.set(72, 52, 26);
-sun.castShadow = true;
-sun.shadow.mapSize.set(2048, 2048);
-sun.shadow.camera.left = -46;
-sun.shadow.camera.right = 46;
-sun.shadow.camera.top = 52;
-sun.shadow.camera.bottom = -46;
-sun.shadow.camera.near = 20;
-sun.shadow.camera.far = 220;
-sun.shadow.bias = -0.0015;
 scene.add(sun);
-const hemi = new THREE.HemisphereLight('#cfe0e8', '#16303d', 1.5);
+const hemi = new THREE.HemisphereLight('#dfeaf0', '#4a6a7a', 2.5);
 scene.add(hemi);
 
-// The sea needs to know which way the light is travelling, to know when you
-// are looking at a wave with the sun behind it.
-sea.userData.sun(new THREE.Vector3().copy(sun.position).multiplyScalar(-1));
+// Both the sea and the sky want the way from the water toward the sun.
+const towardSun = () => new THREE.Vector3().copy(sun.position).normalize();
+sea.userData.sun(towardSun());
+sky.userData.sun(towardSun());
 
 // --- her state ---------------------------------------------------------------
 
@@ -148,6 +145,14 @@ let gameSeconds = 8 * 3600;    // she begins at eight in the morning
 let swing = null;              // a tack or a wear in progress
 let over = 0;                  // steps of canvas she is carrying beyond the force
 let air = null;                // what the compass worked out for the boards
+
+// How grey the day is. The whole palette walks from a bright day to a heavy
+// one on this one figure, so the sea, the sky, her canvas and her paint all
+// move together instead of being dimmed one at a time. The glass may take it
+// out of the weather's hands.
+let byHand = null;
+const holdLook = (g) => { byHand = g; };   // null gives it back to the weather
+const greyness = (force, squall) => byHand === null ? gloomFor(force, squall) : byHand;
 
 const weather = makeWeather(315, 3.3);   // a moderate breeze out of the north-west
 
@@ -175,7 +180,20 @@ const passage = makePassage(rig);
 
 const watchBill = makeWatchBill(company);
 const hands = makeHands(company, crew, rig, hull, camera, renderer.domElement);
-const trim = makeTrim({ weather, sun, sea, hemi });
+const trim = makeTrim({
+  weather, sun,
+  aim: () => { sea.userData.sun(towardSun()); sky.userData.sun(towardSun()); },
+  look: holdLook,
+  // A finer or coarser sea means a new grid, so the old one is thrown away
+  // and a new one put in its place.
+  facets: (n) => {
+    scene.remove(sea);
+    sea.geometry.dispose();
+    sea = makeSea(n);
+    scene.add(sea);
+    sea.userData.sun(towardSun());
+  }
+});
 makeGlossary(rig);
 
 
@@ -312,6 +330,10 @@ const SAID = {
 
 const damage = makeDamage(rig, (sail, kind) => {
   if (kind === 'broach') {
+    // She can only be broached to once at a time. Without this she stacks
+    // them, and four men's worth of orders all try to steer her at once.
+    if ([...crew.running, ...crew.waiting].some((o) => o.broach)) return;
+
     // Thrown broadside to the sea: her head flies up across the wind and she
     // loses every knot she had.
     const rel = signedDiff(weather.windFrom, heading) || 1;
@@ -319,7 +341,7 @@ const damage = makeDamage(rig, (sail, kind) => {
     knots = 0;
     crew.issue({
       name: 'Broached to — getting her before the wind again', hands: 20, minutes: 12,
-      swing: true,
+      swing: true, broach: true,
       onProgress(p) { if (swing) heading = wrap(swing.from + swing.delta * p); },
       onDone() { if (swing) heading = wrap(swing.from + swing.delta); swing = null; }
     });
@@ -402,19 +424,16 @@ function sail(seen, gameDt, t) {
   });
 }
 
-// When a squall comes over her the light goes out of the day.
-const CLEAR_FOG = HORIZON_COLOUR.clone();
-const DARK_FOG = new THREE.Color('#5e6a6d');
-const CLEAR_SEA = new THREE.Color('#ffffff');   // the sea paints itself now; this only dims it
-const DARK_SEA = new THREE.Color('#5a6d76');
-
-function darken(strength) {
-  scene.fog.color.copy(CLEAR_FOG).lerp(DARK_FOG, strength);
-  sea.material.color.copy(CLEAR_SEA).lerp(DARK_SEA, strength);
-  sun.intensity = 2.4 * (1 - 0.78 * strength);
-  renderer.toneMappingExposure = 1.05 * (1 - 0.3 * strength);
-  scene.fog.far = 660 - 300 * strength;
+function weatherLook(force, squall) {
+  const g = greyness(force, squall);
+  if (!weather2(g)) return;           // nothing to repaint
+  scene.fog.color.copy(HUE.skyLow);
+  sun.intensity = 1.35 * (1 - 0.45 * g);
+  hemi.intensity = 2.5 * (1 - 0.2 * g);
+  scene.fog.far = 660 - 240 * g;
 }
+
+
 
 let shown = 0;
 let told = false;
@@ -434,8 +453,8 @@ function frame(now) {
   weather.tick(gameDt, (gameSeconds / 3600) % 24);
   const warning = weather.warning;
   squallLine.userData.update(warning);
-  darken(warning ? warning.strength : 0);
-  sky.userData.update(shown, weather.windFrom, warning ? warning.strength : 0);
+  weatherLook(weather.force, warning ? warning.strength : 0);
+  sky.userData.update(shown, weather.windFrom, greyness(weather.force, warning ? warning.strength : 0));
   over = damage.tick(gameDt, weather.force);
 
   hunt.tick(gameDt, (gameSeconds / 3600) % 24);

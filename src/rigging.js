@@ -6,9 +6,10 @@
 // masts from falling aft, backstays from falling forward. None of it moves.
 import * as THREE from 'three';
 import { beamAt } from './hull.js';
+import { HUE } from './palette.js';
 
-const ROPE = new THREE.MeshStandardMaterial({ color: '#2b2621', roughness: 0.92, flatShading: true });
-const RATLINE = new THREE.LineBasicMaterial({ color: '#4a4136', transparent: true, opacity: 0.9 });
+const ROPE = new THREE.MeshLambertMaterial({ color: HUE.rope, flatShading: true });
+const RATLINE = new THREE.LineBasicMaterial({ color: HUE.rope });
 
 const V = (p) => new THREE.Vector3(p[0], p[1], p[2]);
 const lerp = (a, b, t) => a.map((v, i) => v + (b[i] - v) * t);
@@ -68,7 +69,9 @@ export function makeRigging(masts, headsails) {
       // --- ratlines, the ladder across them --------------------------------
       // Every fifteen inches or so, from above the rail to short of the top.
       const foot = 1.25 / (a.hounds - a.chY), head = 1 - 1.6 / (a.hounds - a.chY);
-      for (let t = foot; t < head; t += 0.42 / (a.hounds - a.chY)) {
+      // Wider apart than a real ship rattles them down, because six hundred
+      // hairlines read as grey fuzz in a picture drawn in flat shapes.
+      for (let t = foot; t < head; t += 0.80 / (a.hounds - a.chY)) {
         for (let i = 0; i < n - 1; i++) {
           ratlineEnds.push(...lerp(set[i][0], set[i][1], 1 - t), ...lerp(set[i + 1][0], set[i + 1][1], 1 - t));
         }

@@ -3,9 +3,10 @@
 import * as THREE from 'three';
 import { deckAt } from './hull.js';
 import { makeRigging } from './rigging.js';
+import { HUE } from './palette.js';
 import { REEFABLE, PLAIN, hoistFor, spreadFor, CANVAS, squareSail, gaffSail, stayTriangle, furledBundle } from './sails.js';
 
-const SPAR = new THREE.MeshStandardMaterial({ color: '#6b5636', roughness: 0.85, flatShading: true });
+const SPAR = new THREE.MeshLambertMaterial({ color: HUE.spar, flatShading: true });
 
 // Her bow points along +z, so with y up her starboard side lies along -x.
 const STARBOARD_X = -1;

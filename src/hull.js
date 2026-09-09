@@ -4,6 +4,7 @@
 // on deck, 27 ft beam, 13 ft draught -- a bluff, deep, box-sided whaleship, not
 // a yacht.
 import * as THREE from 'three';
+import { HUE } from './palette.js';
 
 const LENGTH    = 33.0;   // metres, transom to stem
 const HALF_BEAM = 4.35;
@@ -12,9 +13,9 @@ const BULWARK   = 1.40;   // rail height above the deck edge
 
 const STATIONS = 26;      // cross-sections along her length
 
-const TOPSIDES  = new THREE.Color('#332d28');   // black paint
-const BAND      = new THREE.Color('#b08a45');   // the buff sheer band
-const BOTTOM    = new THREE.Color('#54302a');   // below the waterline
+const TOPSIDES  = HUE.hull;
+const BAND      = HUE.band;
+const BOTTOM    = HUE.bottom;
 
 // u runs from -1 at the transom to +1 at the stem.
 const halfBeamAt = (u) => u >= 0
@@ -116,15 +117,14 @@ function buildDeck() {
 export function makeHull() {
   const ship = new THREE.Group();
 
-  const planking = new THREE.Mesh(buildSkin(), new THREE.MeshStandardMaterial({
-    vertexColors: true, roughness: 0.78, metalness: 0.0,
-    flatShading: true, side: THREE.DoubleSide
+  const planking = new THREE.Mesh(buildSkin(), new THREE.MeshLambertMaterial({
+    vertexColors: true, flatShading: true, side: THREE.DoubleSide
   }));
   planking.castShadow = true;
   ship.add(planking);
 
-  const deck = new THREE.Mesh(buildDeck(), new THREE.MeshStandardMaterial({
-    color: '#7c7260', roughness: 0.95, flatShading: true, side: THREE.DoubleSide
+  const deck = new THREE.Mesh(buildDeck(), new THREE.MeshLambertMaterial({
+    color: HUE.deck, flatShading: true, side: THREE.DoubleSide
   }));
   deck.receiveShadow = true;
   ship.add(deck);
@@ -132,7 +132,7 @@ export function makeHull() {
   // The bowsprit. The headsails will hang from it later.
   const spar = new THREE.Mesh(
     new THREE.CylinderGeometry(0.17, 0.32, 14, 8),
-    new THREE.MeshStandardMaterial({ color: '#7a6440', roughness: 0.8, flatShading: true })
+    new THREE.MeshLambertMaterial({ color: HUE.spar, flatShading: true })
   );
   spar.rotation.x = Math.PI / 2 - 0.20;   // forward, and a little up
   spar.position.set(0, sheerAt(1) + 0.9, LENGTH / 2 + 5.4);

@@ -3,6 +3,7 @@
 // Reducing canvas goes from the top down: royals first, then topgallants, then
 // reef the topsails. A sail runs down this ladder one step at a time.
 import * as THREE from 'three';
+import { HUE } from './palette.js';
 
 export const REEFABLE = ['set', '1st reef', '2nd reef', 'close-reefed', 'furled'];
 export const PLAIN    = ['set', 'furled'];   // courses, royals and headsails do not reef
@@ -20,11 +21,11 @@ const SPREAD = {
 export const hoistFor = (state) => HOIST[state];
 export const spreadFor = (state) => SPREAD[state];
 
-export const CANVAS = new THREE.MeshStandardMaterial({
-  color: '#cfc6b0', roughness: 0.94, metalness: 0, side: THREE.DoubleSide
+export const CANVAS = new THREE.MeshLambertMaterial({
+  color: HUE.canvas, side: THREE.DoubleSide, flatShading: true
 });
 
-const FURLED = new THREE.MeshStandardMaterial({ color: '#b3a992', roughness: 0.95, flatShading: true });
+const FURLED = new THREE.MeshLambertMaterial({ color: HUE.furled, flatShading: true });
 
 // A square sail: bent to its yard at the head, spread to the yard below at the
 // foot, with a little belly in it so it looks like cloth and not a board.

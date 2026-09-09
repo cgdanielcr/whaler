@@ -12,12 +12,13 @@
 // handle. The try-works is a brick oven roughly ten feet by eight.
 import * as THREE from 'three';
 import { deckAt, beamAt } from './hull.js';
+import { HUE } from './palette.js';
 
-const CEDAR = new THREE.MeshStandardMaterial({ color: '#d8cfb8', roughness: 0.8, flatShading: true });
-const TRIM  = new THREE.MeshStandardMaterial({ color: '#2f4a58', roughness: 0.8, flatShading: true });
-const IRON  = new THREE.MeshStandardMaterial({ color: '#2a2724', roughness: 0.7, metalness: 0.35, flatShading: true });
-const BRICK = new THREE.MeshStandardMaterial({ color: '#7a4a3a', roughness: 0.95, flatShading: true });
-const PLANK = new THREE.MeshStandardMaterial({ color: '#6b5636', roughness: 0.9, flatShading: true });
+const CEDAR = new THREE.MeshLambertMaterial({ color: HUE.cedar, flatShading: true });
+const TRIM  = new THREE.MeshLambertMaterial({ color: HUE.trim, flatShading: true });
+const IRON  = new THREE.MeshLambertMaterial({ color: HUE.iron, flatShading: true });
+const BRICK = new THREE.MeshLambertMaterial({ color: HUE.brick, flatShading: true });
+const PLANK = new THREE.MeshLambertMaterial({ color: HUE.spar, flatShading: true });
 
 const BOAT_LEN = 8.6, BOAT_BEAM = 1.85, BOAT_DEPTH = 0.95;
 

@@ -1,35 +1,33 @@
-// The sky: a gradient dome with two sheets of cloud drifting across it.
+// The sky, drawn rather than rendered.
 //
-// The cloud is projected as though it lay on a flat ceiling far overhead, so
-// it piles up and converges toward the horizon the way real cloud does,
-// instead of sitting on the dome like wallpaper. Both sheets fade out near
-// the horizon, where the projection stretches to nothing and would otherwise
-// tear into stripes.
+// Three flat bands of blue with hard steps between them, a flat sun, and
+// cloud cut out of a noise sheet with a hard edge so it reads as paper rather
+// than as vapour. Two tones to the cloud: the lit body and the heavier core
+// under it.
+//
+// The cloud lies on a ceiling far overhead, so it piles up and closes toward
+// the horizon the way real cloud does. How far that projection may stretch is
+// clamped, which is what stops it tearing into stripes at the sea line.
 //
 // It costs two texture lookups a pixel. The noise that made the cloud was
 // worked out once, at load, on the processor.
 import * as THREE from 'three';
 import { cloudSheet } from './clouds.js';
+import { HUE } from './palette.js';
 
-export const HORIZON_COLOUR = new THREE.Color('#b9c4c0');
-
-const ZENITH = new THREE.Color('#4d7fa6');
-const HAZE   = new THREE.Color('#8fa6ae');
+export const HORIZON_COLOUR = new THREE.Color('#a8c4d4');
 
 export function makeSky() {
   const uniforms = {
-    zenith:  { value: ZENITH.clone() },
-    haze:    { value: HAZE.clone() },
-    horizon: { value: HORIZON_COLOUR.clone() },
-    // The low sheet is broken and hard-edged; the high one is thin and soft.
-    low:     { value: cloudSheet({ seed: 3, cover: 0.50, edge: 0.26, billow: true }) },
-    high:    { value: cloudSheet({ seed: 11, cover: 0.62, edge: 0.42, billow: false, octaves: 3 }) },
-    drift:   { value: new THREE.Vector2() },
-    // How much cloud there is, and how dark it has gone.
-    cover:   { value: 1.0 },
-    gloom:   { value: 0.0 },
-    lit:     { value: new THREE.Color('#eef0ea') },
-    shade:   { value: new THREE.Color('#5d666b') }
+    high:  { value: HUE.skyHigh },
+    low:   { value: HUE.skyLow },
+    lit:   { value: HUE.cloudLit },
+    dim:   { value: HUE.cloudDim },
+    sheet: { value: cloudSheet({ seed: 3, cover: 0.46, edge: 0.04, billow: true }) },
+    veil:  { value: cloudSheet({ seed: 11, cover: 0.34, edge: 0.05, billow: false, octaves: 3 }) },
+    drift: { value: new THREE.Vector2() },
+    sun:   { value: new THREE.Vector3(0.76, 0.55, 0.28).normalize() },
+    gloom: { value: 0 }
   };
 
   const material = new THREE.ShaderMaterial({
@@ -44,48 +42,46 @@ export function makeSky() {
       }
     `,
     fragmentShader: `
-      uniform vec3 zenith;
-      uniform vec3 haze;
-      uniform vec3 horizon;
-      uniform sampler2D low;
-      uniform sampler2D high;
-      uniform vec2 drift;
-      uniform float cover;
-      uniform float gloom;
+      uniform vec3 high;
+      uniform vec3 low;
       uniform vec3 lit;
-      uniform vec3 shade;
+      uniform vec3 dim;
+      uniform sampler2D sheet;
+      uniform sampler2D veil;
+      uniform vec2 drift;
+      uniform vec3 sun;
+      uniform float gloom;
       varying vec3 vPos;
 
       void main() {
         vec3 d = normalize(vPos);
         float h = clamp(d.y, -1.0, 1.0);
 
-        vec3 sky = mix(horizon, haze, smoothstep(0.0, 0.18, h));
-        sky = mix(sky, zenith, smoothstep(0.12, 0.75, h));
-        sky = mix(sky, horizon, smoothstep(0.02, -0.08, h));
+        // Three flat bands, with a step between them rather than a fade.
+        vec3 col = low;
+        col = mix(col, mix(low, high, 0.5), step(0.14, h));
+        col = mix(col, high, step(0.42, h));
 
-        // The cloud lies on a ceiling overhead, so looking level along the sea
-        // you look through miles of it and it closes up at the horizon.
-        // Clamping how far the projection may stretch keeps the cloud from
-        // tearing into stripes at the horizon, so it can come right down to it.
-        float up = max(h, 0.115);
+        // A flat sun, sitting where the light actually comes from. It goes
+        // behind the cloud, as it should.
+        col = mix(col, lit, step(0.9975, dot(d, sun)) * (1.0 - gloom * 0.6));
+
+        // The cloud, on its ceiling. Where the projection begins to stretch it
+        // is faded out rather than clamped: clamping smears one patch of it
+        // round the whole horizon and hangs it there in curtains.
+        float up = max(h, 0.05);
         vec2 ceiling = d.xz / up;
-        float a = texture2D(low,  ceiling * 0.055 + drift).a;
-        float b = texture2D(high, ceiling * 0.021 + drift * 0.55 + 0.37).a;
+        float a = texture2D(sheet, ceiling * 0.090 + drift).a;
+        float b = texture2D(veil,  ceiling * 0.038 + drift * 0.55 + 0.37).a;
+        float near = smoothstep(0.05, 0.24, h);
 
-        // Nothing survives right down at the horizon, where the projection
-        // stretches out and there is nothing left to read.
-        float near = smoothstep(-0.01, 0.055, h);
-        a *= near; b *= near;
-
-        // The thin sheet first, then the heavy one over it.
-        vec3 thin  = mix(lit, shade, 0.30 + 0.55 * gloom);
-        vec3 heavy = mix(lit, shade, 0.62 + 0.38 * gloom);
-        vec3 col = mix(sky, thin, b * cover * 0.75);
-        col = mix(col, heavy, a * cover);
+        // Cut, not faded. Two thresholds on the one sheet give the lit body
+        // and the heavier core under it.
+        col = mix(col, mix(lit, dim, 0.45), step(0.5, b) * step(0.35, near) * 0.8);
+        col = mix(col, lit, step(0.5, a) * step(0.35, near));
+        col = mix(col, dim, step(0.78, a) * step(0.35, near));
 
         gl_FragColor = vec4(col, 1.0);
-        #include <tonemapping_fragment>
         #include <colorspace_fragment>
       }
     `
@@ -94,12 +90,12 @@ export function makeSky() {
   const sky = new THREE.Mesh(new THREE.SphereGeometry(4000, 40, 24), material);
   sky.frustumCulled = false;
 
-  // The cloud goes with the wind, and rather faster than she does.
-  sky.userData.update = (t, windFrom, dim) => {
+  // The cloud goes with the wind, and faster than she does.
+  sky.userData.update = (t, windFrom, gloom) => {
     const a = (windFrom + 180) * Math.PI / 180;
     uniforms.drift.value.set(Math.sin(a) * t * 0.0016, Math.cos(a) * t * 0.0016);
-    uniforms.gloom.value = dim;
+    uniforms.gloom.value = gloom;
   };
-  sky.userData.sky = uniforms;
+  sky.userData.sun = (v) => uniforms.sun.value.copy(v).normalize();
   return sky;
 }
