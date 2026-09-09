@@ -358,8 +358,12 @@ export function makeRig() {
     },
 
     // Where a tier stands, and where one more step in either direction leads.
-    stateOf(tier) {
-      const found = of(tier).map((s) => s.state);
+    // Given a mast as well, only that mast's sail: the boards show her one
+    // sail at a time, because a sprung topmast takes one mast and not the rest.
+    stateOf(tier, mast) {
+      const all = sails.filter((s) => s.tier === tier && (!mast || s.mast === mast));
+      if (!all.length) return mast ? null : 'gone';    // she never carried one there
+      const found = all.filter((s) => !s.gone).map((s) => s.state);
       if (!found.length) return 'gone';
       return found.every((s) => s === found[0]) ? found[0] : 'mixed';
     },

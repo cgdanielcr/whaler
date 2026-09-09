@@ -146,6 +146,7 @@ let knots = 0;
 let gameSeconds = 8 * 3600;    // she begins at eight in the morning
 let swing = null;              // a tack or a wear in progress
 let over = 0;                  // steps of canvas she is carrying beyond the force
+let air = null;                // what the compass worked out for the boards
 
 const weather = makeWeather(315, 3.3);   // a moderate breeze out of the north-west
 
@@ -394,7 +395,7 @@ function sail(seen, gameDt, t) {
   // What your eye sees runs at life speed; her reckoning runs on her own clock.
   passage.run(gameDt, knots, course);
 
-  readOut({
+  air = readOut({
     heading, windFrom: weather.windFrom, force: weather.force,
     point: point.name, knots, squall: weather.warning
   });
@@ -442,7 +443,7 @@ function frame(now) {
   rideTheSwell(shown);
   stores.tick(gameDt);
   boards.update(gameSeconds, pace, { over, held: !!warning }, passage, stores,
-                lookouts, hunt, cruise, workUp);
+                lookouts, hunt, cruise, workUp, air);
   watchBill(gameSeconds);
   hands(seen);
   trim();

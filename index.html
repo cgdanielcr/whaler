@@ -5,302 +5,343 @@
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <title>Ship</title>
   <style>
+    /* Her papers. Everything you read is on paper laid over the view: aged
+       stock, iron-gall ink, small capitals for the headings. Nothing on the
+       page is a picture file -- the sails and the compass are drawn as SVG. */
+    :root {
+      --paper:  #f0e7d3;
+      --paper2: #e6dbc2;
+      --ink:    #33291d;
+      --faint:  #7c6b51;
+      --rule:   rgba(80, 62, 38, 0.28);
+      --edge:   rgba(60, 46, 28, 0.42);
+      --blue:   #2c586e;
+      --rust:   #9a4c32;
+      --warn:   #9a6b1e;
+    }
+
     html, body { height: 100%; margin: 0; background: #1d3b4f; overflow: hidden; }
     canvas { display: block; }
-    body { font-family: Georgia, "Times New Roman", serif; color: #e8dfc8; }
+    body { font-family: Georgia, "Times New Roman", serif; color: var(--ink); }
 
     .board {
       position: fixed;
-      padding: 0.8rem 1.05rem;
-      background: rgba(12, 26, 34, 0.62);
-      border: 1px solid rgba(232, 223, 200, 0.22);
+      padding: 0.75rem 0.95rem;
+      background: linear-gradient(160deg, var(--paper) 0%, var(--paper2) 100%);
+      border: 1px solid var(--edge);
+      box-shadow: 0 2px 14px rgba(0, 0, 0, 0.32);
       user-select: none; pointer-events: none;
     }
     .board h2 {
-      margin: 0 0 0.5rem; font-size: 0.7rem; font-weight: normal;
-      letter-spacing: 0.22em; text-transform: uppercase; opacity: 0.55;
+      margin: 0 0 0.55rem; font-size: 0.68rem; font-weight: normal;
+      letter-spacing: 0.24em; text-transform: uppercase; color: var(--faint);
     }
+    .board h3 {
+      margin: 0 0 0.15rem; font-size: 0.6rem; font-weight: normal;
+      letter-spacing: 0.2em; text-transform: uppercase; color: var(--faint);
+    }
+    .board .rule { height: 1px; background: var(--rule); margin: 0.55rem 0; }
+
+    /* --- the sail plan ------------------------------------------------------ */
 
     #canvas-board { top: 1.1rem; left: 1.1rem; }
-    #canvas-board table { border-collapse: collapse; font-size: 0.9rem; }
-    #canvas-board td { padding: 0.1rem 0; }
-    #canvas-board .name { padding-right: 1.3rem; }
-    #canvas-board .state { padding-right: 1.3rem; color: #cfe3c8; min-width: 7.6rem; }
-    #canvas-board .state.reefed { color: #e8c98a; }
-    #canvas-board .state.furled { color: #9aa6ac; }
-    #canvas-board .state.working { color: #8fd0e8; font-style: italic; }
-    #canvas-board .key { opacity: 0.42; font-size: 0.78rem; }
-    #canvas-board .note {
-      margin: 0.7rem 0 0; font-size: 0.76rem; opacity: 0.48; line-height: 1.6;
+    #canvas-board table { border-collapse: collapse; }
+    #canvas-board th, #canvas-board td { padding: 0.05rem 0.1rem; }
+    #canvas-board thead th {
+      font-size: 0.56rem; font-weight: normal; letter-spacing: 0.18em;
+      text-transform: uppercase; color: var(--faint); padding-bottom: 0.3rem;
     }
+    #canvas-board .tier {
+      text-align: left; font-weight: normal; font-size: 0.82rem;
+      padding-right: 0.7rem; white-space: nowrap;
+    }
+    #canvas-board .cell { width: 2.1rem; text-align: center; }
+    #canvas-board .key {
+      font-size: 0.68rem; color: var(--faint); padding-left: 0.6rem; text-align: right;
+    }
+    #canvas-board .states {
+      margin: 0.6rem 0 0; padding-top: 0.5rem; border-top: 1px solid var(--rule);
+      display: flex; justify-content: space-between; gap: 0.2rem;
+    }
+    #canvas-board .states span { text-align: center; }
+    #canvas-board .states i {
+      display: block; font-style: normal; font-size: 0.56rem;
+      letter-spacing: 0.1em; text-transform: uppercase; color: var(--faint);
+    }
+    #canvas-board .states .sail { width: 1.75rem; height: 1.3rem; }
 
-    #orders-board { bottom: 1.1rem; left: 1.1rem; width: 25rem; max-height: 62vh; overflow-y: auto; }
-    #orders-board ul { margin: 0; padding: 0; list-style: none; font-size: 0.88rem; }
-    #orders-board li { margin-bottom: 0.4rem; display: grid; grid-template-columns: 1fr auto; gap: 0 0.8rem; }
-    #orders-board li.idle, #orders-board li.held { opacity: 0.5; }
-    #orders-board .left { font-size: 0.8rem; opacity: 0.7; }
-    #orders-board .bar {
-      grid-column: 1 / -1; height: 3px; margin-top: 0.22rem;
-      background: rgba(232, 223, 200, 0.16);
+    #canvas-board .legend {
+      margin: 0.6rem 0 0; padding-top: 0.5rem; border-top: 1px solid var(--rule);
+      font-size: 0.68rem; line-height: 1.75; color: var(--faint);
     }
-    #orders-board .bar i { display: block; height: 100%; background: #8fd0e8; }
+    #canvas-board .legend b { color: var(--ink); font-weight: normal; }
+
+    .sail { width: 1.9rem; height: 1.4rem; display: block; margin: 0 auto; }
+    .sail .yard { stroke: #6b5636; stroke-width: 1.1; stroke-linecap: round; fill: none; }
+    .sail .cloth { fill: #fbf6ea; stroke: #6f5c40; stroke-width: 0.7; stroke-linejoin: round; }
+    .sail .cloth.furl { fill: #cbbb9c; stroke: #6f5c40; stroke-width: 0.7; }
+    .sail .reef { stroke: #8a7050; stroke-width: 0.95; stroke-linecap: round; }
+    .sail.furled .cloth { fill: #c3b294; }
+    .sail.working .cloth { fill: #dfe9ea; stroke: var(--blue); }
+    .sail.working .yard { stroke: var(--blue); }
+    .sail .tear { stroke: var(--rust); stroke-width: 1.3; stroke-linecap: round; }
+    .sail.gone .yard { stroke: #b09a7c; }
+
+    /* --- the orders in hand -------------------------------------------------- */
+
+    #orders-board {
+      bottom: 1.1rem; left: 1.1rem; width: 23rem;
+      max-height: 56vh; overflow-y: auto;
+    }
+    #orders-board ul { margin: 0; padding: 0; list-style: none; }
+    #orders-board li {
+      display: grid; grid-template-columns: 1.5rem 1fr auto; gap: 0.1rem 0.55rem;
+      align-items: baseline; margin-bottom: 0.5rem;
+    }
+    #orders-board li.idle { display: block; color: var(--faint); font-size: 0.86rem; }
+    #orders-board li.held { opacity: 0.62; }
+    #orders-board .ring { grid-row: span 2; align-self: center; }
+    #orders-board .ring svg { width: 1.35rem; height: 1.35rem; transform: rotate(-90deg); }
+    #orders-board .ring .track { fill: none; stroke: var(--rule); stroke-width: 2.4; }
+    #orders-board .ring .done {
+      fill: none; stroke: var(--blue); stroke-width: 2.4; stroke-linecap: round;
+    }
+    #orders-board .what { font-size: 0.88rem; line-height: 1.35; }
+    #orders-board .what em {
+      display: block; font-style: normal; font-size: 0.7rem; color: var(--faint);
+    }
+    #orders-board .left {
+      font-size: 0.82rem; color: var(--faint); font-variant-numeric: tabular-nums;
+    }
     #orders-board .post {
-      grid-column: 1 / -1; font-size: 0.74rem; line-height: 1.45; opacity: 0.62;
-      margin-top: 0.2rem;
+      grid-column: 2 / -1; font-size: 0.7rem; line-height: 1.45; color: var(--faint);
     }
-    #orders-board .post b { font-weight: normal; color: #8fd0e8; opacity: 0.85; }
+    #orders-board .post b { font-weight: normal; color: var(--blue); }
     #orders-board .hands {
-      margin: 0.7rem 0 0; padding-top: 0.6rem; font-size: 0.82rem; opacity: 0.72;
-      border-top: 1px solid rgba(232, 223, 200, 0.16);
+      margin: 0.65rem 0 0; padding-top: 0.55rem; font-size: 0.8rem; line-height: 1.55;
+      border-top: 1px solid var(--rule);
     }
-    #orders-board .hands em { color: #e8c98a; font-style: normal; }
-    #orders-board .word { margin: 0.45rem 0 0; font-size: 0.85rem; color: #e0a17e; min-height: 1.1em; }
-    #orders-board .chase { margin: 0.45rem 0 0; font-size: 0.85rem; line-height: 1.5; color: #cfe7f2; }
-    #orders-board .chase:empty { display: none; }
-    #orders-board .chase b { color: #8fd0e8; font-weight: normal; }
-    #orders-board .hurt { margin: 0.4rem 0 0; font-size: 0.82rem; line-height: 1.5; }
-    #orders-board .hurt .strain { display: block; color: #e8c98a; }
-    #orders-board .hurt .lost { display: block; color: #d9776a; margin-top: 0.25rem; }
-    #canvas-board .state.lost { color: #d9776a; }
-    #instruments .warn { color: #e8c98a; opacity: 1; }
-    #clock-board .held-back { color: #e8c98a; }
+    #orders-board .hands b { font-weight: normal; font-size: 0.95rem; }
+    #orders-board .hands em { color: var(--rust); font-style: normal; }
+    #orders-board .chase { margin: 0.45rem 0 0; font-size: 0.83rem; line-height: 1.5; color: var(--blue); }
+    #orders-board .chase:empty, #orders-board .hurt:empty, #orders-board .word:empty { display: none; }
+    #orders-board .hurt { margin: 0.4rem 0 0; font-size: 0.8rem; line-height: 1.5; }
+    #orders-board .hurt .strain { display: block; color: var(--warn); }
+    #orders-board .hurt .lost { display: block; color: var(--rust); margin-top: 0.2rem; }
+    #orders-board .word { margin: 0.45rem 0 0; font-size: 0.83rem; color: var(--rust); }
 
-    #track-board dl { margin: 0; display: grid; grid-template-columns: auto auto; gap: 0.15rem 0.9rem; }
-    #track-board dt {
-      font-size: 0.66rem; letter-spacing: 0.18em; text-transform: uppercase;
-      opacity: 0.5; align-self: baseline;
+    /* --- the right-hand column ---------------------------------------------- */
+
+    #right {
+      position: fixed; top: 1.1rem; right: 1.1rem;
+      display: flex; flex-direction: column; align-items: stretch; gap: 0.65rem;
+      width: 12.5rem; pointer-events: none;
     }
-    #track-board dd { margin: 0; font-size: 0.9rem; text-align: right; }
+    #right > * { position: static; }
+
+    #clock-board { text-align: center; }
+    #clock-board .time {
+      font-size: 2rem; letter-spacing: 0.04em; line-height: 1.05;
+      font-variant-numeric: tabular-nums;
+    }
+    #clock-board .watch {
+      font-size: 0.6rem; letter-spacing: 0.2em; text-transform: uppercase;
+      color: var(--faint); margin-top: 0.25rem;
+    }
+    #clock-board .bell { font-size: 0.8rem; font-style: italic; color: var(--faint); }
+    #clock-board h3 { text-align: center; }
+    #clock-board .wind, #clock-board .head { font-size: 0.9rem; line-height: 1.35; }
+    #clock-board .speed { font-size: 0.9rem; }
+    #clock-board .from { font-size: 0.76rem; color: var(--faint); }
+    #clock-board .pace {
+      margin-top: 0.6rem; padding-top: 0.5rem; font-size: 0.74rem; color: var(--faint);
+      border-top: 1px solid var(--rule);
+    }
+    #clock-board .pace.paused { color: var(--warn); }
+    #clock-board .held-back { color: var(--warn); }
+
+    #track-board dl, #stores-board dl {
+      margin: 0; display: grid; grid-template-columns: auto auto; gap: 0.18rem 0.7rem;
+    }
+    #track-board dt, #stores-board dt {
+      font-size: 0.62rem; letter-spacing: 0.14em; text-transform: uppercase;
+      color: var(--faint); align-self: baseline;
+    }
+    #track-board dd, #stores-board dd {
+      margin: 0; font-size: 0.84rem; text-align: right; font-variant-numeric: tabular-nums;
+    }
+    #stores-board dd.low { color: var(--warn); }
+    #stores-board dd.out { color: var(--rust); }
+    #stores-board .short { margin: 0.5rem 0 0; font-size: 0.76rem; color: var(--warn); }
+    #stores-board .short:empty { display: none; }
+
+    /* --- the compass rose ---------------------------------------------------- */
+
+    #rose {
+      position: fixed; right: 1.4rem; bottom: 1.4rem;
+      width: 9.5rem; text-align: center;
+      user-select: none; pointer-events: none;
+    }
+    #rose .rose { width: 100%; height: auto; display: block; }
+    #rose .rim { fill: #c9a86a; stroke: #6b5029; stroke-width: 2.5; }
+    #rose .face { fill: #f0e7d3; stroke: #8a7145; stroke-width: 1; }
+    #rose .ticks line { stroke: #8a7145; stroke-width: 0.9; }
+    #rose .ticks line.cardinal { stroke: #4a3a1e; stroke-width: 1.6; }
+    #rose .letter {
+      font-size: 8px; fill: #4a3a1e; text-anchor: middle;
+      font-family: Georgia, serif; letter-spacing: 0.05em;
+    }
+    #rose .needle .north { fill: var(--rust); }
+    #rose .needle .south { fill: #3d3527; }
+    #rose .pin { fill: #6b5029; }
+    #rose .wind path { fill: var(--blue); opacity: 0.85; }
+    #rose .squall {
+      margin: 0.3rem 0 0; font-size: 0.74rem; line-height: 1.4; color: #f0e7d3;
+      text-shadow: 0 1px 4px rgba(0, 0, 0, 0.8);
+    }
+    #rose .squall:empty { display: none; }
+
+    /* --- the account at the end ---------------------------------------------- */
 
     #landfall {
       position: fixed; inset: 0; margin: auto;
-      width: min(30rem, calc(100vw - 3rem)); height: fit-content;
+      width: min(32rem, calc(100vw - 3rem)); height: fit-content;
+      max-height: calc(100vh - 3rem); overflow-y: auto;
       padding: 1.8rem 2rem;
-      background: rgba(10, 22, 30, 0.93);
-      border: 1px solid rgba(232, 223, 200, 0.3);
-      pointer-events: none;
+      background: linear-gradient(160deg, var(--paper) 0%, var(--paper2) 100%);
+      border: 1px solid var(--edge);
+      box-shadow: 0 6px 34px rgba(0, 0, 0, 0.45);
+      pointer-events: auto;
     }
     #landfall h2 {
-      margin: 0 0 0.9rem; font-size: 0.72rem; font-weight: normal;
-      letter-spacing: 0.24em; text-transform: uppercase; opacity: 0.55;
+      margin: 0 0 0.9rem; font-size: 0.7rem; font-weight: normal;
+      letter-spacing: 0.24em; text-transform: uppercase; color: var(--faint);
     }
-    #landfall .took { margin: 0 0 1.1rem; font-size: 1.15rem; line-height: 1.5; }
-    #landfall dl { margin: 0 0 1.1rem; display: grid; grid-template-columns: 1fr auto; gap: 0.3rem 1.2rem; }
-    #landfall dt { font-size: 0.86rem; opacity: 0.62; }
-    #landfall dd { margin: 0; font-size: 0.95rem; text-align: right; }
-    #landfall p { margin: 0 0 0.8rem; font-size: 0.92rem; line-height: 1.55; }
-    #landfall .again { margin: 0; font-size: 0.8rem; opacity: 0.45; }
-    #landfall { max-height: calc(100vh - 3rem); overflow-y: auto; pointer-events: auto; }
     #landfall h3 {
-      margin: 1.2rem 0 0.5rem; font-size: 0.68rem; font-weight: normal;
-      letter-spacing: 0.22em; text-transform: uppercase; opacity: 0.5;
-      border-top: 1px solid rgba(232, 223, 200, 0.16); padding-top: 0.9rem;
+      margin: 1.3rem 0 0.6rem; font-size: 0.64rem; font-weight: normal;
+      letter-spacing: 0.22em; text-transform: uppercase; color: var(--faint);
+      border-top: 1px solid var(--rule); padding-top: 0.9rem;
     }
-    #landfall .toll { color: #e0a17e; }
+    #landfall .took { margin: 0 0 1.1rem; font-size: 1.1rem; line-height: 1.5; }
+    #landfall dl { margin: 0 0 1.1rem; display: grid; grid-template-columns: 1fr auto; gap: 0.3rem 1.2rem; }
+    #landfall dt { font-size: 0.84rem; color: var(--faint); }
+    #landfall dd { margin: 0; font-size: 0.92rem; text-align: right; }
+    #landfall p { margin: 0 0 0.8rem; font-size: 0.9rem; line-height: 1.55; }
+    #landfall .toll { color: var(--rust); }
+    #landfall .again { margin: 0; font-size: 0.78rem; color: var(--faint); }
     #landfall .roll { margin: 0 0 1rem; padding: 0; list-style: none; font-size: 0.84rem; }
     #landfall .roll li { margin-bottom: 0.3rem; line-height: 1.45; }
     #landfall .roll li.lost { opacity: 0.55; }
-    #landfall .roll b { font-weight: normal; color: #cfe7f2; }
-    #landfall .roll em { color: #e0a17e; font-style: normal; }
-    #landfall .roll span { display: block; font-size: 0.78rem; opacity: 0.6; }
+    #landfall .roll b { font-weight: normal; }
+    #landfall .roll em { color: var(--rust); font-style: normal; }
+    #landfall .roll span { display: block; font-size: 0.77rem; color: var(--faint); }
 
-    /* --- the glossary ----------------------------------------------------- */
+    /* --- the glossary --------------------------------------------------------- */
 
     /* The boards let the mouse through so you can drag to look about her.
        Only the terms themselves catch it. */
     .term {
       pointer-events: auto; cursor: help;
-      border-bottom: 1px dotted rgba(143, 208, 232, 0.5);
+      border-bottom: 1px dotted rgba(44, 88, 110, 0.55);
     }
-    .term:hover { color: #8fd0e8; border-bottom-color: #8fd0e8; }
+    .term:hover { color: var(--blue); border-bottom-color: var(--blue); }
 
-    #gloss {
-      position: fixed; z-index: 10; width: min(21rem, calc(100vw - 2rem));
+    #gloss, #man {
+      position: fixed; z-index: 11;
       padding: 0.7rem 0.9rem;
-      background: rgba(10, 22, 30, 0.95);
-      border: 1px solid rgba(143, 208, 232, 0.45);
+      background: linear-gradient(160deg, var(--paper) 0%, var(--paper2) 100%);
+      border: 1px solid var(--edge);
+      box-shadow: 0 3px 18px rgba(0, 0, 0, 0.4);
       pointer-events: none; user-select: none;
     }
-    #gloss h4 {
-      margin: 0 0 0.35rem; font-size: 0.94rem; font-weight: normal;
-      color: #cfe7f2; letter-spacing: 0.02em;
+    #gloss { width: min(21rem, calc(100vw - 2rem)); }
+    #man { width: 14rem; }
+    #gloss h4, #man h4 {
+      margin: 0 0 0.3rem; font-size: 0.92rem; font-weight: normal; color: var(--blue);
     }
-    #gloss p { margin: 0; font-size: 0.86rem; line-height: 1.5; opacity: 0.85; }
+    #gloss p, #man p { margin: 0; font-size: 0.84rem; line-height: 1.5; }
+    #man p { font-size: 0.78rem; color: var(--faint); }
+    #man em { color: var(--rust); font-style: normal; }
 
-    /* A board the hovered term is pointing at. */
-    .board.lit {
-      border-color: rgba(143, 208, 232, 0.85);
-      background: rgba(16, 38, 50, 0.8);
-    }
+    .board.lit { border-color: var(--blue); box-shadow: 0 0 0 2px rgba(44, 88, 110, 0.3); }
 
-    #orders-card {
-      position: fixed; inset: 0; margin: auto; z-index: 9;
-      width: min(34rem, calc(100vw - 3rem)); height: fit-content;
+    /* --- the sheets: orders, the watch bill, the glass ----------------------- */
+
+    #orders-card, #watch-bill, #glass {
+      position: fixed; z-index: 9; height: fit-content;
       max-height: calc(100vh - 3rem); overflow-y: auto;
-      padding: 1.5rem 1.8rem;
-      background: rgba(10, 22, 30, 0.95);
-      border: 1px solid rgba(232, 223, 200, 0.3);
+      padding: 1.4rem 1.7rem;
+      background: linear-gradient(160deg, var(--paper) 0%, var(--paper2) 100%);
+      border: 1px solid var(--edge);
+      box-shadow: 0 6px 34px rgba(0, 0, 0, 0.45);
       user-select: none;
     }
-    #orders-card h2 {
-      margin: 0 0 0.9rem; font-size: 0.7rem; font-weight: normal;
-      letter-spacing: 0.22em; text-transform: uppercase; opacity: 0.55;
+    #orders-card { inset: 0; margin: auto; width: min(34rem, calc(100vw - 3rem)); }
+    #watch-bill { inset: 0; margin: auto; width: min(62rem, calc(100vw - 3rem)); }
+    #glass {
+      bottom: 1.1rem; left: 50%; transform: translateX(-50%);
+      width: min(24rem, calc(100vw - 2rem)); pointer-events: auto;
+    }
+    #orders-card h2, #watch-bill h2, #glass h2 {
+      margin: 0 0 0.9rem; font-size: 0.68rem; font-weight: normal;
+      letter-spacing: 0.24em; text-transform: uppercase; color: var(--faint);
     }
     #orders-card table { border-collapse: collapse; width: 100%; }
     #orders-card td { padding: 0.3rem 0; vertical-align: top; }
-    #orders-card .k {
-      width: 4.2rem; color: #8fd0e8; font-size: 0.86rem; white-space: nowrap;
+    #orders-card .k { width: 4.2rem; color: var(--blue); font-size: 0.85rem; white-space: nowrap; }
+    #orders-card .w { width: 8rem; font-size: 0.9rem; }
+    #orders-card .d { font-size: 0.8rem; color: var(--faint); line-height: 1.55; }
+    #orders-card .note, #watch-bill .note {
+      margin: 1rem 0 0; padding-top: 0.8rem; font-size: 0.82rem; line-height: 1.7;
+      color: var(--faint); border-top: 1px solid var(--rule);
     }
-    #orders-card .w { width: 8rem; font-size: 0.92rem; }
-    #orders-card .d { font-size: 0.82rem; opacity: 0.72; line-height: 1.55; }
-    #orders-card .note {
-      margin: 1rem 0 0; padding-top: 0.8rem; font-size: 0.84rem; line-height: 1.7;
-      opacity: 0.8; border-top: 1px solid rgba(232, 223, 200, 0.16);
+    #orders-card .note b, #watch-bill .note b { color: var(--ink); font-weight: normal; }
+    #orders-card .shut, #glass .shut {
+      margin: 0.7rem 0 0; font-size: 0.72rem; color: var(--faint);
     }
-    #orders-card .shut { margin: 0.7rem 0 0; font-size: 0.75rem; opacity: 0.4; }
 
-    #stores-board dl {
-      margin: 0; display: grid; grid-template-columns: auto auto; gap: 0.16rem 1.1rem;
+    #watch-bill .watches { display: flex; gap: 1.8rem; align-items: flex-start; }
+    #watch-bill .watch { flex: 1; min-width: 0; opacity: 0.55; }
+    #watch-bill .watch.up, #watch-bill .watch.idlers { opacity: 1; }
+    #watch-bill h3 {
+      margin: 0 0 0.5rem; font-size: 0.88rem; font-weight: normal;
+      text-transform: capitalize; color: var(--blue);
+      display: flex; justify-content: space-between; align-items: baseline;
+      border-bottom: 1px solid var(--rule); padding-bottom: 0.35rem;
     }
-    #stores-board dt {
-      font-size: 0.66rem; letter-spacing: 0.16em; text-transform: uppercase;
-      opacity: 0.5; align-self: baseline;
+    #watch-bill .where {
+      font-size: 0.62rem; letter-spacing: 0.16em; text-transform: uppercase; color: var(--faint);
     }
-    #stores-board dd { margin: 0; font-size: 0.86rem; text-align: right; }
-    #stores-board dd.low { color: #e8c98a; }
-    #stores-board dd.out { color: #e8a08a; }
-    #stores-board .short {
-      margin: 0.5rem 0 0; font-size: 0.78rem; color: #e8c98a; max-width: 12rem;
+    #watch-bill table { border-collapse: collapse; width: 100%; }
+    #watch-bill td { padding: 0.15rem 0; vertical-align: baseline; font-size: 0.82rem; }
+    #watch-bill .who { width: 42%; }
+    #watch-bill .rate { width: 30%; font-size: 0.74rem; color: var(--faint); }
+    #watch-bill .post { font-size: 0.74rem; color: var(--faint); }
+    #watch-bill .post.set { color: var(--blue); }
+    #watch-bill .name {
+      cursor: text; border-bottom: 1px dotted rgba(80, 62, 38, 0.3);
+      display: inline-block; min-width: 5rem;
     }
-    #stores-board .short:empty { display: none; }
+    #watch-bill .name:hover { border-bottom-color: var(--blue); }
+    #watch-bill .name:focus { outline: none; color: var(--blue); border-bottom-color: var(--blue); }
+    #watch-bill .tally {
+      margin: 0.5rem 0 0; font-size: 0.68rem; letter-spacing: 0.12em;
+      text-transform: uppercase; color: var(--faint);
+    }
 
-    /* --- the glass: the wind and the light, by hand ------------------------ */
-
-    #glass {
-      position: fixed; bottom: 1.1rem; left: 50%; transform: translateX(-50%);
-      z-index: 9; width: min(24rem, calc(100vw - 2rem));
-      padding: 1.1rem 1.3rem;
-      background: rgba(10, 22, 30, 0.95);
-      border: 1px solid rgba(232, 223, 200, 0.3);
-      pointer-events: auto; user-select: none;
-    }
-    #glass h2 {
-      margin: 0 0 0.8rem; font-size: 0.7rem; font-weight: normal;
-      letter-spacing: 0.22em; text-transform: uppercase; opacity: 0.55;
-    }
     #glass label {
       display: grid; grid-template-columns: 6.4rem 1fr; gap: 0.1rem 0.7rem;
       align-items: center; margin-bottom: 0.55rem;
     }
-    #glass .what { font-size: 0.8rem; opacity: 0.7; }
-    #glass .was {
-      grid-column: 2; font-size: 0.76rem; color: #8fd0e8; opacity: 0.85;
-    }
-    #glass input[type=range] {
-      width: 100%; accent-color: #8fd0e8; background: transparent; margin: 0;
-    }
+    #glass .what { font-size: 0.8rem; color: var(--faint); }
+    #glass .was { grid-column: 2; font-size: 0.76rem; color: var(--blue); }
+    #glass input[type=range] { width: 100%; accent-color: var(--blue); background: transparent; margin: 0; }
     #glass .note {
-      margin: 0.9rem 0 0; padding-top: 0.7rem; font-size: 0.78rem; line-height: 1.6;
-      opacity: 0.62; border-top: 1px solid rgba(232, 223, 200, 0.16);
+      margin: 0.9rem 0 0; padding-top: 0.7rem; font-size: 0.77rem; line-height: 1.6;
+      color: var(--faint); border-top: 1px solid var(--rule);
     }
-    #glass .rate {
-      margin: 0.6rem 0 0; font-size: 0.76rem; letter-spacing: 0.06em; opacity: 0.6;
-    }
-    #glass .rate.slow { color: #e0a17e; opacity: 1; }
-    #glass .shut { margin: 0.4rem 0 0; font-size: 0.72rem; opacity: 0.38; }
-
-    /* A man on deck, hovered. */
-    #man {
-      position: fixed; z-index: 11; width: 14rem;
-      padding: 0.55rem 0.75rem;
-      background: rgba(10, 22, 30, 0.95);
-      border: 1px solid rgba(143, 208, 232, 0.45);
-      pointer-events: none; user-select: none;
-    }
-    #man h4 {
-      margin: 0 0 0.25rem; font-size: 0.9rem; font-weight: normal; color: #cfe7f2;
-    }
-    #man p { margin: 0; font-size: 0.78rem; line-height: 1.5; opacity: 0.8; }
-    #man em { color: #e0a17e; font-style: normal; }
-
-    /* --- the watch bill --------------------------------------------------- */
-
-    #watch-bill {
-      position: fixed; inset: 0; margin: auto; z-index: 9;
-      width: min(62rem, calc(100vw - 3rem)); height: fit-content;
-      max-height: calc(100vh - 3rem); overflow-y: auto;
-      padding: 1.5rem 1.8rem;
-      background: rgba(10, 22, 30, 0.95);
-      border: 1px solid rgba(232, 223, 200, 0.3);
-    }
-    #watch-bill h2 {
-      margin: 0 0 1rem; font-size: 0.7rem; font-weight: normal;
-      letter-spacing: 0.22em; text-transform: uppercase; opacity: 0.55;
-    }
-    #watch-bill .watches { display: flex; gap: 1.8rem; align-items: flex-start; }
-    #watch-bill .watch { flex: 1; min-width: 0; opacity: 0.5; }
-    #watch-bill .watch.up, #watch-bill .watch.idlers { opacity: 1; }
-    #watch-bill .post.set { color: #8fd0e8; opacity: 0.95; }
-    #watch-bill h3 {
-      margin: 0 0 0.5rem; font-size: 0.92rem; font-weight: normal;
-      text-transform: capitalize; color: #cfe7f2;
-      display: flex; justify-content: space-between; align-items: baseline;
-      border-bottom: 1px solid rgba(232, 223, 200, 0.16); padding-bottom: 0.35rem;
-    }
-    #watch-bill .where {
-      font-size: 0.68rem; letter-spacing: 0.16em; text-transform: uppercase; opacity: 0.5;
-    }
-    #watch-bill table { border-collapse: collapse; width: 100%; }
-    #watch-bill td { padding: 0.16rem 0; vertical-align: baseline; font-size: 0.84rem; }
-    #watch-bill .who { width: 42%; }
-    #watch-bill .rate { width: 30%; font-size: 0.76rem; opacity: 0.62; }
-    #watch-bill .post { font-size: 0.76rem; opacity: 0.5; }
-    #watch-bill .name {
-      cursor: text; border-bottom: 1px dotted rgba(232, 223, 200, 0.2);
-      display: inline-block; min-width: 5rem;
-    }
-    #watch-bill .name:hover { border-bottom-color: rgba(143, 208, 232, 0.7); }
-    #watch-bill .name:focus {
-      outline: none; color: #8fd0e8; border-bottom-color: #8fd0e8;
-    }
-    #watch-bill .tally {
-      margin: 0.5rem 0 0; font-size: 0.72rem; letter-spacing: 0.12em;
-      text-transform: uppercase; opacity: 0.4;
-    }
-    #watch-bill .note {
-      margin: 1.2rem 0 0; padding-top: 0.8rem; font-size: 0.82rem; line-height: 1.7;
-      opacity: 0.72; border-top: 1px solid rgba(232, 223, 200, 0.16);
-    }
-
-    #right {
-      position: fixed; top: 1.1rem; right: 1.1rem;
-      display: flex; flex-direction: column; align-items: flex-end; gap: 0.7rem;
-      pointer-events: none;
-    }
-    #right > * { position: static; }
-
-    #clock-board { text-align: right; }
-    #clock-board .time { font-size: 1.8rem; letter-spacing: 0.06em; line-height: 1.1; }
-    #clock-board .watch { font-size: 0.84rem; opacity: 0.66; line-height: 1.5; margin-top: 0.2rem; }
-    #clock-board .pace {
-      margin-top: 0.55rem; padding-top: 0.5rem; font-size: 0.8rem; opacity: 0.6;
-      border-top: 1px solid rgba(232, 223, 200, 0.16);
-    }
-    #clock-board .pace.paused { color: #e8c98a; opacity: 0.95; }
-
-    #instruments { display: flex; align-items: center; gap: 1rem; }
-    #instruments dl { margin: 0; display: grid; grid-template-columns: auto auto; gap: 0.15rem 0.9rem; }
-    #instruments dt {
-      font-size: 0.66rem; letter-spacing: 0.18em; text-transform: uppercase;
-      opacity: 0.5; align-self: baseline;
-    }
-    #instruments dd { margin: 0; font-size: 0.9rem; max-width: 11.5rem; }
-    #instruments dd.stalled { color: #e0a17e; }
-    .dial-face { fill: rgba(232, 223, 200, 0.05); stroke: rgba(232, 223, 200, 0.3); stroke-width: 1.5; }
-    .dial-north { stroke: rgba(232, 223, 200, 0.55); stroke-width: 2.5; }
-    .dial-hull { fill: rgba(232, 223, 200, 0.72); }
-    .arrow-shaft { stroke: #7fc0d8; stroke-width: 3; }
-    .arrow-head { fill: #7fc0d8; }
+    #glass .rate { margin: 0.6rem 0 0; font-size: 0.76rem; color: var(--faint); }
+    #glass .rate.slow { color: var(--rust); }
   </style>
   <script type="importmap">
   {

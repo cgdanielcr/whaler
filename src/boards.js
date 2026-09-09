@@ -1,150 +1,192 @@
-// The boards she is conned by: what canvas she carries, what the hands are
-// working at, and what o'clock it is.
+// The boards she is conned by, laid out as her papers: what canvas she
+// carries mast by mast, what the hands are working at, what o'clock it is,
+// what is left below, and how the passage goes.
 import { readClock } from './clock.js';
 import { DESTINATION } from './passage.js';
 import { compassPoint } from './wind.js';
+import { sailGlyph, foreAftGlyph } from './glyphs.js';
 
+// The sail plan as a grid: the tiers down, her three masts across. The mizzen
+// carries no course -- that yard is the crossjack and it carries nothing --
+// and the headsails all stand on the fore stays, so those cells are blank.
+const MASTS = ['fore', 'main', 'mizzen'];
 const TIERS = [
   { tier: 'royal',      label: 'Royals',      key: '4' },
   { tier: 'topgallant', label: 'Topgallants', key: '3' },
-  { tier: 'topsail',    label: 'Topsails',    key: '2 or r' },
+  { tier: 'topsail',    label: 'Topsails',    key: '2' },
   { tier: 'course',     label: 'Courses',     key: '1' },
-  { tier: 'spanker',    label: 'Spanker',     key: '5' },
-  { tier: 'headsail',   label: 'Headsails',   key: '6' }
+  { tier: 'spanker',    label: 'Spanker',     key: '5', foreAft: 'spanker' },
+  { tier: 'headsail',   label: 'Headsails',   key: '6', foreAft: 'headsail' }
 ];
 
-// Only write when the words have actually changed. The boards are redrawn
-// every frame, and rebuilding a line you are hovering would sweep the glossary
-// term out from under the mouse sixty times a second.
 const put = (el, html) => { if (el.__said !== html) { el.__said = html; el.innerHTML = html; } };
 const putText = (el, text) => { if (el.__said !== text) { el.__said = text; el.textContent = text; } };
+
+// How long a piece of work has left to run, in her own time.
+const clockOf = (minutes) => {
+  const m = Math.max(0, Math.floor(minutes));
+  const h = Math.floor(m / 60);
+  return h ? `${h}h ${m % 60}m` : `${m} min`;
+};
 
 function panel(id, html, where) {
   const el = document.createElement('div');
   el.id = id;
   el.className = 'board';
   el.innerHTML = html;
-  const home = where ? document.getElementById(where) : null;
-  (home || document.body).appendChild(el);
+  (document.getElementById(where) || document.body).appendChild(el);
   return el;
 }
 
 export function makeBoards(rig, crew, company) {
-  const canvas = panel('canvas-board', '<h2>Canvas</h2><table></table>' +
-    '<p class="note"><b>1</b>-<b>6</b> shorten &nbsp; shift to make sail' +
-    '<br><b>a</b> make sail all round &nbsp; <b>f</b> shorten all round' +
-    '<br><b>t</b> tack &nbsp; <b>w</b> wear &nbsp; <b>&larr; &rarr;</b> helm' +
-    '<br><b>h</b> all hands &nbsp; <b>space</b> bring her to' +
-    '<br><b>-</b> <b>=</b> slower and faster &nbsp; drag to look about' +
-    '<br><b>m</b> mend what is broken &nbsp; <b>c</b> go on deck<br><b>b</b> the watch bill &nbsp; <b>?</b> all orders<br><b>l</b> lower for a whale &nbsp; <b>o</b> cut in and try out</p>');
+  const canvas = panel('canvas-board',
+    '<h2>Canvas</h2>' +
+    '<table><thead><tr><td></td>' +
+    MASTS.map((m) => `<th>${m}</th>`).join('') + '<td></td></tr></thead><tbody></tbody></table>' +
+    // What the drawings mean, which is half the lesson.
+    '<p class="states">' +
+    [['set', 'set'], ['1st reef', 'reefed'], ['2nd reef', 'twice'],
+     ['close-reefed', 'close'], ['furled', 'furled']]
+      .map(([s, said]) => `<span>${sailGlyph(s, false)}<i>${said}</i></span>`).join('') + '</p>' +
+    '<p class="legend"><b>1</b>-<b>6</b> shorten &nbsp; <b>shift</b> to make sail &nbsp; ' +
+    '<b>a</b> all round &nbsp; <b>f</b> shorten all round<br>' +
+    '<b>t</b> tack &nbsp; <b>w</b> wear &nbsp; <b>h</b> all hands &nbsp; ' +
+    '<b>&larr; &rarr;</b> helm &nbsp; <b>space</b> bring her to<br>' +
+    '<b>m</b> mend &nbsp; <b>l</b> lower &nbsp; <b>o</b> cut in and try out &nbsp; ' +
+    '<b>c</b> on deck<br><b>b</b> the watch bill &nbsp; <b>g</b> the glass &nbsp; ' +
+    '<b>?</b> all orders</p>');
 
-  const rows = {};
+  const body = canvas.querySelector('tbody');
+  const cells = {};
   for (const t of TIERS) {
     const tr = document.createElement('tr');
-    tr.innerHTML = `<td class="name">${t.label}</td><td class="state"></td><td class="key">${t.key}</td>`;
-    canvas.querySelector('table').appendChild(tr);
-    rows[t.tier] = tr.querySelector('.state');
+    tr.innerHTML = `<th class="tier">${t.label}</th>` +
+      MASTS.map((m) => `<td class="cell" data-m="${m}"></td>`).join('') +
+      `<td class="key">${t.key}</td>`;
+    body.appendChild(tr);
+    cells[t.tier] = {};
+    for (const td of tr.querySelectorAll('.cell')) cells[t.tier][td.dataset.m] = td;
   }
 
-  const orders = panel("orders-board",
-    "<h2>Orders</h2><ul></ul><p class='hands'></p><p class='chase'></p><p class='hurt'></p><p class='word'></p>");
+  const orders = panel('orders-board',
+    "<h2>Orders</h2><ul></ul><p class='hands'></p><p class='chase'></p>" +
+    "<p class='hurt'></p><p class='word'></p>");
   const list = orders.querySelector('ul');
-  const hands = orders.querySelector(".hands");
-  const hurt = orders.querySelector(".hurt");
+  const hands = orders.querySelector('.hands');
+  const hurt = orders.querySelector('.hurt');
   const word = orders.querySelector('.word');
   const chase = orders.querySelector('.chase');
   let saying = 0;
 
-  const clock = panel('clock-board', '<div class="time"></div><div class="watch"></div><div class="pace"></div>', 'right');
+  const clock = panel('clock-board',
+    '<div class="time"></div><div class="watch"></div><div class="bell"></div>' +
+    '<div class="rule"></div><h3>Wind</h3><div class="wind"></div>' +
+    '<div class="rule"></div><h3>Her head</h3><div class="head"></div>' +
+    '<div class="rule"></div><h3>Speed</h3><div class="speed"></div>' +
+    '<div class="pace"></div>', 'right');
+
   const track = panel('track-board', '<h2>Passage</h2><dl>' +
     '<dt>To run</dt><dd class="to-run"></dd>' +
     '<dt>Bearing</dt><dd class="to-bear"></dd>' +
     '<dt>Made good</dt><dd class="made"></dd>' +
     '<dt>Sailed</dt><dd class="sailed"></dd></dl>', 'right');
-  const reckoning = {
-    toRun: track.querySelector('.to-run'),
-    bear: track.querySelector('.to-bear'),
-    made: track.querySelector('.made'),
-    sailed: track.querySelector('.sailed')
-  };
 
-  // What she has left below. She cannot send ashore for any of it.
   const locker = panel('stores-board', '<h2>Stores</h2><dl></dl><p class="short"></p>', 'right');
-  const lockerList = locker.querySelector('dl');
-  const lockerWord = locker.querySelector('.short');
 
-  const landfall = panel('landfall', '');
-  landfall.style.display = 'none';
   const out = {
     time: clock.querySelector('.time'),
     watch: clock.querySelector('.watch'),
-    pace: clock.querySelector('.pace')
+    bell: clock.querySelector('.bell'),
+    wind: clock.querySelector('.wind'),
+    head: clock.querySelector('.head'),
+    speed: clock.querySelector('.speed'),
+    pace: clock.querySelector('.pace'),
+    toRun: track.querySelector('.to-run'),
+    bear: track.querySelector('.to-bear'),
+    made: track.querySelector('.made'),
+    sailed: track.querySelector('.sailed'),
+    stores: locker.querySelector('dl'),
+    short: locker.querySelector('.short')
   };
 
-  const update = function (gameSeconds, pace, sea, passage, stores, lookouts, hunt, cruise, workUp) {
-    put(lockerList, stores.all.map((s) =>
+  const landfall = panel('landfall', '');
+  landfall.style.display = 'none';
+
+  const update = function (gameSeconds, pace, sea, passage, stores, lookouts, hunt, cruise, workUp, air) {
+    put(out.stores, stores.all.map((s) =>
       `<dt>${s.said}</dt><dd class="${s.out ? 'out' : s.low ? 'low' : ''}">${s.reads}</dd>`).join(''));
-    put(lockerWord, stores.word);
+    put(out.short, stores.word);
 
-    reckoning.toRun.textContent = cruise && cruise.onGround
+    const cruising = cruise && cruise.onGround;
+    putText(out.toRun, cruising
       ? `day ${Math.floor(cruise.days(gameSeconds)) + 1} on the ground`
-      : `${passage.toRun.toFixed(1)} miles`;
-    reckoning.bear.textContent = `${passage.bearingSaid} — ${Math.round(passage.bearing)}°`;
-    reckoning.made.textContent = cruise && cruise.onGround
+      : `${passage.toRun.toFixed(1)} miles`);
+    putText(out.bear, `${passage.bearingSaid} — ${Math.round(passage.bearing)}°`);
+    putText(out.made, cruising
       ? `${cruise.barrels} barrels, ${cruise.whales} whale${cruise.whales === 1 ? '' : 's'}`
-      : `${passage.made.toFixed(1)} of ${DESTINATION.miles} miles`;
-    reckoning.sailed.textContent = `${passage.sailed.toFixed(1)} miles`;
+      : `${passage.made.toFixed(1)} of ${DESTINATION.miles} miles`);
+    putText(out.sailed, `${passage.sailed.toFixed(1)} miles`);
 
+    // The sail plan, one cell to a sail.
     for (const t of TIERS) {
-      const state = rig.stateOf(t.tier);
-      const cell = rows[t.tier];
-      putText(cell, rig.working(t.tier) ? `${state} …` : state);
-      cell.className = 'state' + (state === 'gone' ? ' lost' : rig.working(t.tier) ? ' working'
-        : state === 'furled' ? ' furled' : state === 'set' ? '' : ' reefed');
+      const busy = rig.working(t.tier);
+      for (const m of MASTS) {
+        const state = rig.stateOf(t.tier, m);
+        put(cells[t.tier][m], t.foreAft
+          ? foreAftGlyph(state, busy, t.foreAft)
+          : sailGlyph(state, busy));
+      }
     }
 
-    // The bar creeps along every frame, so it is moved on its own and the
-    // words around it are left alone unless they have really changed.
+    // The orders in hand, each with a ring that fills as the work goes on.
     put(list, crew.running.length || crew.waiting.length
       ? crew.running.map((o) =>
-          `<li><span class="what">${o.name}</span>` +
-          `<span class="left">${crew.remaining(o)} min</span>` +
-          `<span class="bar"><i></i></span>` +
+          `<li><span class="ring"><svg viewBox="0 0 24 24">` +
+          `<circle class="track" cx="12" cy="12" r="9"/>` +
+          `<circle class="done" cx="12" cy="12" r="9"/></svg></span>` +
+          `<span class="what">${o.name}<em>${o.hands} hands</em></span>` +
+          `<span class="left">${clockOf(crew.remaining(o))}</span>` +
           (o.posted || []).map((p) =>
-            `<span class="post"><b>${p.at}</b> &mdash; ` +
-            `${p.men.map((m) => m.name).join(', ')}</span>`).join('') +
-          '</li>').join('') +
+            `<span class="post"><b>${p.at}</b> &mdash; ${p.men.map((m) => m.name).join(', ')}</span>`
+          ).join('') + '</li>').join('') +
         crew.waiting.map((o) =>
-          `<li class="held"><span class="what">${o.name}</span>` +
-          `<span class="left">wants ${o.hands} hands</span></li>`).join('')
-      : '<li class="idle">nothing in hand</li>');
+          `<li class="held"><span class="ring"><svg viewBox="0 0 24 24">` +
+          `<circle class="track" cx="12" cy="12" r="9"/></svg></span>` +
+          `<span class="what">${o.name}<em>wants ${o.hands} hands</em></span>` +
+          `<span class="left">waiting</span></li>`).join('')
+      : '<li class="idle">No orders in hand</li>');
 
-    const bars = list.querySelectorAll('.bar i');
+    const rings = list.querySelectorAll('.ring .done');
     crew.running.forEach((o, i) => {
-      if (bars[i]) bars[i].style.width = `${Math.round((o.elapsed / o.seconds) * 100)}%`;
+      if (!rings[i]) return;
+      const c = 2 * Math.PI * 9;
+      rings[i].style.strokeDasharray = `${c}`;
+      rings[i].style.strokeDashoffset = `${c * (1 - o.elapsed / o.seconds)}`;
     });
 
     const t = readClock(gameSeconds);
     const mate = company.mateOf(t.onDeck);
-    put(hands, `<b>${crew.free}</b> of ${crew.onDeck} hands free &mdash; ` +
-      `crew ${crew.weariness}${crew.allHands ? ' &mdash; <em>all hands on deck</em>' : ''}` +
+    put(hands, `<b>${crew.free}</b> of ${crew.onDeck} hands free` +
+      `${crew.allHands ? ' &mdash; <em>all hands on deck</em>' : ''}` +
       (mate ? `<br>${mate.name}, ${mate.berth.toLowerCase()}, has the deck` : '') +
       (lookouts && lookouts.said ? `<br>At the mastheads: ${lookouts.said}` : ''));
     put(chase, [hunt && hunt.said, workUp && workUp.said].filter(Boolean).join('<br>'));
 
-    // What she is carrying away, and what she has already lost.
     const lost = rig.hurt();
     const strain = sea.over > 1 ? 'She is dangerously over-pressed for this wind.'
       : sea.over === 1 ? 'She is carrying more than this wind will bear.' : '';
-    put(hurt,
-      (strain ? `<span class="strain">${strain}</span>` : '') +
+    put(hurt, (strain ? `<span class="strain">${strain}</span>` : '') +
       (lost.length ? `<span class="lost">${lost.map((d) => `${d.name} &mdash; ${d.kind}`).join('<br>')}</span>` : ''));
 
-    out.time.textContent = t.time;
-    put(out.watch, `${t.watch}, ${t.bells}<br>${t.onDeck} watch on deck`);
-    // "her clock at ×1" rather than "running ×1": running is a point of sail,
-    // and the glossary would offer the wrong meaning for it here.
-    put(out.pace, (pace === 0 ? 'hove to — she waits on you' : `her clock at ×${pace}`) +
+    putText(out.time, t.time);
+    putText(out.watch, t.watch);
+    putText(out.bell, t.bells ? `${t.bells} — ${t.onDeck} watch` : `${t.onDeck} watch`);
+    if (air) {
+      put(out.wind, `${air.force}<br><span class="from">from the ${air.from}</span>`);
+      put(out.head, `${air.headSaid}<br><span class="from">${Math.round(air.heading)}° — ${air.point}</span>`);
+      putText(out.speed, air.knots < 0.05 ? 'no way on her' : `${air.knots.toFixed(1)} knots`);
+    }
+    put(out.pace, (pace === 0 ? 'hove to' : `her clock at ×${pace}`) +
       (sea.held ? '<br><span class="held-back">no speeding up with a squall in sight</span>' : ''));
     out.pace.className = 'pace' + (pace === 0 ? ' paused' : '');
   };
@@ -157,16 +199,10 @@ export function makeBoards(rig, crew, company) {
   };
 
   // The account of the whole voyage, written up when she turns for home.
-  // A whaling voyage was reckoned in barrels, and in who came home.
   const account = (ended, cruise, arrived, clockAt) => {
-    const spars = rig.hurt().length
-      ? `<p>She is not whole: ${rig.hurt().map((d) => `${d.name.toLowerCase()} &mdash; ${d.kind}`).join('; ')}.</p>`
-      : '<p>She has every sail and every spar she began with.</p>';
-
     const men = cruise.muster();
     const gone = men.filter((m) => m.health === 'lost');
-    const hurt = men.filter((m) => m.health === 'hurt');
-
+    const hurtMen = men.filter((m) => m.health === 'hurt');
     const roll = men.map((m) =>
       `<li class="${m.health}"><b>${m.name}</b>, ${m.berth.toLowerCase()}` +
       (m.health === 'lost' ? ' &mdash; <em>lost</em>' : m.health === 'hurt' ? ' &mdash; <em>hurt</em>' : '') +
@@ -179,16 +215,17 @@ export function makeBoards(rig, crew, company) {
       '<dl>' +
       `<dt>Days on the ground</dt><dd>${Math.round(ended.days)}</dd>` +
       `<dt>Sailed through the water</dt><dd>${arrived ? arrived.sailed.toFixed(0) : '—'} miles</dd>` +
-      `<dt>Men brought home sound</dt><dd>${men.length - gone.length - hurt.length} of ${men.length}</dd>` +
+      `<dt>Men brought home sound</dt><dd>${men.length - gone.length - hurtMen.length} of ${men.length}</dd>` +
       `<dt>She turned for home because</dt><dd>${ended.why}</dd>` +
-      `<dt>At</dt><dd>${clockAt}</dd>` +
-      '</dl>' + spars +
+      `<dt>At</dt><dd>${clockAt}</dd></dl>` +
+      (rig.hurt().length
+        ? `<p>She is not whole: ${rig.hurt().map((d) => `${d.name.toLowerCase()} &mdash; ${d.kind}`).join('; ')}.</p>`
+        : '<p>She has every sail and every spar she began with.</p>') +
       (gone.length ? `<p class="toll">${gone.map((m) => m.name).join(' and ')} did not come home.</p>` : '') +
       '<h3>The company</h3><ul class="roll">' + roll + '</ul>' +
       '<p class="again">Reload the page to ship a new crew and sail her again.</p>';
 
-    // The passage is over; the working boards have nothing left to say.
-    for (const b of document.querySelectorAll('#canvas-board, #orders-board, #right')) {
+    for (const b of document.querySelectorAll('#canvas-board, #orders-board, #right, #rose')) {
       b.style.transition = 'opacity 1.2s';
       b.style.opacity = 0;
     }
