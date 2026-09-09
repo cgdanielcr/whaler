@@ -7,8 +7,9 @@
 import * as THREE from 'three';
 import { beamAt } from './hull.js';
 import { HUE } from './palette.js';
+import { cutLight } from './flat.js';
 
-const ROPE = new THREE.MeshLambertMaterial({ color: HUE.rope, flatShading: true });
+const ROPE = cutLight(new THREE.MeshLambertMaterial({ color: HUE.rope, flatShading: true }));
 const RATLINE = new THREE.LineBasicMaterial({ color: HUE.rope });
 
 const V = (p) => new THREE.Vector3(p[0], p[1], p[2]);

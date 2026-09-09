@@ -13,12 +13,13 @@
 import * as THREE from 'three';
 import { deckAt, beamAt } from './hull.js';
 import { HUE } from './palette.js';
+import { cutLight } from './flat.js';
 
-const CEDAR = new THREE.MeshLambertMaterial({ color: HUE.cedar, flatShading: true });
-const TRIM  = new THREE.MeshLambertMaterial({ color: HUE.trim, flatShading: true });
-const IRON  = new THREE.MeshLambertMaterial({ color: HUE.iron, flatShading: true });
-const BRICK = new THREE.MeshLambertMaterial({ color: HUE.brick, flatShading: true });
-const PLANK = new THREE.MeshLambertMaterial({ color: HUE.spar, flatShading: true });
+const CEDAR = cutLight(new THREE.MeshLambertMaterial({ color: HUE.cedar, flatShading: true }));
+const TRIM  = cutLight(new THREE.MeshLambertMaterial({ color: HUE.trim, flatShading: true }));
+const IRON  = cutLight(new THREE.MeshLambertMaterial({ color: HUE.iron, flatShading: true }));
+const BRICK = cutLight(new THREE.MeshLambertMaterial({ color: HUE.brick, flatShading: true }));
+const PLANK = cutLight(new THREE.MeshLambertMaterial({ color: HUE.spar, flatShading: true }));
 
 const BOAT_LEN = 8.6, BOAT_BEAM = 1.85, BOAT_DEPTH = 0.95;
 

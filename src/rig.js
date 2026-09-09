@@ -4,9 +4,10 @@ import * as THREE from 'three';
 import { deckAt } from './hull.js';
 import { makeRigging } from './rigging.js';
 import { HUE } from './palette.js';
+import { cutLight } from './flat.js';
 import { REEFABLE, PLAIN, hoistFor, spreadFor, CANVAS, squareSail, gaffSail, stayTriangle, furledBundle } from './sails.js';
 
-const SPAR = new THREE.MeshLambertMaterial({ color: HUE.spar, flatShading: true });
+const SPAR = cutLight(new THREE.MeshLambertMaterial({ color: HUE.spar, flatShading: true }));
 
 // Her bow points along +z, so with y up her starboard side lies along -x.
 const STARBOARD_X = -1;
@@ -304,6 +305,10 @@ export function makeRig() {
       // brightened in the colour itself.
       if ('emissive' in c) { c.emissive = new THREE.Color('#ffc257'); c.emissiveIntensity = 0.85; }
       else c.color = new THREE.Color('#ffc257');
+      // A copy of a material does not bring its shader alterations with it, so
+      // the lit version has to be given the same treatment. Without this a
+      // sail goes smoothly shaded for exactly as long as you point at it.
+      if (c.isMeshLambertMaterial) cutLight(c);
       brightOf.set(m, c);
     }
     return brightOf.get(m);

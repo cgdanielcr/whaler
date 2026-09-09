@@ -5,6 +5,7 @@
 // a yacht.
 import * as THREE from 'three';
 import { HUE } from './palette.js';
+import { cutLight } from './flat.js';
 
 const LENGTH    = 33.0;   // metres, transom to stem
 const HALF_BEAM = 4.35;
@@ -117,22 +118,22 @@ function buildDeck() {
 export function makeHull() {
   const ship = new THREE.Group();
 
-  const planking = new THREE.Mesh(buildSkin(), new THREE.MeshLambertMaterial({
+  const planking = new THREE.Mesh(buildSkin(), cutLight(new THREE.MeshLambertMaterial({
     vertexColors: true, flatShading: true, side: THREE.DoubleSide
-  }));
+  })));
   planking.castShadow = true;
   ship.add(planking);
 
-  const deck = new THREE.Mesh(buildDeck(), new THREE.MeshLambertMaterial({
+  const deck = new THREE.Mesh(buildDeck(), cutLight(new THREE.MeshLambertMaterial({
     color: HUE.deck, flatShading: true, side: THREE.DoubleSide
-  }));
+  })));
   deck.receiveShadow = true;
   ship.add(deck);
 
   // The bowsprit. The headsails will hang from it later.
   const spar = new THREE.Mesh(
     new THREE.CylinderGeometry(0.17, 0.32, 14, 8),
-    new THREE.MeshLambertMaterial({ color: HUE.spar, flatShading: true })
+    cutLight(new THREE.MeshLambertMaterial({ color: HUE.spar, flatShading: true }))
   );
   spar.rotation.x = Math.PI / 2 - 0.20;   // forward, and a little up
   spar.position.set(0, sheerAt(1) + 0.9, LENGTH / 2 + 5.4);

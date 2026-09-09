@@ -6,9 +6,10 @@
 // here is kept in her own frame: x to larboard, z forward.
 import * as THREE from 'three';
 import { HUE } from './palette.js';
+import { cutLight } from './flat.js';
 
-const WHALE = new THREE.MeshLambertMaterial({ color: HUE.whale, flatShading: true });
-const PALE  = new THREE.MeshLambertMaterial({ color: HUE.furled, flatShading: true });
+const WHALE = cutLight(new THREE.MeshLambertMaterial({ color: HUE.whale, flatShading: true }));
+const PALE = cutLight(new THREE.MeshLambertMaterial({ color: HUE.furled, flatShading: true }));
 
 // A sperm whale: one third of him is that blunt square head, which is the
 // case of spermaceti that the whole trade was after.

@@ -66,6 +66,7 @@ uniform float uTime;
 uniform float uSwell;
 uniform vec2  uOffset;
 varying vec3  vWorld;
+varying vec3  vNorm;
 varying float vLift;
 
 vec3 seaAt(vec2 X) {
@@ -78,6 +79,18 @@ ${WAVE_GLSL}
 void main() {
   vec2 X = position.xz + uOffset;
   vec3 p = seaAt(X);
+
+  // The true slope of the water here, taken over a third of a metre. It is
+  // worked out from the waves themselves rather than from the triangle this
+  // corner belongs to, so it runs smoothly across the surface and nothing in
+  // the picture betrays where one triangle ends and the next begins.
+  const float E = 0.34;
+  vec3 pX = seaAt(X + vec2(E, 0.0));
+  vec3 pZ = seaAt(X + vec2(0.0, E));
+  vec3 tX = vec3(E + pX.x - p.x, pX.y - p.y, pX.z - p.z);
+  vec3 tZ = vec3(pZ.x - p.x, pZ.y - p.y, E + pZ.z - p.z);
+  vNorm = normalize(cross(tZ, tX));
+
   vLift = clamp(p.y / max(0.001, ${TOTAL.toFixed(3)} * uSwell), -1.0, 1.0);
   vec3 moved = vec3(position.x + p.x, p.y, position.z + p.z);
   vWorld = (modelMatrix * vec4(moved, 1.0)).xyz;
@@ -95,6 +108,7 @@ uniform vec3  uFoam;
 uniform vec3  uHaze;
 uniform float uTime;
 varying vec3  vWorld;
+varying vec3  vNorm;
 varying float vLift;
 
 float hash21(vec2 p) {
@@ -110,16 +124,22 @@ float vnoise(vec2 p) {
 }
 
 void main() {
-  // The true face of this triangle, whatever its corners were told to be.
-  // This is what makes the sea read as flat pieces instead of a smooth sheet.
-  vec3 N = normalize(cross(dFdx(vWorld), dFdy(vWorld)));
-  if (N.y < 0.0) N = -N;
+  vec3 N = normalize(vNorm);
+  vec2 drift = vec2(uTime * 0.05, uTime * -0.035);
 
-  // One number for how this face stands: mostly which way it is turned, and
-  // a little of how high it has been lifted.
-  float tone = clamp(dot(N, uSun) * 0.72 + (vLift * 0.5 + 0.5) * 0.42, 0.0, 1.0);
+  // One number for how this piece of water stands: mostly which way it is
+  // turned, and a little of how high it has been lifted.
+  float tone = dot(N, uSun) * 0.72 + (vLift * 0.5 + 0.5) * 0.42;
 
-  // Cut into four. No blending: the step between two blues is a hard line.
+  // Roughen it before cutting. A perfectly even slope cut into steps gives
+  // the smooth concentric bands of a contour map; a little noise in the
+  // number first makes the boundary wander and jag, the way a cut edge does.
+  float rough = vnoise(vWorld.xz * 0.13 + drift * 0.3)
+              + vnoise(vWorld.xz * 0.52 - drift * 0.2) * 0.4;
+  tone = clamp(tone + (rough / 1.4 - 0.5) * 0.10, 0.0, 1.0);
+
+  // Cut into four. No blending: the step between two blues is a hard line,
+  // and it now falls across the wave rather than along the mesh.
   vec3 col = uSea0;
   col = mix(col, uSea1, step(0.34, tone));
   col = mix(col, uSea2, step(0.52, tone));
@@ -131,7 +151,6 @@ void main() {
   // ragged border and not a fog of speckles.
   float steep = clamp(1.0 - N.y, 0.0, 1.0);
   float ready = clamp((steep - 0.06) * 3.4, 0.0, 1.0) * clamp((vLift - 0.42) * 2.6, 0.0, 1.0);
-  vec2 drift = vec2(uTime * 0.05, uTime * -0.035);
   float torn = vnoise(vWorld.xz * 0.34 + drift);
   col = mix(col, uFoam, step(0.60, ready * (0.62 + 0.75 * torn)));
 
@@ -140,16 +159,18 @@ void main() {
   float streak = vnoise(vec2(vWorld.x * 0.05, vWorld.z * 0.44) + drift * 0.4);
   col = mix(col, uFoam, step(0.72, clamp((vLift - 0.30) * 1.7, 0.0, 1.0) * streak * 1.5));
 
-  // Distance takes the colour toward the sky, in two steps rather than a fade.
-  float far = length(vWorld.xz) / 620.0;
-  col = mix(col, uHaze, step(0.55, far) * 0.30 + step(0.82, far) * 0.45);
+  // Distance takes the colour toward the sky. This one is a fade and not a
+  // cut: haze is the only thing in the picture that is genuinely not a shape,
+  // and drawing it as one puts a hard line across the sea at middle distance.
+  float far = smoothstep(0.30, 1.15, length(vWorld.xz) / 620.0);
+  col = mix(col, uHaze, far * 0.72);
 
   gl_FragColor = vec4(col, 1.0);
   #include <colorspace_fragment>
 }
 `;
 
-export function makeSea(segments = 120) {
+export function makeSea(segments = 160) {
   const geometry = new THREE.PlaneGeometry(EXTENT, EXTENT, segments, segments);
   geometry.rotateX(-Math.PI / 2);
 

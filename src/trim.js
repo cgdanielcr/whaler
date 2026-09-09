@@ -36,7 +36,7 @@ export function makeTrim({ weather, sun, aim, look, facets }) {
     sunUp: 34,
     sunHot: sun.intensity,
     gloom: 0,
-    facets: 120
+    facets: 160
   };
 
   const panel = document.createElement('div');

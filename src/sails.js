@@ -4,6 +4,7 @@
 // reef the topsails. A sail runs down this ladder one step at a time.
 import * as THREE from 'three';
 import { HUE } from './palette.js';
+import { cutLight } from './flat.js';
 
 export const REEFABLE = ['set', '1st reef', '2nd reef', 'close-reefed', 'furled'];
 export const PLAIN    = ['set', 'furled'];   // courses, royals and headsails do not reef
@@ -21,11 +22,13 @@ const SPREAD = {
 export const hoistFor = (state) => HOIST[state];
 export const spreadFor = (state) => SPREAD[state];
 
-export const CANVAS = new THREE.MeshLambertMaterial({
-  color: HUE.canvas, side: THREE.DoubleSide, flatShading: true
-});
+// Smooth-shaded, because a sail is one curved piece of cloth. The steps in
+// the light give it its flat look; faceting it would only draw the mesh.
+export const CANVAS = cutLight(new THREE.MeshLambertMaterial({
+  color: HUE.canvas, side: THREE.DoubleSide
+}));
 
-const FURLED = new THREE.MeshLambertMaterial({ color: HUE.furled, flatShading: true });
+const FURLED = cutLight(new THREE.MeshLambertMaterial({ color: HUE.furled, flatShading: true }));
 
 // A square sail: bent to its yard at the head, spread to the yard below at the
 // foot, with a little belly in it so it looks like cloth and not a board.
