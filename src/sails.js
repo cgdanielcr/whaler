@@ -5,6 +5,7 @@
 import * as THREE from 'three';
 import { HUE } from './palette.js';
 import { cutLight } from './flat.js';
+import { sailCloth, CLOTH_METRES } from './cloth.js';
 
 export const REEFABLE = ['set', '1st reef', '2nd reef', 'close-reefed', 'furled'];
 export const PLAIN    = ['set', 'furled'];   // courses, royals and headsails do not reef
@@ -25,7 +26,7 @@ export const spreadFor = (state) => SPREAD[state];
 // Smooth-shaded, because a sail is one curved piece of cloth. The steps in
 // the light give it its flat look; faceting it would only draw the mesh.
 export const CANVAS = cutLight(new THREE.MeshLambertMaterial({
-  color: HUE.canvas, side: THREE.DoubleSide
+  color: HUE.canvas, side: THREE.DoubleSide, map: sailCloth()
 }));
 
 const FURLED = cutLight(new THREE.MeshLambertMaterial({ color: HUE.furled, flatShading: true }));
@@ -38,8 +39,14 @@ const FURLED = cutLight(new THREE.MeshLambertMaterial({ color: HUE.furled, flatS
 // the clews. The courses are cut this way so their feet clear the deck and
 // everything on it; without it a course hangs about the height of a man's head.
 export function squareSail(headHalf, footHalf, hoist, belly, roach = 0) {
-  const COLS = 6, ROWS = 4;
-  const pos = [], idx = [];
+  // More cloth across than before, because the seams want somewhere to fall
+  // and the belly reads as a curve rather than as four facets.
+  const COLS = 14, ROWS = 8;
+  const pos = [], uv = [], idx = [];
+  // How many cloths wide she is, so the seams keep their real spacing however
+  // big the sail: a topsail carries a great many more than a royal.
+  const cloths = Math.max(3, Math.round((footHalf * 2) / CLOTH_METRES));
+
   for (let r = 0; r <= ROWS; r++) {
     const v = r / ROWS;                                   // 0 at the foot, 1 at the head
     const half = footHalf + (headHalf - footHalf) * v;
@@ -48,6 +55,7 @@ export function squareSail(headHalf, footHalf, hoist, belly, roach = 0) {
       const cut = roach * Math.sin(Math.PI * u) * (1 - v) * (1 - v);
       pos.push((u * 2 - 1) * half, hoist * v + cut,
                belly * Math.sin(Math.PI * u) * Math.sin(Math.PI * v));
+      uv.push(u * cloths, v);
     }
   }
   for (let r = 0; r < ROWS; r++) {
@@ -58,6 +66,7 @@ export function squareSail(headHalf, footHalf, hoist, belly, roach = 0) {
   }
   const g = new THREE.BufferGeometry();
   g.setAttribute('position', new THREE.Float32BufferAttribute(pos, 3));
+  g.setAttribute('uv', new THREE.Float32BufferAttribute(uv, 2));
   g.setIndex(idx);
   g.computeVertexNormals();
   return g;
@@ -70,6 +79,12 @@ export function gaffSail(throat, peak, clew, tack) {
   g.setAttribute('position', new THREE.Float32BufferAttribute([
     ...throat, ...peak, ...clew, ...tack
   ], 3));
+  // Her cloths run up and down as a square sail's do. The foot is the long
+  // side, so that is what sets how many of them there are.
+  const wide = Math.hypot(clew[0] - tack[0], clew[1] - tack[1], clew[2] - tack[2]);
+  const cloths = Math.max(3, Math.round(wide / CLOTH_METRES));
+  g.setAttribute('uv', new THREE.Float32BufferAttribute(
+    [0, 1, cloths, 1, cloths, 0, 0, 0], 2));
   g.setIndex([0, 2, 1, 0, 3, 2]);
   g.computeVertexNormals();
   return g;
@@ -78,8 +93,11 @@ export function gaffSail(throat, peak, clew, tack) {
 // A headsail: a triangle hanging on a stay, given head, tack and clew, with a
 // belly blown out to leeward so she reads as cloth rather than a sheet of card.
 export function stayTriangle(head, tack, clew, belly = 0) {
-  const N = 6;
-  const pos = [], idx = [], rowStart = [];
+  const N = 8;
+  const pos = [], uv = [], idx = [], rowStart = [];
+  const wide = Math.hypot(clew[0] - tack[0], clew[1] - tack[1], clew[2] - tack[2]);
+  const cloths = Math.max(2, Math.round(wide / CLOTH_METRES));
+
   for (let i = 0; i <= N; i++) {
     rowStart.push(pos.length / 3);
     for (let j = 0; j <= i; j++) {
@@ -90,6 +108,8 @@ export function stayTriangle(head, tack, clew, belly = 0) {
       pos.push(head[0] * a + tack[0] * b + clew[0] * c + bulge,
                head[1] * a + tack[1] * b + clew[1] * c,
                head[2] * a + tack[2] * b + clew[2] * c);
+      // Seams across the foot, and the head of her at the top of the cloth.
+      uv.push(c * cloths, a);
     }
   }
   for (let i = 0; i < N; i++) {
@@ -101,6 +121,7 @@ export function stayTriangle(head, tack, clew, belly = 0) {
   }
   const g = new THREE.BufferGeometry();
   g.setAttribute('position', new THREE.Float32BufferAttribute(pos, 3));
+  g.setAttribute('uv', new THREE.Float32BufferAttribute(uv, 2));
   g.setIndex(idx);
   g.computeVertexNormals();
   return g;
