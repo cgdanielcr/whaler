@@ -53,7 +53,7 @@ const scene = new THREE.Scene();
 scene.fog = new THREE.Fog(HORIZON_COLOUR, 240, 660);
 
 const camera = new THREE.PerspectiveCamera(48, window.innerWidth / window.innerHeight, 0.5, 8000);
-camera.position.set(78, 30, 68);
+camera.position.set(74, 29, -58);
 
 const controls = new OrbitControls(camera, renderer.domElement);
 controls.target.set(0, 19, 0);
@@ -80,7 +80,7 @@ function stand(where) {
     controls.minDistance = 22;
     controls.maxDistance = 300;
     controls.target.set(0, 19, 0);
-    camera.position.set(78, 30, 68);
+    camera.position.set(74, 29, -58);
   } else {
     // Forward on the forecastle, and always on the weather side -- which is
     // where the officer of the watch keeps, and also the side her canvas is
