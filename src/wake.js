@@ -65,13 +65,19 @@ uniform vec3  uFoam;
 varying float vBase;
 varying float vZ;
 void main() {
-  // Bands lying across the track, anchored to the water she has left.
-  float band = 0.54 + 0.46 * sin(vZ * 0.26 + uRun * 0.26);
-  float a = vBase * uStrength * band;
-  if (a < 0.28) discard;               // cut, not faded
+  // The track itself is continuous. Cutting it into bands turned it into a
+  // handful of white spots, which is not what a wake looks like.
+  float a = vBase * uStrength;
+  if (a < 0.20) discard;               // cut, not faded
+
+  // Inside it, brighter water travelling aft at the speed she is making, so
+  // there is something moving down the track without the track breaking up.
+  float band = 0.5 + 0.5 * sin(vZ * 0.24 + uRun * 0.24);
+  bool white = a > 0.52 && band > 0.42;
+
   // Whiter than the sea's own wind-foam, or her track is lost among it.
-  vec3 torn = mix(uFoam, vec3(1.0), 0.40);
-  gl_FragColor = vec4(torn, a > 0.55 ? 1.0 : 0.7);
+  vec3 torn = mix(uFoam, vec3(1.0), 0.45);
+  gl_FragColor = vec4(torn, white ? 0.95 : 0.45);
 }`;
 
 export function makeWake() {

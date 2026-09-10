@@ -254,3 +254,38 @@ direction". So the pilot now *points* and *lands*:
   in rust. A step arriving slides up from below.
 
 *Test: press Sail, and do what the mate tells you, one step at a time.*
+
+## M20c — Making her move. BUILT.
+
+The owner, twice: she does not look as though she is moving. The second time he named
+it exactly — "white spots, not a real wake", and "does not look like the ship moves on
+the surface of this water".
+
+Three faults, in order of how much they mattered:
+
+1. **The wake was drawn under the water.** The sea is a Gerstner field, so its surface is
+   displaced sideways as well as up, and the height `waveHeight()` gives for a point is
+   not the height the shader draws there. Twelve centimetres of clearance was not enough,
+   so the wake had been rendering invisibly since M3. It now stands half a metre clear
+   with a polygon offset behind it.
+2. **The default camera sat ahead of her**, putting the hull between the eye and the one
+   thing that says she is moving. It now stands off her quarter, astern. The bow wave was
+   also drawn narrower than her own beam, so what showed of it was under the hull.
+3. **A Gerstner sea cannot carry the cue at all.** Every wave looks like every other wave,
+   and the crests run at ten metres a second of their own accord against her two and a
+   half. The eye has nothing to hold on to. No wake fixes this on its own — which is why
+   the first two fixes were not enough.
+
+So `src/drift.js`: patches of weed, fixed in the world, riding the swell and going
+nowhere. She runs past them, and because they are the only fixed things in sight the eye
+tracks them and reads her motion off them. They recycle out of sight ahead of her.
+
+The wake itself is now a **continuous track** rather than bands — cutting it up is what
+made it read as white spots — with brighter water travelling aft down the inside of it at
+the speed she is making.
+
+**Open to the owner's taste:** how much weed. It is set thick enough to be unmistakable,
+which may be thicker than a clean sea wants, and weed on the open Pacific is a stretch
+even if it is fair in home water. Thinning it is one number.
+
+*Test: make sail, and watch the weed go by.*

@@ -36,6 +36,7 @@ import { makeInstructions, headSaid } from './instructions.js';
 import { makeOffice } from './office.js';
 import { makePilot } from './pilot.js';
 import { makeVane } from './vane.js';
+import { makeDrift } from './drift.js';
 import { HUE, weather as weather2, gloomFor } from './palette.js';
 
 const renderer = new THREE.WebGLRenderer({ antialias: true });
@@ -110,6 +111,10 @@ let sea = makeSea();
 scene.add(sea);
 const wake = makeWake();
 scene.add(wake);
+// Weed on the water: the only fixed things in sight, and so the only things
+// the eye can read her motion off.
+const drift = makeDrift();
+scene.add(drift);
 
 const ship = new THREE.Group();
 const hull = makeHull();
@@ -507,6 +512,7 @@ function sail(seen, gameDt, t) {
 
   sea.userData.update(t, runX, runZ, weather.force);
   wake.userData.update(t, runX, runZ, course, knots);
+  drift.userData.update(t, runX, runZ, course);
 
   // Her run carries the boats and the whale astern; her turning swings them
   // round her, since she is the one thing in the scene that never moves.
