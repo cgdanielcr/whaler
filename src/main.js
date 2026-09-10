@@ -205,7 +205,7 @@ const boards = makeBoards(rig, crew, company, allows, !V.steps);
 const readOut = makeInstruments();
 const passage = makePassage(rig, V.plan);
 
-const watchBill = makeWatchBill(company);
+const watchBill = makeWatchBill(company, crew);
 const hands = makeHands(company, crew, rig, hull, camera, renderer.domElement);
 const trim = makeTrim({
   weather, sun,

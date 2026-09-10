@@ -130,7 +130,7 @@ Drawn as SVG in the page rather than in Three.js: crisp at any size, hovers and 
 free, the glossary lights terms in it without new work, and it cannot break the sailing.
 No image files, no build step, nothing new in the repo but one module.
 
-### M21 — The ship in section
+### M21 — The ship in section. BUILT.
 
 New: `src/cutaway.js`. Her forecastle, the steerage, the cabin, the hold, the deck, the
 mastheads, and the boats on their davits. Every man is a small figure standing where he
@@ -144,8 +144,22 @@ be read while the voyage is still going.
 It opens on `b` and takes the watch bill's place, with the bill's table moved to the side of
 the same screen — one crew screen, not two.
 
-*Test: press b. Twelve men on deck and twelve below. Wait for eight bells and watch them
-change places.*
+Built as **boxes rather than a beautiful sheer plan**, on purpose: it is a berthing chart,
+and a berthing chart wants to be read rather than admired. Bow to the right, as a ship's
+plan is drawn. Aloft, the boats, on deck, then the cabin, steerage, blubber room and
+forecastle below, and the hold under all of it. Each box carries its name and a tally.
+
+A man is placed the way the ship places him: a boat's crew first, then the mastheads, then
+whatever work he is posted to, then his watch, then his berth. Order a reef with all hands
+and you watch eight men move up into the aloft box.
+
+It shares the watch bill's sheet on **b** rather than taking a key of its own, with the
+bill below it saying the same thing as a table.
+
+**Open to the owner:** the layout is a guess made without him. It is meant to be argued
+with.
+
+*Test: press b. See where every man is. Order a reef and watch them go aloft.*
 
 ### M22 — Reassigning
 

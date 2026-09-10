@@ -3,6 +3,7 @@
 //
 // The names are yours to change. Click one and type over it.
 import { readClock } from './clock.js';
+import { section, bindSection } from './cutaway.js';
 
 const ORDER = ['mate', 'boatsteerer', 'tradesman', 'able seaman', 'ordinary seaman', 'green hand'];
 
@@ -15,7 +16,7 @@ const STATION_SAID = {
   'day work': 'his trade'
 };
 
-export function makeWatchBill(company) {
+export function makeWatchBill(company, crew) {
   const panel = document.createElement('div');
   panel.id = 'watch-bill';
   panel.style.display = 'none';
@@ -51,7 +52,12 @@ export function makeWatchBill(company) {
   function draw(gameSeconds) {
     const onDeck = readClock(gameSeconds).onDeck;
     panel.innerHTML =
-      '<h2>The watch bill</h2>' +
+      '<h2>The ship in section</h2>' +
+      // Where every man is this minute, drawn. The bill below says the same
+      // thing in a table; this says it as a place.
+      section(company, crew, gameSeconds) +
+      '<p class="whois"></p>' +
+      '<h2 class="bill">The watch bill</h2>' +
       '<div class="watches">' + column('starboard', onDeck) + column('larboard', onDeck) +
       idlerColumn() + '</div>' +
       '<p class="note">Twenty-nine hands under you. Twenty-four keep watches, ' +
@@ -60,6 +66,8 @@ export function makeWatchBill(company) {
       'A watch of twelve cannot reef topsails or tack ship on its own. Both ' +
       'want all hands, and always did.<br>' +
       'Click a name to change it. <b>b</b> or <b>esc</b> to close.</p>';
+
+    bindSection(panel, company);
 
     for (const el of panel.querySelectorAll('.name')) {
       el.addEventListener('blur', commit);
@@ -102,9 +110,13 @@ export function makeWatchBill(company) {
   let last = '';
   return function tick(gameSeconds) {
     clockAt = gameSeconds;
+    // The section must also follow the men about, so a piece of work starting
+    // or ending redraws it -- but never while a name is being typed.
     const now = readClock(gameSeconds).onDeck +
-      company.idlers.map((m) => m.job || '').join('|');
-    if (showing() && now !== last) draw(gameSeconds);
+      company.idlers.map((m) => m.job || '').join('|') +
+      '|' + crew.running.map((o) => o.name).join(',') +
+      '|' + company.all.filter((m) => m.inBoat).length;
+    if (showing() && now !== last && !panel.contains(document.activeElement)) draw(gameSeconds);
     last = now;
   };
 }

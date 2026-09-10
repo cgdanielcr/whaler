@@ -497,8 +497,44 @@
       margin: 0.7rem 0 0; font-size: 0.72rem; color: var(--faint);
     }
 
-    #watch-bill .watches { display: flex; gap: 1.8rem; align-items: flex-start; }
-    #watch-bill .watch { flex: 1; min-width: 0; opacity: 0.55; }
+    /* --- the ship in section ------------------------------------------------- */
+
+    #watch-bill .section { display: block; width: 100%; height: auto; }
+    #watch-bill .section .hull { fill: rgba(80, 62, 38, 0.05); stroke: var(--edge); stroke-width: 1.4; }
+    #watch-bill .section .room {
+      fill: rgba(80, 62, 38, 0.07); stroke: var(--rule); stroke-width: 1;
+    }
+    #watch-bill .section .deck { stroke: var(--ink); stroke-width: 1.6; }
+    #watch-bill .section .mast { stroke: var(--faint); stroke-width: 2.4; }
+    #watch-bill .section .yard { stroke: var(--faint); stroke-width: 1.4; }
+    #watch-bill .section .water {
+      stroke: var(--blue); stroke-width: 1; stroke-dasharray: 7 5; opacity: 0.5;
+    }
+    #watch-bill .section .tag {
+      font-size: 9px; letter-spacing: 0.16em; text-transform: uppercase;
+      fill: var(--faint); font-family: Georgia, serif;
+    }
+    #watch-bill .section .tally {
+      font-size: 10px; fill: var(--faint); text-anchor: end; font-family: Georgia, serif;
+    }
+    #watch-bill .section .man { fill: var(--ink); cursor: help; }
+    #watch-bill .section .man.hurt { fill: var(--rust); }
+    #watch-bill .section .man:hover { fill: var(--blue); }
+
+    #watch-bill .whois {
+      margin: 0.5rem 0 0; padding: 0.5rem 0.7rem; min-height: 1.2rem;
+      font-size: 0.86rem; color: var(--faint);
+      background: rgba(80, 62, 38, 0.05); border: 1px solid var(--rule);
+    }
+    #watch-bill .whois b { font-weight: normal; color: var(--blue); }
+    #watch-bill h2.bill {
+      margin-top: 1.6rem; padding-top: 1rem; border-top: 1px solid var(--rule);
+    }
+
+    #watch-bill .watches {
+      display: flex; gap: 1.8rem; align-items: flex-start; flex-wrap: wrap;
+    }
+    #watch-bill .watch { flex: 1 1 15rem; min-width: 15rem; opacity: 0.55; }
     #watch-bill .watch.up, #watch-bill .watch.idlers { opacity: 1; }
     #watch-bill h3 {
       margin: 0 0 0.5rem; font-size: 0.88rem; font-weight: normal;
