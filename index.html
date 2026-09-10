@@ -457,6 +457,8 @@
       border-color: var(--blue);
       animation: pointing 1.5s ease-in-out infinite;
     }
+    /* The compass is not a board, but the pilot points at it all the same. */
+    #rose.lit { border-radius: 50%; animation: pointing 1.5s ease-in-out infinite; }
     @keyframes pointing {
       0%, 100% { box-shadow: 0 0 0 2px rgba(44, 88, 110, 0.22), 0 2px 14px rgba(0, 0, 0, 0.32); }
       50%      { box-shadow: 0 0 0 6px rgba(44, 88, 110, 0.42), 0 2px 14px rgba(0, 0, 0, 0.32); }

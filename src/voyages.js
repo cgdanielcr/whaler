@@ -162,33 +162,20 @@ export const VOYAGES = [
 
     letter: [
       'New Bedford, the eleventh day of October, 1841.',
-      'Sir — you have the feel of her now. Today we would have you learn what ' +
-      'it costs to go where the wind comes from. The mark lies six miles to ' +
-      'the north-west, and the wind is out of the north-west, so she cannot be ' +
-      'steered at it. No square-rigged ship will lie closer than six points to ' +
-      'the wind; try to point her nearer and she will stop and be taken aback.',
-      'What you must do is beat. Stand as close to the wind as she will lie on ' +
-      'one tack, then put her about and stand as close on the other, making a ' +
-      'staircase of it up to the mark. Every mile she sails will gain you a ' +
-      'little over half a mile toward it, and the board will show you both ' +
-      'figures so that you may see the difference.',
-      'She comes about one of two ways. Tacking carries her head through the ' +
-      'wind: it is quick, and it can fail, and a ship that misses stays hangs ' +
-      'in irons and loses all her way. Wearing carries her stern through ' +
-      'instead: it never fails, but it is slower and it throws away ground to ' +
-      'leeward. Below four knots, do not trust her to stay.',
-      'Either way it is all hands. A watch of twelve cannot bring a ship of ' +
-      'this burthen round, and never could; call your people up before you ' +
-      'put her about.',
-      'Coming home you will have the wind behind you, and you may judge the ' +
-      'difference for yourself.',
+      'Sir — you have the feel of her now. Today you learn what it costs to go ' +
+      'where the wind comes from. The mark lies six miles to the north-west, ' +
+      'and so does the wind.',
+      'Coming home you will have it behind you, and you may judge the ' +
+      'difference for yourself. Your mate will show you the way of it.',
       'We are, sir, your obedient servants.'
     ],
 
     task: 'Beat six miles up to the mark to the north-west, and run home again.',
 
     wind: { from: 315, force: 3.5 },
-    heading: 245,         // close-hauled on the larboard tack, already standing toward it
+    // Well off the wind to begin with, so that coming up to close-hauled is
+    // something the master does rather than something already done for him.
+    heading: 200,
     swing: 0.5,
     fair: true,
     ground: false,
@@ -203,7 +190,92 @@ export const VOYAGES = [
       { bearing: 135, miles: 6, said: 'home', near: 1.5 }
     ],
 
-    allow: ['sail', 'helm', 'clock', 'look', 'allhands', 'manoeuvre']
+    allow: ['sail', 'helm', 'clock', 'look', 'allhands', 'manoeuvre'],
+
+    steps: [
+      {
+        say: 'The mark bears north-west. So does the wind — look at the pennant. ' +
+             'She cannot be steered at it, because no square-rigged ship will lie ' +
+             'closer than six points to the wind, and six points is a long way off.',
+        vane: true, board: 'clock-board',
+        how: (s) => `The wind is out of the ${s.windSaid}, and the mark bears ${s.bearSaid}.`,
+        acts: [{ said: 'I see it', key: 'PilotOn' }],
+        done: (s) => s.acked,
+        well: 'So we cannot go straight there. We go at it sideways instead.'
+      },
+      {
+        say: 'Bring her as near the wind as she will lie. Put your helm over ' +
+             'little by little, and stop the moment the board says close-hauled — ' +
+             'go a hair further and she is taken aback and stops dead.',
+        board: 'clock-board',
+        how: (s) => (s.offWind < 67
+          ? 'Too near — she is taken aback. Bear away.'
+          : `${Math.round(s.offWind)}° off the wind. She wants sixty-seven.`),
+        acts: [
+          { said: '◀ Helm a-larboard', hold: 'ArrowLeft' },
+          { said: 'Helm a-starboard ▶', hold: 'ArrowRight' }
+        ],
+        done: (s) => s.offWind >= 67 && s.offWind <= 82,
+        well: 'Close-hauled. That is as near as she lies, and no ship of her rig does better.'
+      },
+      {
+        say: 'Now stand on and watch the two bottom figures on your orders ' +
+             'board. Sailed is how far she has gone through the water. Made ' +
+             'good is how far that has carried you toward the mark. They are ' +
+             'about to part company.',
+        board: 'voyage-board',
+        how: (s) => `Sailed ${s.sailed.toFixed(1)} miles. ${s.toRun.toFixed(1)} still to run.`,
+        acts: [{ said: 'Run her clock on', key: 'Equal' }],
+        done: (s) => s.sailed > 1.6,
+        well: 'A little over half a mile made good in every mile sailed. That is what windward costs.'
+      },
+      {
+        say: 'You have stood far enough on this board. Put her about — call all ' +
+             'hands first, because a watch of thirteen cannot bring a ship of ' +
+             'this burthen round. Tacking carries her head through the wind and ' +
+             'is quick, but below four knots she may miss stays and hang there.',
+        board: 'orders-board',
+        how: (s) => (s.allHands
+          ? `All hands on deck. She is making ${s.knots.toFixed(1)} knots — ${s.knots >= 4 ? 'fast enough to stay' : 'too slow to trust her; wear instead'}.`
+          : 'The watch below is still below. Call all hands.'),
+        acts: [
+          { said: 'Call all hands', key: 'KeyH' },
+          { said: 'Tack her', key: 'KeyT' },
+          { said: 'Wear her round', key: 'KeyW' }
+        ],
+        done: (s) => s.windSide < 0 && s.offWind < 95,
+        well: 'She is round and standing on the other board. That is a leg of the staircase.'
+      },
+      {
+        say: 'Now do it again, and again, until the mark is under her bow. Stand ' +
+             'as close as she lies on each board, and put her about when you have ' +
+             'run far enough. The mate will not hold your hand for this part.',
+        board: 'voyage-board',
+        how: (s) => `${s.toRun.toFixed(1)} miles to the mark, and ${s.sailed.toFixed(1)} sailed to get this far.`,
+        acts: [
+          { said: '◀ Helm a-larboard', hold: 'ArrowLeft' },
+          { said: 'Helm a-starboard ▶', hold: 'ArrowRight' },
+          { said: 'Call all hands', key: 'KeyH' },
+          { said: 'Tack her', key: 'KeyT' },
+          { said: 'Run her clock on', key: 'Equal' }
+        ],
+        done: (s) => s.leg > 0,
+        well: 'The mark is fetched, and it cost you nearly twice the miles.'
+      },
+      {
+        say: 'Home lies south-east, and the wind is behind you the whole way. ' +
+             'Put her before it and see how different the same six miles are.',
+        board: 'voyage-board', gauge: 12,
+        how: (s) => `Home bears ${s.bearSaid}. She is making ${s.knots.toFixed(1)} knots.`,
+        acts: [
+          { said: 'Helm a-starboard ▶', hold: 'ArrowRight' },
+          { said: '◀ Helm a-larboard', hold: 'ArrowLeft' },
+          { said: 'Run her clock on', key: 'Equal' }
+        ],
+        done: (s) => s.toRun < 2.5,
+        well: 'Read the account when she is in. The same six miles, and not the same at all.'
+      }
+    ]
   },
 
   {
@@ -214,24 +286,12 @@ export const VOYAGES = [
 
     letter: [
       'New Bedford, the nineteenth day of October, 1841.',
-      'Sir — there is a fresh breeze this morning and the glass is falling, so ' +
-      'we would have you learn the last of it before you go: what she may carry, ' +
-      'and what it costs to carry more.',
-      'She lies at her moorings under all plain sail, and that is already more ' +
-      'than this wind will bear. Canvas comes off her from the top down — the ' +
-      'royals first, then the topgallants, then a reef in the topsails, then ' +
-      'the courses. Take it off in that order and never out of it. The board ' +
-      'will tell you when she is over-pressed, and it will tell you when she ' +
-      'is dangerously so.',
-      'Carry more than the wind will bear and the strain tells: a sail splits ' +
-      'from head to foot, a yard springs, a topmast goes by the board. It does ' +
-      'not happen at once, which is what tempts a young master to leave it a ' +
-      'little longer.',
-      'Watch the horizon to windward. A squall shows as a dark line before it ' +
-      'reaches you, and you will have minutes and not hours. You cannot get it ' +
-      'all off her in the time; you must choose what comes off first. Run ' +
-      'fourteen miles south to the mark, and bring her there with every sail ' +
-      'whole.',
+      'Sir — a fresh breeze this morning and the glass falling. You have the ' +
+      'last of it to learn before we send you round the Horn: what she may ' +
+      'carry, and what it costs to carry more.',
+      'She lies under all plain sail, which is already more than this wind will ' +
+      'bear. Run fourteen miles south to the mark and bring her there with ' +
+      'every sail whole. Your mate has been through a good many squalls.',
       'We are, sir, your obedient servants.'
     ],
 
@@ -250,7 +310,78 @@ export const VOYAGES = [
 
     plan: [{ bearing: 180, miles: 14, said: 'the mark', near: 1.5 }],
 
-    allow: ['sail', 'helm', 'clock', 'look', 'allhands', 'manoeuvre']
+    allow: ['sail', 'helm', 'clock', 'look', 'allhands', 'manoeuvre'],
+
+    steps: [
+      {
+        say: 'Before anything else: she is carrying more canvas than this wind ' +
+             'will bear, and the orders board has been telling you so since you ' +
+             'sailed. Get her royals off her — the topmost sails, the first to ' +
+             'come in and the last to go out.',
+        mark: { tier: 'royal' }, board: 'orders-board',
+        how: (s) => `A ${s.forceSaid.toLowerCase()}, and she is over-pressed.`,
+        acts: [{ said: 'Take in the royals', key: 'Digit4' }],
+        done: (s) => s.stateOf('royal') === 'furled',
+        well: 'Royals in, and the board has stopped complaining.'
+      },
+      {
+        say: 'The glass is falling and it will freshen. Take the topgallants in ' +
+             'too, before you need to. Canvas comes off her from the top down and ' +
+             'never out of that order — royals, topgallants, then a reef in the ' +
+             'topsails, then the courses.',
+        mark: { tier: 'topgallant' }, board: 'canvas-board',
+        how: (s) => `${s.forceSaid}. She is making ${s.knots.toFixed(1)} knots.`,
+        acts: [{ said: 'Take in the topgallants', key: 'Digit3' }],
+        done: (s) => s.stateOf('topgallant') === 'furled',
+        well: 'Snug enough for what she has now. Keep your eye to windward.'
+      },
+      {
+        say: 'Watch the horizon on your weather side. A squall shows as a dark ' +
+             'line before it reaches you, and the compass will say how far off ' +
+             'it is. Run her clock on and wait for it.',
+        board: 'rose',
+        how: (s) => (s.squall
+          ? `A squall, ${Math.max(1, Math.round(s.squall.minutes))} minutes off.`
+          : 'Nothing in sight yet.'),
+        acts: [{ said: 'Run her clock on', key: 'Equal' }],
+        done: (s) => !!s.squall,
+        well: 'There it is. Now you have minutes, not hours, and a choice to make.'
+      },
+      {
+        say: 'Reefing her topsails takes twelve minutes and all hands. You have ' +
+             'less warning than that, so you cannot get everything off her — you ' +
+             'must choose. Call all hands and put a reef in the topsails now.',
+        mark: { tier: 'topsail' }, board: 'orders-board',
+        how: (s) => (s.squall && !s.squall.here
+          ? `${Math.max(1, Math.round(s.squall.minutes))} minutes before it strikes.`
+          : `${s.forceSaid}. ${s.allHands ? 'All hands on deck.' : 'Call all hands.'}`),
+        acts: [
+          { said: 'Call all hands', key: 'KeyH' },
+          { said: 'Reef the topsails', key: 'Digit2' }
+        ],
+        done: (s) => s.stateOf('topsail') !== 'set',
+        well: 'A reef in her. Now find out whether it was enough.'
+      },
+      {
+        say: 'Ride it out and run her down to the mark. If the board says she is ' +
+             'dangerously over-pressed, take more off her — a split sail or a ' +
+             'sprung yard is what carrying too much costs, and there is no ' +
+             'mending it on this voyage.',
+        board: 'voyage-board', gauge: 12,
+        how: (s) => (s.hurt
+          ? `${s.hurt} thing${s.hurt > 1 ? 's have' : ' has'} carried away. ${s.toRun.toFixed(1)} miles to run.`
+          : `Whole so far. ${s.toRun.toFixed(1)} miles to run.`),
+        acts: [
+          { said: '◀ Helm a-larboard', hold: 'ArrowLeft' },
+          { said: 'Helm a-starboard ▶', hold: 'ArrowRight' },
+          { said: 'Reef her further', key: 'Digit2' },
+          { said: 'Furl the courses', key: 'Digit1' },
+          { said: 'Run her clock on', key: 'Equal' }
+        ],
+        done: (s) => s.toRun < 2.5,
+        well: 'The mark is under her bow, and the worst of it is behind you.'
+      }
+    ]
   },
 
   {
@@ -261,21 +392,11 @@ export const VOYAGES = [
 
     letter: [
       'New Bedford, the second day of November, 1841.',
-      'Sir — a longer run today, and a lesson in your people rather than in ' +
-      'your canvas. Seven-and-twenty of them keep watches, four hours on deck ' +
-      'and four below. That is not a kindness. It is the ' +
-      'only way a ship is worked for three years together without her company ' +
-      'being used up in the first six months.',
-      'Calling all hands turns out every man aboard, the watch below with the ' +
-      'rest, and there is work that cannot be done without it — reefing her ' +
-      'topsails, and bringing her about. But men on deck are men not sleeping, ' +
-      'and a tired crew is a slow one: the same reef that takes twelve minutes ' +
-      'from a fresh watch will take you half as long again from a spent one. ' +
-      'The board will tell you how they are.',
-      'Call them up when you need them and send them below the moment you do ' +
-      'not. There is weather about today and you will need them more than ' +
-      'once. Run thirty miles to the south-west, and bring your people in ' +
-      'with something left in them.',
+      'Sir — a longer run today, and the lesson is your people rather than your ' +
+      'canvas. There is weather about and you will want every hand more than ' +
+      'once.',
+      'Run thirty miles to the south-west, and bring your people in with ' +
+      'something left in them.',
       'We are, sir, your obedient servants.'
     ],
 
@@ -298,7 +419,67 @@ export const VOYAGES = [
 
     plan: [{ bearing: 225, miles: 30, said: 'the mark', near: 1.5 }],
 
-    allow: ['sail', 'helm', 'clock', 'look', 'allhands', 'manoeuvre']
+    allow: ['sail', 'helm', 'clock', 'look', 'allhands', 'manoeuvre'],
+
+    steps: [
+      {
+        say: 'A long run today, and the lesson is your people rather than your ' +
+             'canvas. Press b and look at the bill: seven-and-twenty of them keep ' +
+             'watches, half on deck and half below, four hours about. Look at ' +
+             'their ages while you are there — most of them are boys.',
+        board: 'orders-board',
+        how: (s) => `The company is ${s.weariness}. ${s.knots.toFixed(1)} knots, ${s.toRun.toFixed(1)} miles to run.`,
+        acts: [{ said: 'I have seen the bill', key: 'PilotOn' }],
+        done: (s) => s.acked,
+        well: 'Half of them are asleep. That is not idleness — it is how a ship lasts three years.'
+      },
+      {
+        say: 'There is weather about, and you will want every hand more than ' +
+             'once. Run her on until the first squall shows, then call all hands ' +
+             'and get her canvas off her.',
+        board: 'rose',
+        how: (s) => (s.squall
+          ? `A squall, ${Math.max(1, Math.round(s.squall.minutes))} minutes off. The company is ${s.weariness}.`
+          : `Nothing in sight. The company is ${s.weariness}.`),
+        acts: [
+          { said: 'Run her clock on', key: 'Equal' },
+          { said: 'Call all hands', key: 'KeyH' },
+          { said: 'Shorten all round', key: 'KeyF' }
+        ],
+        done: (s) => s.allHands && !!s.squall,
+        well: 'Every man aboard is on deck. Now they are awake, and they are tiring.'
+      },
+      {
+        say: 'When it has blown through, send them below again. Men on deck are ' +
+             'men not sleeping, and a tired crew is a slow one — the same reef ' +
+             'that takes twelve minutes from a fresh watch takes half as long ' +
+             'again from a spent one. Press the same key to let them go.',
+        board: 'orders-board',
+        how: (s) => `The company is ${s.weariness}${s.allHands ? ', and all of them on deck' : ', and the watch below is below'}.`,
+        acts: [
+          { said: 'Send the watch below', key: 'KeyH' },
+          { said: 'Make sail again', key: 'KeyA' },
+          { said: 'Run her clock on', key: 'Equal' }
+        ],
+        done: (s) => !s.allHands,
+        well: 'Rested men. They will thank you at the third squall, and so will you.'
+      },
+      {
+        say: 'Two more squalls before the mark. Call them up when you need them, ' +
+             'send them below the moment you do not, and bring your people in ' +
+             'with something left in them.',
+        board: 'voyage-board', gauge: 14,
+        how: (s) => `${s.toRun.toFixed(1)} miles to run. The company is ${s.weariness}.`,
+        acts: [
+          { said: 'Call all hands / send below', key: 'KeyH' },
+          { said: 'Shorten all round', key: 'KeyF' },
+          { said: 'Make sail all round', key: 'KeyA' },
+          { said: 'Run her clock on', key: 'Equal' }
+        ],
+        done: (s) => s.toRun < 2.5,
+        well: 'In, and your people still on their feet. That is the whole of it.'
+      }
+    ]
   },
 
   {
@@ -313,14 +494,8 @@ export const VOYAGES = [
       'foot, and we have not sent a sailmaker down to her. You will mend her ' +
       'yourself, at sea, as you will have to do for three years once you are ' +
       'round the Horn.',
-      'A ship that far from home mends herself or does without. She carries ' +
-      'spare canvas in bolts, spare spars on the skids, and coils of cordage, ' +
-      'and when they are gone she does without them. A split sail is unbent ' +
-      'and a new one bent in its place out of the locker. A sprung yard is ' +
-      'fished — splinted with a spare spar and woolded round with rope — and ' +
-      'that is the carpenter’s work, not a seaman’s. Set your hands to it and ' +
-      'watch the stores board as they go.',
-      'Sixteen miles to the south-west, and bring her in whole.',
+      'A ship that far from home mends herself or does without. Sixteen miles ' +
+      'to the south-west, and bring her in whole.',
       'We are, sir, your obedient servants.'
     ],
 
@@ -341,7 +516,63 @@ export const VOYAGES = [
 
     plan: [{ bearing: 225, miles: 16, said: 'the mark', near: 1.5 }],
 
-    allow: ['sail', 'helm', 'clock', 'look', 'allhands', 'manoeuvre', 'mend']
+    allow: ['sail', 'helm', 'clock', 'look', 'allhands', 'manoeuvre', 'mend'],
+
+    steps: [
+      {
+        say: 'She sailed hurt. Her fore topsail split from head to foot on ' +
+             'Tuesday and nobody has bent a new one. Look at the canvas board — ' +
+             'the sail is drawn torn, and the orders board names what is wrong ' +
+             'with her.',
+        mark: { tier: 'topsail' }, board: 'orders-board',
+        how: (s) => (s.hurt
+          ? `${s.hurt} thing${s.hurt > 1 ? 's' : ''} carried away, and she is the slower for it.`
+          : 'Nothing wrong with her.'),
+        acts: [{ said: 'I see it', key: 'PilotOn' }],
+        done: (s) => s.acked,
+        well: 'A ship three years from home mends herself or does without.'
+      },
+      {
+        say: 'Look at your stores board first — spare canvas in bolts, spare ' +
+             'spars on the skids, coils of cordage. That is everything she has, ' +
+             'and when it is gone she does without it. A split sail costs one ' +
+             'bolt of canvas.',
+        board: 'stores-board',
+        how: () => 'Five bolts, three spars, six coils. No more until she is home.',
+        acts: [{ said: 'I have seen the locker', key: 'PilotOn' }],
+        done: (s) => s.acked,
+        well: 'Now spend one of them.'
+      },
+      {
+        say: 'Set the hands to mend her. Eight of them will be three hours ' +
+             'unbending the old sail and bending a new one out of the locker — ' +
+             'this is a seaman’s job and wants no carpenter. Watch the canvas go ' +
+             'from five bolts to four as they do it.',
+        board: 'stores-board',
+        how: (s) => (s.hurt ? 'Still torn. Set them on it.' : 'A new sail bent, and she has her canvas again.'),
+        acts: [
+          { said: 'Set the hands to mend', key: 'KeyM' },
+          { said: 'Run her clock on', key: 'Equal' }
+        ],
+        done: (s) => s.hurt === 0,
+        well: 'Whole again, and a bolt of canvas the poorer. That is the trade.'
+      },
+      {
+        say: 'Now make all sail and run her in. She will go better than she did ' +
+             'this morning, and you will feel the difference the mended sail ' +
+             'makes.',
+        board: 'voyage-board', gauge: 12,
+        how: (s) => `${s.toRun.toFixed(1)} miles to run at ${s.knots.toFixed(1)} knots.`,
+        acts: [
+          { said: 'Make sail all round', key: 'KeyA' },
+          { said: '◀ Helm a-larboard', hold: 'ArrowLeft' },
+          { said: 'Helm a-starboard ▶', hold: 'ArrowRight' },
+          { said: 'Run her clock on', key: 'Equal' }
+        ],
+        done: (s) => s.toRun < 2.5,
+        well: 'In, and whole. That is the last of your five voyages — the ground is next.'
+      }
+    ]
   },
 
   {

@@ -246,6 +246,8 @@ function unpoint() {
 
 function point(step) {
   unpoint();
+  // Each step asks for its own nod, so a voyage may have more than one.
+  acked = false;
   if (step.mark) rig.mark(step.mark);
   if (step.vane) vane.userData.show(true);
   if (step.board) {
@@ -264,18 +266,31 @@ const pilot = V.steps ? makePilot(V.steps, {
 }) : null;
 
 // Everything a step might want to look at, in the words the boards use.
-const conning = () => ({
-  acked,
-  knots,
-  leg: passage.leg,
-  toRun: passage.toRun,
-  offMark: signedDiff(passage.bearing, heading),
-  headSaid: `Her head is ${headSaid(passage.bearing, heading)}`,
-  bearSaid: passage.bearingSaid,
-  windSaid: air ? air.from : '',
-  stateOf: (tier) => rig.stateOf(tier),
-  working: (tier) => rig.working(tier)
-});
+const conning = () => {
+  const rel = signedDiff(weather.windFrom, heading);
+  return {
+    acked,
+    knots,
+    leg: passage.leg,
+    toRun: passage.toRun,
+    sailed: passage.sailed,
+    offMark: signedDiff(passage.bearing, heading),
+    headSaid: `Her head is ${headSaid(passage.bearing, heading)}`,
+    bearSaid: passage.bearingSaid,
+    windSaid: air ? air.from : '',
+    forceSaid: air ? air.force : '',
+    // How she lies to the wind, and which board she is on. A tack carries her
+    // from one side to the other, which is how the pilot knows she came round.
+    offWind: Math.abs(rel),
+    windSide: Math.sign(rel) || 1,
+    squall: weather.warning,
+    allHands: crew.allHands,
+    weariness: crew.weariness,
+    hurt: rig.hurt().length,
+    stateOf: (tier) => rig.stateOf(tier),
+    working: (tier) => rig.working(tier)
+  };
+};
 makeGlossary(rig, allows);
 if (V.fair) weather.quiet(24 * 60);      // nothing in the weather today
 

@@ -303,3 +303,30 @@ which may be thicker than a clean sea wants, and weed on the open Pacific is a s
 even if it is fair in home water. Thinning it is one number.
 
 *Test: make sail, and watch the weed go by.*
+
+## M20d — The pilot on every voyage. BUILT.
+
+Voyage one had the mate at your elbow; two to five still opened with a letter and a wall
+of keys, which is the pattern the owner disliked. All five now have him.
+
+- **Two, working to windward** (6 steps): see that the mark and the wind are the same
+  bearing; come up until the board says close-hauled and stop before she is taken aback;
+  stand on and watch *Sailed* and *Made good* part company; call all hands and put her
+  about; beat up to the mark; run home before the wind.
+- **Three, shortening down** (5): royals in, topgallants in, watch the compass for the
+  squall, then all hands and a reef with less warning than the reef takes.
+- **Four, watch and watch** (4): look at the bill and their ages; call all hands for the
+  squall; **send them below again**; bring your people in with something left in them.
+- **Five, something carried away** (4): see what is torn, look in the locker, set the
+  hands to mend, and watch the canvas go from five bolts to four.
+
+The letters shrank to two or three paragraphs each, because the pilot now teaches what
+they used to explain. `conning()` grew the figures the steps read: how she lies to the
+wind, which board she is on, the squall, all hands, weariness, and what has carried away.
+
+Two faults found by loading them: **a step's nod was a single flag**, so a voyage with two
+"I see it" steps skipped the second — it now resets per step. And **voyage two began
+already close-hauled**, so the step asking you to come up to the wind completed before you
+touched anything; she now starts well off it.
+
+*Test: sail any voyage. The mate is there on all five.*
