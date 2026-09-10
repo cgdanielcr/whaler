@@ -31,6 +31,8 @@ import { makeAfloat, makeWhale } from './afloat.js';
 import { makeCruise, remember } from './cruise.js';
 import { makeWorkUp } from './workup.js';
 import { makeTrim } from './trim.js';
+import { chosen } from './voyages.js';
+import { makeInstructions } from './instructions.js';
 import { HUE, weather as weather2, gloomFor } from './palette.js';
 
 const renderer = new THREE.WebGLRenderer({ antialias: true });
@@ -136,15 +138,23 @@ sky.userData.sun(towardSun());
 const TURN = 9;                // degrees a second of your time, helm hard over
 const KNOT = 0.5144;
 const WAY = 90;                // game seconds for her to gather or lose her way
+const PAY_OFF = 2.2;           // degrees a second she falls off when caught in the wind's eye
 
-let heading = 170;
-let lastHeading = 170;
+// Which voyage she is sailing, and what it allows her to do. Everything below
+// reads from this rather than from a constant, so a short morning in the bay
+// and a three-year cruise are the same ship with different orders.
+const V = chosen();
+const allows = (group) => V.allow.includes(group);
+
+let heading = V.heading;
+let lastHeading = V.heading;
 let runX = 0, runZ = 0;
 let knots = 0;
 let gameSeconds = 8 * 3600;    // she begins at eight in the morning
 let swing = null;              // a tack or a wear in progress
 let over = 0;                  // steps of canvas she is carrying beyond the force
 let air = null;                // what the compass worked out for the boards
+let warnedInIrons = false;     // the mate says it once, not every frame
 
 // How grey the day is. The whole palette walks from a bright day to a heavy
 // one on this one figure, so the sea, the sky, her canvas and her paint all
@@ -154,29 +164,35 @@ let byHand = null;
 const holdLook = (g) => { byHand = g; };   // null gives it back to the weather
 const greyness = (force, squall) => byHand === null ? gloomFor(force, squall) : byHand;
 
-const weather = makeWeather(315, 3.3);   // a moderate breeze out of the north-west
-
-// You may run her on during a quiet stretch, but not with a squall in sight.
-const PACES = [1, 2, 4, 8];
-let paceStep = 0, hoveTo = false;
-const heldBack = () => !!weather.warning;
-const time = {
-  toggle: () => { hoveTo = !hoveTo; },
-  faster: () => { if (!heldBack()) paceStep = Math.min(PACES.length - 1, paceStep + 1); },
-  slower: () => { paceStep = Math.max(0, paceStep - 1); },
-  get pace() { return hoveTo ? 0 : PACES[heldBack() ? 0 : paceStep]; }
-};
+const weather = makeWeather(V.wind.from, V.wind.force, V.swing);
 
 const held = new Set();
 const helm = { hold: (code) => held.add(code), release: (code) => held.delete(code) };
+
+// You may run her on during a quiet stretch, but not with a squall in sight,
+// and not with your helm over. Her clock carries the helm with it: at eight
+// times, a touch on the arrow swings her half round before you can take your
+// finger off. So while you are conning her she comes back to her own time.
+const PACES = [1, 2, 4, 8];
+// She lies hove to behind the owners' letter until it has been read.
+let paceStep = 0, hoveTo = true;
+const heldBack = () => !!weather.warning || held.size > 0;
+const time = {
+  begin: () => { hoveTo = false; },
+  toggle: () => { hoveTo = !hoveTo; },
+  faster: () => { if (!weather.warning) paceStep = Math.min(PACES.length - 1, paceStep + 1); },
+  slower: () => { paceStep = Math.max(0, paceStep - 1); },
+  slowest: () => { paceStep = 0; },
+  get pace() { return hoveTo ? 0 : PACES[heldBack() ? 0 : paceStep]; }
+};
 
 const company = makeCompany();
 const crew = makeCrew(company);
 const stores = makeStores();
 const lookouts = makeLookouts(company);
-const boards = makeBoards(rig, crew, company);
+const boards = makeBoards(rig, crew, company, allows);
 const readOut = makeInstruments();
-const passage = makePassage(rig);
+const passage = makePassage(rig, V.plan);
 
 const watchBill = makeWatchBill(company);
 const hands = makeHands(company, crew, rig, hull, camera, renderer.domElement);
@@ -194,7 +210,11 @@ const trim = makeTrim({
     sea.userData.sun(towardSun());
   }
 });
-makeGlossary(rig);
+// The letter first, so that every sea term in it is marked by the glossary
+// along with the boards.
+const instructions = makeInstructions(V, { begin: () => time.begin() });
+makeGlossary(rig, allows);
+if (V.fair) weather.quiet(24 * 60);      // nothing in the weather today
 
 
 // --- tacking and wearing -----------------------------------------------------
@@ -295,7 +315,7 @@ const workUp = makeWorkUp({
   crew, hunt, cruise, stores, say: boards.say,
   onFire: (lit) => { whaler.smoke.visible = lit; }
 });
-bindOrders({ rig, crew, time, manoeuvre, helm, say: boards.say, repairs, hunt, workUp });
+bindOrders({ rig, crew, time, manoeuvre, helm, say: boards.say, repairs, hunt, workUp, allows });
 
 // A man off a yard in a hard blow. It was rare, and it was remembered.
 function fell(man, where) {
@@ -385,6 +405,19 @@ function sail(seen, gameDt, t) {
     const authority = Math.min(1, knots / 3);
     if (held.has('ArrowLeft')) heading = wrap(heading - TURN * authority * seen);
     if (held.has('ArrowRight')) heading = wrap(heading + TURN * authority * seen);
+
+    // She will not lie in the wind's eye. Steer her up inside six points and
+    // she loses her way, the helm goes dead, and the wind on her bows pushes
+    // her head round until her sails fill again. Without this you could steer
+    // her into irons and stay there, since a ship with no way on does not
+    // answer her rudder at all.
+    if (off < 67 && knots < 1) {
+      heading = wrap(heading - side * PAY_OFF * seen);
+      if (!warnedInIrons) {
+        warnedInIrons = true;
+        boards.say('She is inside six points and taken aback. She is falling off of herself.');
+      }
+    } else if (off > 80) warnedInIrons = false;
   }
   ship.rotation.y = heading * Math.PI / 180;
 
@@ -416,7 +449,12 @@ function sail(seen, gameDt, t) {
   }
 
   // What your eye sees runs at life speed; her reckoning runs on her own clock.
-  passage.run(gameDt, knots, course);
+  passage.run(gameDt, knots, course, (fetched) => {
+    // Fetching a mark is a moment to decide something, so her clock comes
+    // back to her own time rather than running away with you.
+    time.slowest();
+    if (fetched.then) boards.say(fetched.then);
+  });
 
   air = readOut({
     heading, windFrom: weather.windFrom, force: weather.force,
@@ -443,8 +481,9 @@ function frame(now) {
   const real = Math.min((now - last) / 1000, 0.1);
   last = now;
   // Once she is in, the clock stops and only the sea keeps moving.
-  const pace = cruise.over ? 0 : time.pace;
-  const seen = real * (cruise.over ? 1 : pace);   // what your eye sees
+  const home = cruise.over || (!V.ground && passage.arrived);
+  const pace = home ? 0 : time.pace;
+  const seen = real * (home ? 1 : pace);   // what your eye sees
   const gameDt = pace * real * GAME_SECONDS_PER_SECOND;   // what her clock counts
 
   shown += seen;
@@ -457,28 +496,40 @@ function frame(now) {
   sky.userData.update(shown, weather.windFrom, greyness(weather.force, warning ? warning.strength : 0));
   over = damage.tick(gameDt, weather.force);
 
-  hunt.tick(gameDt, (gameSeconds / 3600) % 24);
-  lookouts.tick(gameSeconds, readClock(gameSeconds).onDeck);
+  // Whales and mastheads belong to the cruising ground. A morning in home
+  // water has neither.
+  if (V.ground) {
+    hunt.tick(gameDt, (gameSeconds / 3600) % 24);
+    lookouts.tick(gameSeconds, readClock(gameSeconds).onDeck);
+  }
   crew.tick(gameDt, readClock(gameSeconds).onDeck, weather.force, fell, noteWork);
   sail(seen, gameDt, shown);
   rideTheSwell(shown);
   stores.tick(gameDt);
   boards.update(gameSeconds, pace, { over, held: !!warning }, passage, stores,
                 lookouts, hunt, cruise, workUp, air);
+  instructions.update(passage, heading);
   watchBill(gameSeconds);
   hands(seen);
   trim();
   whaler.smoke.userData.update(shown);
 
-  // She runs her distance, and then she is on the ground and the cruise
-  // begins. It ends when her water will not stretch any further.
+  // A short voyage ends when she has run her legs and is home again. The
+  // cruise runs her distance first, and then she is on the ground: it ends
+  // when her water will not stretch any further.
   if (passage.arrived && !told) {
     told = true;
-    cruise.raise(gameSeconds);
-    boards.say('She has raised the cruising ground. Keep a good lookout.');
+    if (V.ground) {
+      cruise.raise(gameSeconds);
+      boards.say('She has raised the cruising ground. Keep a good lookout.');
+    } else {
+      instructions.account(passage, readClock(gameSeconds).time);
+    }
   }
-  const ended = cruise.tick(gameSeconds);
-  if (ended) boards.account(ended, cruise, passage.arrived, readClock(gameSeconds).time);
+  if (V.ground) {
+    const ended = cruise.tick(gameSeconds);
+    if (ended) boards.account(ended, cruise, passage.arrived, readClock(gameSeconds).time);
+  }
 
   controls.update();
   renderer.render(scene, camera);

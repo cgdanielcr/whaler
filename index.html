@@ -160,14 +160,19 @@
     #clock-board .pace.paused { color: var(--warn); }
     #clock-board .held-back { color: var(--warn); }
 
-    #track-board dl, #stores-board dl {
+    #voyage-board .task {
+      margin: 0 0 0.6rem; font-size: 0.86rem; line-height: 1.5;
+      padding-bottom: 0.55rem; border-bottom: 1px solid var(--rule);
+    }
+
+    #track-board dl, #stores-board dl, #voyage-board dl {
       margin: 0; display: grid; grid-template-columns: auto auto; gap: 0.18rem 0.7rem;
     }
-    #track-board dt, #stores-board dt {
+    #track-board dt, #stores-board dt, #voyage-board dt {
       font-size: 0.62rem; letter-spacing: 0.14em; text-transform: uppercase;
       color: var(--faint); align-self: baseline;
     }
-    #track-board dd, #stores-board dd {
+    #track-board dd, #stores-board dd, #voyage-board dd {
       margin: 0; font-size: 0.84rem; text-align: right; font-variant-numeric: tabular-nums;
     }
     #stores-board dd.low { color: var(--warn); }
@@ -200,6 +205,56 @@
       text-shadow: 0 1px 4px rgba(0, 0, 0, 0.8);
     }
     #rose .squall:empty { display: none; }
+
+    /* --- the owners' letter, and the account of a short voyage --------------- */
+
+    #letter, #voyage-done {
+      position: fixed; inset: 0; margin: auto; z-index: 12;
+      width: min(33rem, calc(100vw - 3rem)); height: fit-content;
+      max-height: calc(100vh - 3rem); overflow-y: auto;
+      padding: 2rem 2.3rem;
+      background: linear-gradient(160deg, var(--paper) 0%, var(--paper2) 100%);
+      border: 1px solid var(--edge);
+      box-shadow: 0 6px 34px rgba(0, 0, 0, 0.45);
+      pointer-events: auto;
+    }
+    #letter h2, #voyage-done h2 {
+      margin: 0 0 1.1rem; font-size: 0.68rem; font-weight: normal;
+      letter-spacing: 0.24em; text-transform: uppercase; color: var(--faint);
+    }
+    #letter h3 {
+      margin: 1.5rem 0 0.6rem; font-size: 0.62rem; font-weight: normal;
+      letter-spacing: 0.22em; text-transform: uppercase; color: var(--faint);
+      border-top: 1px solid var(--rule); padding-top: 0.9rem;
+    }
+    #letter p { margin: 0 0 0.9rem; font-size: 0.95rem; line-height: 1.7; }
+    #letter .dateline {
+      font-style: italic; color: var(--faint); font-size: 0.85rem; text-align: right;
+    }
+    #letter .keys { margin: 0; padding: 0; list-style: none; }
+    #letter .keys li { font-size: 0.84rem; line-height: 1.9; color: var(--faint); }
+    #letter .keys b { font-weight: normal; color: var(--blue); }
+    #letter .other, #voyage-done .mate { font-size: 0.84rem; color: var(--faint); }
+    #voyage-done .mate { font-style: italic; line-height: 1.6; }
+    #letter .go, #voyage-done .go { margin: 1.4rem 0 0.7rem; }
+
+    #letter button, #voyage-done button {
+      font-family: inherit; color: var(--blue); background: none; cursor: pointer;
+      border: none; padding: 0; font-size: inherit;
+      border-bottom: 1px solid rgba(44, 88, 110, 0.5);
+    }
+    #letter button:hover, #voyage-done button:hover { color: var(--rust); border-bottom-color: var(--rust); }
+    #letter .sail {
+      font-size: 1.15rem; letter-spacing: 0.18em; text-transform: uppercase;
+      border: 1px solid var(--edge); padding: 0.55rem 1.9rem;
+    }
+    #letter .sail:hover { border-color: var(--rust); }
+
+    #voyage-done .home { font-size: 1.1rem; margin: 0 0 1.1rem; }
+    #voyage-done dl { margin: 0 0 1.1rem; display: grid; grid-template-columns: 1fr auto; gap: 0.3rem 1.2rem; }
+    #voyage-done dt { font-size: 0.84rem; color: var(--faint); }
+    #voyage-done dd { margin: 0; font-size: 0.92rem; text-align: right; }
+    #voyage-done p { margin: 0 0 0.8rem; font-size: 0.9rem; line-height: 1.55; }
 
     /* --- the account at the end ---------------------------------------------- */
 

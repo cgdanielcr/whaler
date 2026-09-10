@@ -2,7 +2,6 @@
 // carries mast by mast, what the hands are working at, what o'clock it is,
 // what is left below, and how the passage goes.
 import { readClock } from './clock.js';
-import { DESTINATION } from './passage.js';
 import { compassPoint } from './wind.js';
 import { sailGlyph, foreAftGlyph } from './glyphs.js';
 
@@ -38,7 +37,28 @@ function panel(id, html, where) {
   return el;
 }
 
-export function makeBoards(rig, crew, company) {
+// The keys, gathered by the work they belong to, so that a voyage which does
+// not allow a thing does not advertise it either.
+const LEGEND = [
+  ['sail', '<b>1</b>-<b>6</b> shorten'],
+  ['sail', '<b>shift</b> to make sail'],
+  ['sail', '<b>a</b> all round'],
+  ['sail', '<b>f</b> shorten all round'],
+  ['manoeuvre', '<b>t</b> tack'],
+  ['manoeuvre', '<b>w</b> wear'],
+  ['allhands', '<b>h</b> all hands'],
+  ['helm', '<b>&larr; &rarr;</b> helm'],
+  ['clock', '<b>space</b> bring her to'],
+  ['mend', '<b>m</b> mend'],
+  ['whale', '<b>l</b> lower'],
+  ['whale', '<b>o</b> cut in and try out'],
+  ['look', '<b>c</b> on deck'],
+  ['look', '<b>b</b> the watch bill'],
+  ['look', '<b>g</b> the glass'],
+  ['look', '<b>?</b> all orders']
+];
+
+export function makeBoards(rig, crew, company, allows = () => true) {
   const canvas = panel('canvas-board',
     '<h2>Canvas</h2>' +
     '<table><thead><tr><td></td>' +
@@ -48,13 +68,8 @@ export function makeBoards(rig, crew, company) {
     [['set', 'set'], ['1st reef', 'reefed'], ['2nd reef', 'twice'],
      ['close-reefed', 'close'], ['furled', 'furled']]
       .map(([s, said]) => `<span>${sailGlyph(s, false)}<i>${said}</i></span>`).join('') + '</p>' +
-    '<p class="legend"><b>1</b>-<b>6</b> shorten &nbsp; <b>shift</b> to make sail &nbsp; ' +
-    '<b>a</b> all round &nbsp; <b>f</b> shorten all round<br>' +
-    '<b>t</b> tack &nbsp; <b>w</b> wear &nbsp; <b>h</b> all hands &nbsp; ' +
-    '<b>&larr; &rarr;</b> helm &nbsp; <b>space</b> bring her to<br>' +
-    '<b>m</b> mend &nbsp; <b>l</b> lower &nbsp; <b>o</b> cut in and try out &nbsp; ' +
-    '<b>c</b> on deck<br><b>b</b> the watch bill &nbsp; <b>g</b> the glass &nbsp; ' +
-    '<b>?</b> all orders</p>');
+    '<p class="legend">' +
+    LEGEND.filter(([g]) => allows(g)).map(([, said]) => said).join(' &nbsp; ') + '</p>');
 
   const body = canvas.querySelector('tbody');
   const cells = {};
@@ -124,7 +139,7 @@ export function makeBoards(rig, crew, company) {
     putText(out.bear, `${passage.bearingSaid} — ${Math.round(passage.bearing)}°`);
     putText(out.made, cruising
       ? `${cruise.barrels} barrels, ${cruise.whales} whale${cruise.whales === 1 ? '' : 's'}`
-      : `${passage.made.toFixed(1)} of ${DESTINATION.miles} miles`);
+      : `${passage.made.toFixed(1)} of ${passage.total} miles`);
     putText(out.sailed, `${passage.sailed.toFixed(1)} miles`);
 
     // The sail plan, one cell to a sail.

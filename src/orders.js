@@ -8,7 +8,21 @@ const BY_DIGIT = {
 };
 const ALL_TIERS = ['royal', 'topgallant', 'topsail', 'course', 'spanker', 'headsail'];
 
-export function bindOrders({ rig, crew, time, manoeuvre, helm, say, repairs, hunt, workUp }) {
+// Which group of the ship's work each key belongs to. A voyage that does not
+// allow a group has not those keys, and the mate says so rather than the key
+// doing nothing at all.
+const GROUP_OF = {
+  Digit1: 'sail', Digit2: 'sail', Digit3: 'sail', Digit4: 'sail',
+  Digit5: 'sail', Digit6: 'sail', KeyR: 'sail', KeyF: 'sail', KeyA: 'sail',
+  ArrowLeft: 'helm', ArrowRight: 'helm',
+  KeyT: 'manoeuvre', KeyW: 'manoeuvre',
+  KeyH: 'allhands', KeyM: 'mend',
+  KeyL: 'whale', KeyO: 'whale',
+  Space: 'clock', Equal: 'clock', Minus: 'clock'
+};
+
+export function bindOrders({ rig, crew, time, manoeuvre, helm, say, repairs, hunt, workUp,
+                             allows = () => true }) {
   // dir is +1 to shorten sail, -1 to make more.
   function give(tier, dir) {
     const from = rig.stateOf(tier);
@@ -34,6 +48,14 @@ export function bindOrders({ rig, crew, time, manoeuvre, helm, say, repairs, hun
     if (e.metaKey || e.ctrlKey || e.altKey || e.repeat) return;
     // While a name is being typed on the watch bill, the keys are his, not hers.
     if (e.target.isContentEditable) return;
+
+    // Nothing she is not ordered to do today.
+    const group = GROUP_OF[e.code];
+    if (group && !allows(group)) {
+      say('Nothing in your orders today calls for that.');
+      e.preventDefault();
+      return;
+    }
 
     if (e.code === 'ArrowLeft' || e.code === 'ArrowRight') { helm.hold(e.code); e.preventDefault(); return; }
 

@@ -7,7 +7,9 @@
 const MINUTE = 60, HOUR = 3600;
 const rand = (lo, hi) => lo + Math.random() * (hi - lo);
 
-export function makeWeather(baseFrom, baseForce) {
+// swing is how far the force wanders of its own accord: one for the open sea,
+// less for a quiet morning in home water.
+export function makeWeather(baseFrom, baseForce, swing = 1) {
   let clock = 0;
   let squall = null;
   let nextSquall = rand(18, 40) * MINUTE;
@@ -15,8 +17,8 @@ export function makeWeather(baseFrom, baseForce) {
 
   // She never blows quite steady: two slow swells in the force, hours apart.
   const steady = () => baseForce
-    + 1.25 * Math.sin(clock / (2.6 * HOUR))
-    + 0.65 * Math.sin(clock / (1.15 * HOUR));
+    + swing * 1.25 * Math.sin(clock / (2.6 * HOUR))
+    + swing * 0.65 * Math.sin(clock / (1.15 * HOUR));
 
   function raise(night) {
     return {

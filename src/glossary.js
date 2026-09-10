@@ -19,7 +19,7 @@ function lookUp(word) {
   return TERMS[w] ? w : TERMS[w.replace(/s$/, '')] ? w.replace(/s$/, '') : null;
 }
 
-export function makeGlossary(rig) {
+export function makeGlossary(rig, allows = () => true) {
   const card = document.createElement('div');
   card.id = 'gloss';
   card.style.display = 'none';
@@ -125,46 +125,52 @@ export function makeGlossary(rig) {
   // --- the card of orders ----------------------------------------------------
 
   const cost = (e) => `${e.hands} hands, ${e.minutes} min`;
+  // Each row belongs to a group of her work, so that a voyage which has not
+  // been given a thing is not told about it either.
   const ORDERS = [
-    ['1', 'Courses', `furl — ${cost(TAKE_IN.course)}`, `set — ${cost(LET_OUT.course)}`],
-    ['2 or r', 'Topsails', `single-reef — ${cost(TOPSAIL['set>1st reef'])}`,
+    ['sail', '1', 'Courses', `furl — ${cost(TAKE_IN.course)}`, `set — ${cost(LET_OUT.course)}`],
+    ['sail', '2 or r', 'Topsails', `single-reef — ${cost(TOPSAIL['set>1st reef'])}`,
       `second reef — ${cost(TOPSAIL['1st reef>2nd reef'])}`,
       `close-reef — ${cost(TOPSAIL['2nd reef>close-reefed'])}`,
       `shake out a reef — ${cost(TOPSAIL['1st reef>set'])}`],
-    ['3', 'Topgallants', `take in — ${cost(TAKE_IN.topgallant)}`, `set — ${cost(LET_OUT.topgallant)}`],
-    ['4', 'Royals', `take in — ${cost(TAKE_IN.royal)}`, `set — ${cost(LET_OUT.royal)}`],
-    ['5', 'Spanker', `brail in — ${cost(TAKE_IN.spanker)}`, `reef — ${cost(SPANKER_REEF)}`],
-    ['6', 'Headsails', `haul down — ${cost(TAKE_IN.headsail)}`, `set — ${cost(LET_OUT.headsail)}`],
-    ['t', 'Tack ship', `through the wind — ${cost(MANOEUVRES.tack)}`, 'quick, and it can fail'],
-    ['w', 'Wear ship', `stern through the wind — ${cost(MANOEUVRES.wear)}`, 'slow, sure, loses ground']
-  ];
+    ['sail', '3', 'Topgallants', `take in — ${cost(TAKE_IN.topgallant)}`, `set — ${cost(LET_OUT.topgallant)}`],
+    ['sail', '4', 'Royals', `take in — ${cost(TAKE_IN.royal)}`, `set — ${cost(LET_OUT.royal)}`],
+    ['sail', '5', 'Spanker', `brail in — ${cost(TAKE_IN.spanker)}`, `reef — ${cost(SPANKER_REEF)}`],
+    ['sail', '6', 'Headsails', `haul down — ${cost(TAKE_IN.headsail)}`, `set — ${cost(LET_OUT.headsail)}`],
+    ['manoeuvre', 't', 'Tack ship', `through the wind — ${cost(MANOEUVRES.tack)}`, 'quick, and it can fail'],
+    ['manoeuvre', 'w', 'Wear ship', `stern through the wind — ${cost(MANOEUVRES.wear)}`,
+      'slow, sure, loses ground']
+  ].filter(([g]) => allows(g));
+
+  const NOTE = [
+    ['sail', 'Hold <b>shift</b> with a number to make sail instead of shortening it.'],
+    ['sail', '<b>a</b> makes sail all round, <b>f</b> shortens all round.'],
+    ['allhands', '<b>h</b> calls all hands: every hand aboard instead of the watch of ' +
+      'twelve, and it tires them. Reefing topsails and tacking ship both want it.'],
+    ['helm', '<b>&larr; &rarr;</b> put the helm over.'],
+    ['clock', '<b>space</b> brings her to. <b>-</b> and <b>=</b> run her clock slower and faster.'],
+    ['look', '<b>c</b> takes you down on deck and back to the quarterdeck.'],
+    ['look', '<b>b</b> opens the watch bill: who is in which watch, and what he is rated.'],
+    ['whale', '<b>l</b> lowers three boats for a whale the mastheads have raised. Eighteen ' +
+      'men go, and the watch on deck falls from twelve to three.'],
+    ['whale', '<b>o</b> sets the hands on a whale alongside: cutting in first, which is ' +
+      'all hands and most of a day, then trying out, which runs day and night.'],
+    ['mend', '<b>m</b> sets the hands to mend whatever has carried away, out of her stores. ' +
+      'A split sail wants a bolt of canvas; a sprung yard or topmast wants a spare ' +
+      'spar and the carpenter.'],
+    ['look', 'Her masts are held up by shrouds, stays and backstays. The ratlines ' +
+      'across the shrouds are the ladder her topmen go aloft by.'],
+    ['sail', 'Canvas comes off from the top down: royals, topgallants, then reef the topsails.']
+  ].filter(([g]) => allows(g));
 
   const sheet = document.createElement('div');
   sheet.id = 'orders-card';
   sheet.style.display = 'none';
   sheet.innerHTML = '<h2>The orders she answers to</h2><table>' +
-    ORDERS.map(([key, what, ...lines]) =>
+    ORDERS.map(([, key, what, ...lines]) =>
       `<tr><td class="k">${key}</td><td class="w">${what}</td>` +
       `<td class="d">${lines.join('<br>')}</td></tr>`).join('') +
-    '</table><p class="note">' +
-    'Hold <b>shift</b> with a number to make sail instead of shortening it.<br>' +
-    '<b>a</b> makes sail all round, <b>f</b> shortens all round.<br>' +
-    '<b>h</b> calls all hands: every hand aboard instead of the watch of twelve, ' +
-    'and it tires them. Reefing topsails and tacking ship both want it.<br>' +
-    '<b>&larr; &rarr;</b> put the helm over. <b>space</b> brings her to.<br>' +
-    '<b>c</b> takes you down on deck and back to the quarterdeck.<br>' +
-    '<b>b</b> opens the watch bill: who is in which watch, and what he is rated.<br>' +
-    '<b>l</b> lowers three boats for a whale the mastheads have raised. Eighteen ' +
-    'men go, and the watch on deck falls from twelve to three.<br>' +
-    '<b>o</b> sets the hands on a whale alongside: cutting in first, which is ' +
-    'all hands and most of a day, then trying out, which runs day and night.<br>' +
-    '<b>m</b> sets the hands to mend whatever has carried away, out of her stores. ' +
-    'A split sail wants a bolt of canvas; a sprung yard or topmast wants a spare ' +
-    'spar and the carpenter.<br>' +
-    'Her masts are held up by shrouds, stays and backstays. The ratlines ' +
-    'across the shrouds are the ladder her topmen go aloft by.<br>' +
-    '<b>-</b> and <b>=</b> run her clock slower and faster.<br>' +
-    'Canvas comes off from the top down: royals, topgallants, then reef the topsails.' +
+    '</table><p class="note">' + NOTE.map(([, said]) => said).join('<br>') +
     '</p><p class="shut">? or esc to close</p>';
   document.body.appendChild(sheet);
 
@@ -183,7 +189,8 @@ export function makeGlossary(rig) {
   // The boards she is conned by. The clock face and the reckoning are numbers
   // and match nothing, so they cost only a failed search.
   for (const id of ['canvas-board', 'orders-board', 'track-board', 'clock-board', 'watch-bill',
-                    'instruments', 'landfall', 'orders-card']) {
+                    'instruments', 'landfall', 'orders-card',
+                    'letter', 'voyage-board', 'voyage-done']) {
     watch(document.getElementById(id));
   }
 }
