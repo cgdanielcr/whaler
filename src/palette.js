@@ -40,7 +40,7 @@ const PAIRS = {
   cedar:    ['#d8cfb8', '#bfc0ba'],
   trim:     ['#2f4a58', '#2b3c46'],
   whale:    ['#2e3238', '#242a30'],
-  weed:     ['#3f5136', '#354332']    // kelp and sea wrack, adrift on the surface
+  weed:     ['#33422c', '#2b3529']    // kelp and sea wrack, adrift on the surface
 };
 
 // The live set, mixed to wherever the weather stands. Everything that draws

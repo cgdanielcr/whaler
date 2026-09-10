@@ -12,12 +12,14 @@
 // past them, and because they are the only fixed things in sight, the eye
 // tracks them and reads her motion off them.
 //
-// They are kept few and small. This is a clean sea and it should stay one.
+// They are kept few and small, and they got smaller again once the swell was
+// given a grain of its own: at the size they started they read as islands
+// rather than as weed. This is a clean sea and it should stay one.
 import * as THREE from 'three';
 import { waveHeight } from './sea.js';
 import { HUE } from './palette.js';
 
-const COUNT = 48;
+const COUNT = 30;
 const REACH = 155;        // metres: beyond this she has left them behind
 const LIFT = 0.45;        // clear of the sea's own displaced surface
 
@@ -38,14 +40,14 @@ function patch(size) {
 export function makeDrift() {
   const group = new THREE.Group();
   const material = new THREE.MeshBasicMaterial({
-    color: HUE.weed, transparent: true, opacity: 0.85, depthWrite: false,
+    color: HUE.weed, transparent: true, opacity: 0.6, depthWrite: false,
     side: THREE.DoubleSide,
     polygonOffset: true, polygonOffsetFactor: -3, polygonOffsetUnits: -6
   });
   const wrack = [];
 
   for (let i = 0; i < COUNT; i++) {
-    const mesh = new THREE.Mesh(patch(3.0 + Math.random() * 6.0), material);
+    const mesh = new THREE.Mesh(patch(1.4 + Math.random() * 3.0), material);
     mesh.rotation.y = Math.random() * Math.PI * 2;
     mesh.renderOrder = 1;
     group.add(mesh);

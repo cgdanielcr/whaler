@@ -462,3 +462,34 @@ seen to happen.
 
 *Test: sail the Horn passage and press k. Ten thousand miles of real sea, and the wind backs
 as you go south.*
+
+## M20i — The look: her canvas, and the sea. BUILT.
+
+The owner: it still looks like a prototype, and the ship looks static in the centre of a
+blue thing. Both were fair, and the causes were separate.
+
+**Her canvas** (`src/cloth.js`). The sails were flat white slabs, and a sail is the largest
+thing in the picture. A real one is sewn from cloths about two feet wide, so it is ruled
+with vertical seams head to foot, with reef bands across the upper part carrying the points
+the hands knot round the yard — and no working sail is white. All of it is drawn onto an
+HTML canvas at load and handed over as a texture: **no image file, no modelling tool**. The
+seams keep their real spacing whatever the sail's size, because the cloth count comes off
+its own width. Square sails carry three times the mesh they did, so the belly is a curve
+rather than four facets.
+
+**The sea.** Two causes, both structural:
+
+- **The horizon stood 240 metres off** — seven of her own lengths. She was sailing in a
+  small grey room. The fog now begins at 620 and reaches past a mile, and the sea itself
+  runs to 2,800 metres.
+- **The swell had no grain.** Five wave trains crossing at right angles cancel into confused
+  chop with no direction in it — which is exactly what a blue thing looks like. The three
+  big ones now run within fifteen degrees of each other, as ocean swell does, so the sea
+  arrives in trains of long parallel crests and she visibly marches across them. The short
+  chop still crosses, because chop does.
+
+**And the weed came back down.** Once the swell had a grain of its own the weed was no
+longer carrying the motion on its own, and at the size it had been it read as islands. Half
+as many, a third the size, darker and quieter.
+
+*Test: look at the sea. It has a direction now, and a distance.*

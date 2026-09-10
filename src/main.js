@@ -55,7 +55,9 @@ renderer.toneMapping = THREE.NoToneMapping;
 document.body.appendChild(renderer.domElement);
 
 const scene = new THREE.Scene();
-scene.fog = new THREE.Fog(HORIZON_COLOUR, 240, 660);
+// The horizon used to stand two hundred and forty metres off, which is seven
+// of her own lengths -- she sailed in a small grey room. It is a mile now.
+scene.fog = new THREE.Fog(HORIZON_COLOUR, 620, 2150);
 
 const camera = new THREE.PerspectiveCamera(48, window.innerWidth / window.innerHeight, 0.5, 8000);
 camera.position.set(74, 29, -58);
@@ -605,7 +607,7 @@ function weatherLook(force, squall) {
   scene.fog.color.copy(HUE.skyLow);
   sun.intensity = 1.35 * (1 - 0.45 * g);
   hemi.intensity = 2.5 * (1 - 0.2 * g);
-  scene.fog.far = 660 - 240 * g;
+  scene.fog.far = 2150 - 800 * g;
 }
 
 

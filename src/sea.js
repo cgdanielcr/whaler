@@ -14,17 +14,23 @@
 import * as THREE from 'three';
 import { HUE } from './palette.js';
 
-const EXTENT = 1400;      // metres across, wider than the eye can see
+const EXTENT = 2800;      // metres across, wider than the eye can see
 const CROWD = 0.35;       // how tight the grid is under her, against the horizon
 
 // Each wave: length in metres, height, the way it runs, and how sharp its
 // crest is. Long swell first, chop last. Tuned by eye, not measured.
+// The three big ones run within fifteen degrees of each other, which is what
+// gives the sea a grain: ocean swell arrives in trains of long parallel
+// crests, and she marches across them. They used to cross at right angles,
+// which cancelled them into confused chop with no direction in it -- a blue
+// thing rather than an ocean. The short stuff still crosses, because chop does.
 const WAVES = [
-  { len: 78.0, amp: 1.45, dir: [1.00,  0.22], sharp: 0.92 },
-  { len: 47.0, amp: 0.85, dir: [0.62, -0.78], sharp: 0.85 },
-  { len: 29.0, amp: 0.46, dir: [0.18,  0.98], sharp: 0.75 },
-  { len: 14.0, amp: 0.13, dir: [-0.72, 0.69], sharp: 0.60 },
-  { len:  7.5, amp: 0.05, dir: [0.88,  0.47], sharp: 0.45 }
+  { len: 155.0, amp: 0.95, dir: [1.00,  0.16], sharp: 0.50 },   // the long heave
+  { len:  78.0, amp: 1.05, dir: [1.00,  0.30], sharp: 0.92 },
+  { len:  47.0, amp: 0.55, dir: [0.90,  0.44], sharp: 0.85 },
+  { len:  29.0, amp: 0.30, dir: [0.28,  0.96], sharp: 0.75 },   // chop, crossing
+  { len:  14.0, amp: 0.12, dir: [-0.72, 0.69], sharp: 0.60 },
+  { len:   7.5, amp: 0.05, dir: [0.88,  0.47], sharp: 0.45 }
 ];
 
 const G = 9.81;
@@ -162,7 +168,7 @@ void main() {
   // Distance takes the colour toward the sky. This one is a fade and not a
   // cut: haze is the only thing in the picture that is genuinely not a shape,
   // and drawing it as one puts a hard line across the sea at middle distance.
-  float far = smoothstep(0.30, 1.15, length(vWorld.xz) / 620.0);
+  float far = smoothstep(0.22, 1.10, length(vWorld.xz) / 1500.0);
   col = mix(col, uHaze, far * 0.72);
 
   gl_FragColor = vec4(col, 1.0);
