@@ -543,23 +543,65 @@
 
     /* --- the chart ----------------------------------------------------------- */
 
+    /* A chart of 1841: foxed paper, an engraved coast, a graduated neatline,
+       and rhumb lines out of a compass rose. Everything drawn, nothing fetched
+       -- the stain on the paper is an SVG turbulence filter. */
     #chart .sea { display: block; width: 100%; height: auto; }
-    #chart .water { fill: rgba(44, 88, 110, 0.15); }
-    #chart .land { fill: rgba(120, 98, 62, 0.42); stroke: var(--edge); stroke-width: 1.1; }
-    #chart .grat { stroke: var(--rule); stroke-width: 0.5; }
+    #chart .water { fill: #efe4c9; }
+    #chart .stain { fill: none; opacity: 0.5; mix-blend-mode: multiply; }
+    #chart .grain { fill: none; opacity: 0.30; mix-blend-mode: multiply; pointer-events: none; }
+
+    #chart .land {
+      fill: #ddcfae; stroke: #4a3a24; stroke-width: 1.3; stroke-linejoin: round;
+    }
+    #chart .grat { stroke: #7a6242; stroke-width: 0.45; opacity: 0.32; }
+
+    /* The rhumb network. Faint, and heavier on the cardinal points. */
+    #chart .rhumb line { stroke: #8a6d45; stroke-width: 0.4; opacity: 0.30; }
+    #chart .rhumb line.half { opacity: 0.42; }
+    #chart .rhumb line.main { stroke: #9a4c32; stroke-width: 0.6; opacity: 0.48; }
+
+    #chart .rose .major { fill: #3a2f1e; }
+    #chart .rose .minor { fill: #a08a5e; }
+    #chart .rose .pin { fill: #9a4c32; }
+    #chart .rose .ring { fill: none; stroke: #4a3a24; stroke-width: 0.7; opacity: 0.7; }
+    #chart .rose .np {
+      font-size: 12px; fill: #4a3a24; text-anchor: middle;
+      font-family: Georgia, serif; font-style: italic;
+    }
+
+    #chart .neat { fill: none; stroke: #4a3a24; stroke-width: 1.1; }
+    #chart .neat.outer { stroke-width: 2.2; }
+    #chart .tick { stroke: #4a3a24; stroke-width: 0.8; }
     #chart .deg {
-      font-size: 9px; fill: var(--faint); font-family: Georgia, serif;
+      font-size: 8.5px; fill: #4a3a24; text-anchor: middle;
+      font-family: Georgia, serif; letter-spacing: 0.04em;
     }
-    #chart .track { fill: none; stroke: var(--blue); stroke-width: 1.4; stroke-dasharray: 4 3; }
-    #chart .her path { fill: var(--rust); stroke: var(--paper); stroke-width: 0.8; }
-    #chart .port circle { fill: var(--blue); }
+    #chart .deg.lat { text-anchor: end; }
+
+    #chart .track { fill: none; stroke: #7a2f1c; stroke-width: 1.5; stroke-dasharray: 5 3; }
+    #chart .her path { fill: #7a2f1c; stroke: #efe4c9; stroke-width: 0.9; }
+    #chart .port circle { fill: #3a2f1e; }
     #chart .port text, #chart .mark text {
-      font-size: 11px; fill: var(--ink); font-family: Georgia, serif;
+      font-size: 11px; fill: #33291d; font-family: Georgia, serif; font-style: italic;
     }
-    #chart .mark path { fill: none; stroke: var(--rust); stroke-width: 1.4; }
-    #chart .scale line { stroke: var(--ink); stroke-width: 1.2; }
+    #chart .mark path { fill: none; stroke: #7a2f1c; stroke-width: 1.4; }
+
+    #chart .cartouche rect {
+      fill: rgba(239, 228, 201, 0.82); stroke: #4a3a24; stroke-width: 1;
+    }
+    #chart .cartouche .title {
+      font-size: 17px; fill: #33291d; font-family: Georgia, serif; font-style: italic;
+    }
+    #chart .cartouche .sub {
+      font-size: 12px; fill: #4a3a24; font-family: Georgia, serif; font-style: italic;
+    }
+    #chart .cartouche .small { font-size: 10px; letter-spacing: 0.14em; font-style: normal; }
+
+    #chart .scale line { stroke: #33291d; stroke-width: 1.2; }
     #chart .scale text {
-      font-size: 10px; fill: var(--ink); text-anchor: middle; font-family: Georgia, serif;
+      font-size: 10px; fill: #33291d; text-anchor: middle;
+      font-family: Georgia, serif; font-style: italic;
     }
     #chart .fix {
       margin: 0.6rem 0 0; font-size: 0.92rem; color: var(--blue);

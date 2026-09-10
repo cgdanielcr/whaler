@@ -24,6 +24,79 @@ const merc = (lat) => {
 };
 
 const W = 900, H = 560;
+const EDGE = 34;                // the neatline: a chart has a graduated border
+
+// The ornament of a chart of the period, drawn rather than fetched. Foxed
+// paper, a graduated neatline, rhumb lines radiating from compass roses, and a
+// cartouche. None of it is a picture file: the paper's stain is an SVG
+// turbulence filter and the rest is lines.
+const PAPER = `
+<defs>
+  <filter id="foxed" x="0" y="0" width="100%" height="100%">
+    <feTurbulence type="fractalNoise" baseFrequency="0.024" numOctaves="4" seed="7"/>
+    <feColorMatrix type="matrix" values="0 0 0 0 0.42  0 0 0 0 0.32  0 0 0 0 0.16  0 0 0 0.30 0"/>
+  </filter>
+  <filter id="damp" x="-5%" y="-5%" width="110%" height="110%">
+    <feTurbulence type="fractalNoise" baseFrequency="0.006" numOctaves="3" seed="3"/>
+    <feColorMatrix type="matrix" values="0 0 0 0 0.38  0 0 0 0 0.27  0 0 0 0 0.12  0 0 0 0.22 0"/>
+  </filter>
+</defs>`;
+
+// A rose of thirty-two points, with rhumb lines running out of it across the
+// whole sheet -- the thing that makes a sea chart look like a sea chart.
+function rose(cx, cy, reach, full) {
+  let out = '<g class="rhumb">';
+  for (let i = 0; i < 32; i++) {
+    const a = (i / 32) * Math.PI * 2;
+    out += `<line x1="${cx.toFixed(1)}" y1="${cy.toFixed(1)}" ` +
+      `x2="${(cx + Math.sin(a) * reach).toFixed(1)}" y2="${(cy - Math.cos(a) * reach).toFixed(1)}" ` +
+      `class="${i % 4 === 0 ? 'main' : i % 2 === 0 ? 'half' : ''}"/>`;
+  }
+  out += '</g>';
+  if (!full) return out;
+
+  out += `<g class="rose" transform="translate(${cx.toFixed(1)},${cy.toFixed(1)})">`;
+  for (let i = 0; i < 8; i++) {
+    const a = (i / 8) * Math.PI * 2, r = i % 2 ? 15 : 26;
+    const p = (t, k) => `${(Math.sin(a + t) * k).toFixed(1)} ${(-Math.cos(a + t) * k).toFixed(1)}`;
+    out += `<path class="${i % 2 ? 'minor' : 'major'}" d="M ${p(0, r)} L ${p(Math.PI / 8, 5)} ` +
+      `L 0 0 L ${p(-Math.PI / 8, 5)} Z"/>`;
+  }
+  out += '<circle class="pin" r="3.2"/><circle class="ring" r="27"/><circle class="ring" r="31"/>' +
+    '<text class="np" y="-34">N</text></g>';
+  return out;
+}
+
+// The graduated border, ticked every degree and numbered where the graticule
+// falls, which is how a chart tells you where you are without a grid over the
+// water.
+function neatline(at, step, span) {
+  let ticks = '';
+  const fine = span > 90 ? 5 : span > 40 ? 2 : 1;
+  for (let lon = -180; lon <= 180; lon += fine) {
+    const [x] = at(0, lon);
+    if (x < EDGE || x > W - EDGE) continue;
+    const big = lon % step === 0;
+    ticks += `<line class="tick" x1="${x.toFixed(1)}" y1="${EDGE}" x2="${x.toFixed(1)}" y2="${(EDGE - (big ? 9 : 5)).toFixed(1)}"/>` +
+      `<line class="tick" x1="${x.toFixed(1)}" y1="${H - EDGE}" x2="${x.toFixed(1)}" y2="${(H - EDGE + (big ? 9 : 5)).toFixed(1)}"/>`;
+    if (big) {
+      ticks += `<text class="deg" x="${x.toFixed(1)}" y="${EDGE - 13}">${Math.abs(lon)}°${lon < 0 ? 'W' : lon > 0 ? 'E' : ''}</text>`;
+    }
+  }
+  for (let lat = -85; lat <= 85; lat += fine) {
+    const [, y] = at(lat, 0);
+    if (y < EDGE || y > H - EDGE) continue;
+    const big = lat % step === 0;
+    ticks += `<line class="tick" x1="${EDGE}" y1="${y.toFixed(1)}" x2="${(EDGE - (big ? 9 : 5)).toFixed(1)}" y2="${y.toFixed(1)}"/>` +
+      `<line class="tick" x1="${W - EDGE}" y1="${y.toFixed(1)}" x2="${(W - EDGE + (big ? 9 : 5)).toFixed(1)}" y2="${y.toFixed(1)}"/>`;
+    if (big) {
+      ticks += `<text class="deg lat" x="${EDGE - 5}" y="${(y + 3).toFixed(1)}">${Math.abs(lat)}°${lat < 0 ? 'S' : lat > 0 ? 'N' : ''}</text>`;
+    }
+  }
+  return `<rect class="neat outer" x="6" y="6" width="${W - 12}" height="${H - 12}"/>` +
+    `<rect class="neat" x="${EDGE}" y="${EDGE}" width="${W - EDGE * 2}" height="${H - EDGE * 2}"/>` +
+    ticks;
+}
 
 export function makeChart(home) {
   const panel = document.createElement('div');
@@ -105,14 +178,13 @@ export function makeChart(home) {
     for (let lon = -180; lon <= 180; lon += step) {
       const [x] = at(0, lon);
       if (x < 0 || x > W) continue;
-      grid += `<line class="grat" x1="${x}" y1="0" x2="${x}" y2="${H}"/>` +
-        `<text class="deg" x="${x + 3}" y="${H - 6}">${Math.abs(lon)}°${lon < 0 ? 'W' : lon > 0 ? 'E' : ''}</text>`;
+      // Lines only. The graduated border carries the numbers, as a chart's does.
+      grid += `<line class="grat" x1="${x}" y1="${EDGE}" x2="${x}" y2="${H - EDGE}"/>`;
     }
     for (let lat = -80; lat <= 80; lat += step) {
       const [, y] = at(lat, 0);
       if (y < 0 || y > H) continue;
-      grid += `<line class="grat" x1="0" y1="${y}" x2="${W}" y2="${y}"/>` +
-        `<text class="deg" x="4" y="${y - 4}">${Math.abs(lat)}°${lat < 0 ? 'S' : lat > 0 ? 'N' : ''}</text>`;
+      grid += `<line class="grat" x1="${EDGE}" y1="${y}" x2="${W - EDGE}" y2="${y}"/>`;
     }
 
     // Her track, and the marks she is running between.
@@ -147,7 +219,7 @@ export function makeChart(home) {
     const round = [60, 120, 300, 600, 1200, 3000, 6000].find((n) => n > nm / 5) || 6000;
     const bar = (round / NM_PER_DEG) * scale;
     const scaleBar =
-      `<g class="scale" transform="translate(${W - bar - 24},${H - 34})">` +
+      `<g class="scale" transform="translate(${W - bar - EDGE - 18},${H - EDGE - 22})">` +
       `<line x1="0" y1="0" x2="${bar.toFixed(1)}" y2="0"/>` +
       `<line x1="0" y1="-5" x2="0" y2="5"/><line x1="${bar.toFixed(1)}" y1="-5" x2="${bar.toFixed(1)}" y2="5"/>` +
       `<text x="${(bar / 2).toFixed(1)}" y="-9">${round} sea miles</text></g>`;
@@ -158,11 +230,29 @@ export function makeChart(home) {
         `heading ${compassPoint(latest.heading)}`
       : '';
 
+    // A rose in an empty quarter of the sheet, with the rhumbs running out of
+    // it, and two lesser ones for the network to cross at.
+    const rhumbs = rose(W * 0.74, H * 0.30, W, true) +
+      rose(W * 0.22, H * 0.72, W * 0.8, false);
+
+    const cartouche =
+      `<g class="cartouche" transform="translate(${EDGE + 16},${H - EDGE - 58})">` +
+      '<rect x="-8" y="-22" width="286" height="66" rx="2"/>' +
+      '<text class="title" y="-4">A Chart of the Western Ocean</text>' +
+      '<text class="sub" y="14">and the passage to the Pacifick Ground</text>' +
+      '<text class="sub small" y="31">New Bedford · 1841</text></g>';
+
     panel.innerHTML = '<h2>The chart</h2>' +
       // The sheet clips its own edges, so land running off it is simply cut.
       `<svg class="sea" viewBox="0 0 ${W} ${H}" preserveAspectRatio="xMidYMid meet">` +
+      PAPER +
       `<rect class="water" x="0" y="0" width="${W}" height="${H}"/>` +
-      grid + land + laid + her + scaleBar + '</svg>' +
+      `<rect class="stain" x="0" y="0" width="${W}" height="${H}" filter="url(#damp)"/>` +
+      // The rose and its rhumbs are printed over the land, as they are on a
+      // real chart: the network belongs to the sheet, not to the sea.
+      grid + land + rhumbs + laid + her +
+      `<rect class="grain" x="0" y="0" width="${W}" height="${H}" filter="url(#foxed)"/>` +
+      neatline(at, step, win.span) + cartouche + scaleBar + '</svg>' +
       `<p class="fix">${said}</p>` +
       '<p class="note">Drawn on Mercator, as every sea chart since 1569 has been: on ' +
       'this projection a steady compass course comes out a straight line, which is ' +
