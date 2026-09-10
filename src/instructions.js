@@ -41,7 +41,7 @@ const KEYS = [
            '<b>?</b> every order she answers to']
 ];
 
-export function makeInstructions(v, { begin }) {
+export function makeInstructions(v, { begin, letterFirst = true }) {
   const allows = (group) => v.allow.includes(group);
 
   // --- the letter ------------------------------------------------------------
@@ -57,6 +57,8 @@ export function makeInstructions(v, { begin }) {
     '</ul>' +
     '<p class="go"><button class="sail">Sail</button></p>' +
     `<p class="other">Or sail instead: ${others(v)}</p>`;
+  // When the shipping office is up, the letter waits behind it.
+  if (!letterFirst) letter.style.display = 'none';
   document.body.appendChild(letter);
 
   letter.querySelector('.sail').addEventListener('click', () => {
@@ -121,7 +123,7 @@ export function makeInstructions(v, { begin }) {
     if (passage.lost && passage.lost.length) {
       return 'Not whole, sir. That is what carrying too much canvas costs.';
     }
-    if (v.squallAt) {
+    if (v.squalls) {
       return 'She came through it whole, sir. That is what shortening down in time buys you.';
     }
     if (passage.worth >= well) return 'Handsomely sailed, sir. You did not waste a mile of it.';

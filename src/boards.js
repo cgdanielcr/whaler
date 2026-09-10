@@ -184,6 +184,7 @@ export function makeBoards(rig, crew, company, allows = () => true) {
     put(hands, `<b>${crew.free}</b> of ${crew.onDeck} hands free` +
       `${crew.allHands ? ' &mdash; <em>all hands on deck</em>' : ''}` +
       (mate ? `<br>${mate.name}, ${mate.berth.toLowerCase()}, has the deck` : '') +
+      `<br>The company is <em class="fit">${crew.weariness}</em>` +
       (lookouts && lookouts.said ? `<br>At the mastheads: ${lookouts.said}` : ''));
     put(chase, [hunt && hunt.said, workUp && workUp.said].filter(Boolean).join('<br>'));
 

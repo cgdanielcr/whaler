@@ -161,12 +161,102 @@ export const VOYAGES = [
 
     // One squall, on cue, with more warning than a whole reef takes and less
     // than the whole of shortening down. That gap is the game.
-    squallAt: 20 * 60,                 // her own seconds after she sails
-    squallWarning: 10,                 // minutes of warning from the horizon
+    squalls: [{ at: 20 * 60, warning: 10 }],
 
     plan: [{ bearing: 180, miles: 14, said: 'the mark', near: 1.5 }],
 
     allow: ['sail', 'helm', 'clock', 'look', 'allhands', 'manoeuvre']
+  },
+
+  {
+    key: 'watch',
+    n: 4,
+    title: 'Watch and watch',
+    teaches: 'Why she is worked in two halves, and what it costs to keep them all on deck.',
+
+    letter: [
+      'New Bedford, the second day of November, 1841.',
+      'Sir — a longer run today, and a lesson in your people rather than in ' +
+      'your canvas. Four-and-twenty of them keep watches, twelve to a watch, ' +
+      'four hours on deck and four below. That is not a kindness. It is the ' +
+      'only way a ship is worked for three years together without her company ' +
+      'being used up in the first six months.',
+      'Calling all hands turns out every man aboard, the watch below with the ' +
+      'rest, and there is work that cannot be done without it — reefing her ' +
+      'topsails, and bringing her about. But men on deck are men not sleeping, ' +
+      'and a tired crew is a slow one: the same reef that takes twelve minutes ' +
+      'from a fresh watch will take you half as long again from a spent one. ' +
+      'The board will tell you how they are.',
+      'Call them up when you need them and send them below the moment you do ' +
+      'not. There is weather about today and you will need them more than ' +
+      'once. Run thirty miles to the south-west, and bring your people in ' +
+      'with something left in them.',
+      'We are, sir, your obedient servants.'
+    ],
+
+    task: 'Run thirty miles south-west, and bring your people in with something left in them.',
+
+    wind: { from: 315, force: 3.8 },
+    heading: 225,          // a close reach, and she will hold it all day
+    swing: 0.8,
+    fair: true,            // no weather but the three she is given
+    ground: false,
+    wellSailed: 0.88,
+
+    // Three of them, spread across the run, so the crew must be spent and
+    // rested and spent again rather than simply held on deck throughout.
+    squalls: [
+      { at: 35 * 60, warning: 12 },
+      { at: 95 * 60, warning: 9 },
+      { at: 195 * 60, warning: 7 }
+    ],
+
+    plan: [{ bearing: 225, miles: 30, said: 'the mark', near: 1.5 }],
+
+    allow: ['sail', 'helm', 'clock', 'look', 'allhands', 'manoeuvre']
+  },
+
+  {
+    key: 'mend',
+    n: 5,
+    title: 'Something carried away',
+    teaches: 'What she carries below, and how a ship puts herself to rights at sea.',
+
+    letter: [
+      'New Bedford, the ninth day of November, 1841.',
+      'Sir — she came in on Tuesday with her fore topsail split from head to ' +
+      'foot, and we have not sent a sailmaker down to her. You will mend her ' +
+      'yourself, at sea, as you will have to do for three years once you are ' +
+      'round the Horn.',
+      'A ship that far from home mends herself or does without. She carries ' +
+      'spare canvas in bolts, spare spars on the skids, and coils of cordage, ' +
+      'and when they are gone she does without them. A split sail is unbent ' +
+      'and a new one bent in its place out of the locker. A sprung yard is ' +
+      'fished — splinted with a spare spar and woolded round with rope — and ' +
+      'that is the carpenter’s work, not a seaman’s. Set your hands to it and ' +
+      'watch the stores board as they go.',
+      'Sixteen miles to the south-west, and bring her in whole.',
+      'We are, sir, your obedient servants.'
+    ],
+
+    task: 'Mend what has carried away, and run sixteen miles south-west to the mark.',
+
+    // Kept below a fresh breeze on purpose: the lesson is mending what is
+    // already broken, not breaking more of it.
+    wind: { from: 315, force: 2.9 },
+    heading: 225,
+    swing: 0.3,
+    fair: true,
+    ground: false,
+    wellSailed: 0.88,
+
+    // She begins the voyage already hurt, so the lesson is certain rather
+    // than left to the weather's humour.
+    damaged: [{ name: 'Fore topsail', kind: 'split sail' }],
+
+    plan: [{ bearing: 225, miles: 16, said: 'the mark', near: 1.5 }],
+
+    allow: ['sail', 'helm', 'clock', 'look', 'allhands', 'manoeuvre', 'mend']
   },
 
   {
@@ -196,14 +286,31 @@ export const VOYAGES = [
 ];
 
 // Which voyage she is to sail. The page's address chooses it, so that a
-// choice made on the letter is remembered across a reload and nothing has to
-// be taken apart and built again while she is afloat.
-export function chosen() {
-  const key = (location.hash || '').replace('#', '');
-  return VOYAGES.find((v) => v.key === key) || VOYAGES[0];
-}
+// choice made in the shipping office is remembered across a reload and
+// nothing has to be taken apart and built again while she is afloat.
+const keyed = () => VOYAGES.find((v) => v.key === (location.hash || '').replace('#', ''));
+
+export const chosen = () => keyed() || VOYAGES[0];
+export const picked = () => !!keyed();      // false means the office, not a voyage
 
 export function choose(key) {
   location.hash = key;
   location.reload();
+}
+
+// Which voyages you have sailed through to the end. One small entry in the
+// browser's own store: no account, no login, and nothing else remembered,
+// because a voyage is short enough to finish in a sitting. A browser that
+// will not remember is no reason not to sail.
+const LEDGER = 'whaler.sailed';
+
+export function sailed() {
+  try { return JSON.parse(localStorage.getItem(LEDGER)) || []; } catch (e) { return []; }
+}
+
+export function logSailed(key) {
+  try {
+    const done = sailed();
+    if (!done.includes(key)) localStorage.setItem(LEDGER, JSON.stringify([...done, key]));
+  } catch (e) { /* she sailed it all the same */ }
 }

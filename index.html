@@ -123,6 +123,7 @@
     }
     #orders-board .hands b { font-weight: normal; font-size: 0.95rem; }
     #orders-board .hands em { color: var(--rust); font-style: normal; }
+    #orders-board .hands em.fit { color: var(--blue); }
     #orders-board .chase { margin: 0.45rem 0 0; font-size: 0.83rem; line-height: 1.5; color: var(--blue); }
     #orders-board .chase:empty, #orders-board .hurt:empty, #orders-board .word:empty { display: none; }
     #orders-board .hurt { margin: 0.4rem 0 0; font-size: 0.8rem; line-height: 1.5; }
@@ -206,9 +207,34 @@
     }
     #rose .squall:empty { display: none; }
 
+    /* --- the shipping office ------------------------------------------------- */
+
+    #office .preamble { color: var(--faint); font-size: 0.88rem; }
+    #office .berth { margin: 1.4rem 0 0; padding: 0; list-style: none; }
+    #office .berth li {
+      display: grid; grid-template-columns: 1.6rem 1fr auto;
+      gap: 0.1rem 0.4rem; align-items: baseline;
+      padding: 0.6rem 0; border-top: 1px solid var(--rule);
+    }
+    #office .mark { color: var(--blue); font-size: 0.95rem; }
+    #office .berth .link { justify-self: start; text-align: left; font-size: 1.02rem; }
+    #office .teaches {
+      grid-column: 2 / -1; font-size: 0.78rem; line-height: 1.5; color: var(--faint);
+    }
+    #office .cue {
+      font-size: 0.58rem; letter-spacing: 0.18em; text-transform: uppercase;
+      color: var(--rust); align-self: center;
+    }
+    #office li.done .link { color: var(--faint); border-bottom-color: transparent; }
+    #office li.done .link:hover { color: var(--rust); }
+    #office .note {
+      margin: 1.2rem 0 0; padding-top: 0.9rem; font-size: 0.76rem;
+      color: var(--faint); border-top: 1px solid var(--rule);
+    }
+
     /* --- the owners' letter, and the account of a short voyage --------------- */
 
-    #letter, #voyage-done {
+    #office, #letter, #voyage-done {
       position: fixed; inset: 0; margin: auto; z-index: 12;
       width: min(33rem, calc(100vw - 3rem)); height: fit-content;
       max-height: calc(100vh - 3rem); overflow-y: auto;
@@ -218,7 +244,7 @@
       box-shadow: 0 6px 34px rgba(0, 0, 0, 0.45);
       pointer-events: auto;
     }
-    #letter h2, #voyage-done h2 {
+    #office h2, #letter h2, #voyage-done h2 {
       margin: 0 0 1.1rem; font-size: 0.68rem; font-weight: normal;
       letter-spacing: 0.24em; text-transform: uppercase; color: var(--faint);
     }
@@ -238,12 +264,12 @@
     #voyage-done .mate { font-style: italic; line-height: 1.6; }
     #letter .go, #voyage-done .go { margin: 1.4rem 0 0.7rem; }
 
-    #letter button, #voyage-done button {
+    #office button, #letter button, #voyage-done button {
       font-family: inherit; color: var(--blue); background: none; cursor: pointer;
       border: none; padding: 0; font-size: inherit;
       border-bottom: 1px solid rgba(44, 88, 110, 0.5);
     }
-    #letter button:hover, #voyage-done button:hover { color: var(--rust); border-bottom-color: var(--rust); }
+    #office button:hover, #letter button:hover, #voyage-done button:hover { color: var(--rust); border-bottom-color: var(--rust); }
     #letter .sail {
       font-size: 1.15rem; letter-spacing: 0.18em; text-transform: uppercase;
       border: 1px solid var(--edge); padding: 0.55rem 1.9rem;

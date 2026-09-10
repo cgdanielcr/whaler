@@ -31,8 +31,9 @@ import { makeAfloat, makeWhale } from './afloat.js';
 import { makeCruise, remember } from './cruise.js';
 import { makeWorkUp } from './workup.js';
 import { makeTrim } from './trim.js';
-import { chosen } from './voyages.js';
+import { chosen, picked, logSailed } from './voyages.js';
 import { makeInstructions } from './instructions.js';
+import { makeOffice } from './office.js';
 import { HUE, weather as weather2, gloomFor } from './palette.js';
 
 const renderer = new THREE.WebGLRenderer({ antialias: true });
@@ -211,10 +212,19 @@ const trim = makeTrim({
   }
 });
 // The letter first, so that every sea term in it is marked by the glossary
-// along with the boards.
-const instructions = makeInstructions(V, { begin: () => time.begin() });
+// along with the boards. With no voyage chosen she lies in the shipping
+// office instead, and the letter waits behind it.
+const instructions = makeInstructions(V, { begin: () => time.begin(), letterFirst: picked() });
+if (!picked()) makeOffice();
 makeGlossary(rig, allows);
 if (V.fair) weather.quiet(24 * 60);      // nothing in the weather today
+
+// A voyage may begin with something already carried away, so that mending it
+// is the lesson rather than a thing the weather may or may not hand you.
+for (const d of V.damaged || []) {
+  const s = rig.sails.find((x) => x.name === d.name);
+  if (s) rig.damage(s, d.kind);
+}
 
 
 // --- tacking and wearing -----------------------------------------------------
@@ -482,7 +492,6 @@ function weatherLook(force, squall) {
 
 let shown = 0;
 let told = false;
-let squalled = false;
 let last = performance.now();
 const BEGAN = gameSeconds;     // her clock when she sailed
 
@@ -500,10 +509,10 @@ function frame(now) {
 
   weather.tick(gameDt, (gameSeconds / 3600) % 24);
 
-  // A voyage may be given one squall of its own, on cue, rather than waiting
-  // on the weather's humour.
-  if (!squalled && V.squallAt && gameSeconds - BEGAN >= V.squallAt) {
-    squalled = weather.summon(V.squallWarning);
+  // A voyage may be given squalls of its own, on cue, rather than waiting on
+  // the weather's humour.
+  for (const s of V.squalls || []) {
+    if (!s.came && gameSeconds - BEGAN >= s.at) s.came = weather.summon(s.warning);
   }
 
   const warning = weather.warning;
@@ -539,12 +548,16 @@ function frame(now) {
       cruise.raise(gameSeconds);
       boards.say('She has raised the cruising ground. Keep a good lookout.');
     } else {
+      logSailed(V.key);
       instructions.account(passage, readClock(gameSeconds).time);
     }
   }
   if (V.ground) {
     const ended = cruise.tick(gameSeconds);
-    if (ended) boards.account(ended, cruise, passage.arrived, readClock(gameSeconds).time);
+    if (ended) {
+      logSailed(V.key);
+      boards.account(ended, cruise, passage.arrived, readClock(gameSeconds).time);
+    }
   }
 
   controls.update();

@@ -97,21 +97,26 @@ voyage, so she carries the loss to the mark — which is the lesson.
 *Test: see the dark line on the horizon, take in the royals and the topgallants, and come
 through with all your canvas whole.*
 
-### M20 — The shipping office, and voyages four and five
+### M20 — The shipping office, and voyages four and five. BUILT.
 
-A first screen before the sea: the list of voyages, the ones you have done ticked off, the
-next one open, and the whole cruise at the bottom. The browser remembers which are done —
-one small entry in its own storage, no account and no login, and nothing else remembered,
-because a voyage is short enough to finish in a sitting.
+`src/office.js` is the first screen: the six voyages, what each one teaches, the ones you
+have sailed ticked, and the next unsailed one marked. **Nothing is locked** — a master who
+wants to go whaling on his first morning may. The browser remembers only which voyages you
+finished, in one entry, and says so on the card.
 
-Two more voyages, which by now are mostly a few lines in the table:
+Two more voyages:
 
-- **Watch and watch** — through the night, all hands called, the watch bill and fatigue.
-- **Something carried away** — a split sail, the stores, the carpenter, `m` to mend.
+- **Voyage four, watch and watch** — thirty miles, three squalls spread across the run, and
+  the crew's weariness now on the orders board. All hands is every man aboard and it tires
+  them; a weary crew is a slow one. Call them up and send them below again.
+- **Voyage five, something carried away** — she *begins* with her fore topsail split, so the
+  lesson is certain rather than left to the weather. `m` bends a new one out of the locker
+  and you watch the canvas go from five bolts to four.
 
-And the seventh card is the game as it stands today, unchanged: *A cruise*.
+Note on voyage four: it is **not** a night voyage. The sky has no night in it, so claiming
+one would have been a lie. The lesson is the crew's strength across a long run instead.
 
-*Test: finish voyage three, come back to the office, and see three ticks and voyage four open.*
+*Test: finish a voyage, come back to the office, and see it ticked.*
 
 ---
 
