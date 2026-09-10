@@ -482,7 +482,9 @@ function weatherLook(force, squall) {
 
 let shown = 0;
 let told = false;
+let squalled = false;
 let last = performance.now();
+const BEGAN = gameSeconds;     // her clock when she sailed
 
 function frame(now) {
   const real = Math.min((now - last) / 1000, 0.1);
@@ -497,6 +499,13 @@ function frame(now) {
   gameSeconds += gameDt;
 
   weather.tick(gameDt, (gameSeconds / 3600) % 24);
+
+  // A voyage may be given one squall of its own, on cue, rather than waiting
+  // on the weather's humour.
+  if (!squalled && V.squallAt && gameSeconds - BEGAN >= V.squallAt) {
+    squalled = weather.summon(V.squallWarning);
+  }
+
   const warning = weather.warning;
   squallLine.userData.update(warning);
   weatherLook(weather.force, warning ? warning.strength : 0);

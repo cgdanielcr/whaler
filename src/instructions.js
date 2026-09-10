@@ -119,7 +119,10 @@ export function makeInstructions(v, { begin }) {
 
   function word(passage) {
     if (passage.lost && passage.lost.length) {
-      return 'She is home, but not whole. That is what carrying too much canvas costs.';
+      return 'Not whole, sir. That is what carrying too much canvas costs.';
+    }
+    if (v.squallAt) {
+      return 'She came through it whole, sir. That is what shortening down in time buys you.';
     }
     if (passage.worth >= well) return 'Handsomely sailed, sir. You did not waste a mile of it.';
     if (passage.worth >= well * 0.85) {
@@ -152,11 +155,16 @@ export function makeInstructions(v, { begin }) {
             `<span class="through">${l.through.toFixed(1)} miles sailed for ${l.miles}</span></dd>`).join('')
         : '';
 
+      // A voyage that comes back is home; one that only goes out has fetched
+      // what it was sent for.
+      const home = legs.length && legs[legs.length - 1].said === 'home';
+
       done.innerHTML =
         `<h2>Voyage ${v.n} — ${v.title}</h2>` +
-        '<p class="home">She is home, and the anchor down.</p><dl>' +
+        `<p class="home">${home ? 'She is home, and the anchor down.'
+                                : 'The mark is under her bow.'}</p><dl>` +
         byLeg +
-        `<dt>Out and home in</dt><dd>${a.took}</dd>` +
+        `<dt>${home ? 'Out and home in' : 'Run in'}</dt><dd>${a.took}</dd>` +
         `<dt>Sailed through the water</dt><dd>${a.sailed.toFixed(1)} miles</dd>` +
         `<dt>Her best</dt><dd>${passage.most.toFixed(1)} knots</dd>` +
         `<dt>Of every mile sailed, made good</dt><dd>${Math.round(a.worth * 100)}%</dd>` +

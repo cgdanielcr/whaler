@@ -122,6 +122,54 @@ export const VOYAGES = [
   },
 
   {
+    key: 'shorten',
+    n: 3,
+    title: 'Shortening down',
+    teaches: 'What she may carry at each force, and how little warning a squall gives.',
+
+    letter: [
+      'New Bedford, the nineteenth day of October, 1841.',
+      'Sir — there is a fresh breeze this morning and the glass is falling, so ' +
+      'we would have you learn the last of it before you go: what she may carry, ' +
+      'and what it costs to carry more.',
+      'She lies at her moorings under all plain sail, and that is already more ' +
+      'than this wind will bear. Canvas comes off her from the top down — the ' +
+      'royals first, then the topgallants, then a reef in the topsails, then ' +
+      'the courses. Take it off in that order and never out of it. The board ' +
+      'will tell you when she is over-pressed, and it will tell you when she ' +
+      'is dangerously so.',
+      'Carry more than the wind will bear and the strain tells: a sail splits ' +
+      'from head to foot, a yard springs, a topmast goes by the board. It does ' +
+      'not happen at once, which is what tempts a young master to leave it a ' +
+      'little longer.',
+      'Watch the horizon to windward. A squall shows as a dark line before it ' +
+      'reaches you, and you will have minutes and not hours. You cannot get it ' +
+      'all off her in the time; you must choose what comes off first. Run ' +
+      'fourteen miles south to the mark, and bring her there with every sail ' +
+      'whole.',
+      'We are, sir, your obedient servants.'
+    ],
+
+    task: 'Run fourteen miles south to the mark, and bring her there with every sail whole.',
+
+    wind: { from: 315, force: 4.0 },   // a fresh breeze: her royals should be in already
+    heading: 180,                      // pointed at the mark, on a broad reach
+    swing: 0.9,                        // and it freshens as the morning goes on
+    fair: true,                        // no squall but the one she is given
+    ground: false,
+    wellSailed: 0.9,
+
+    // One squall, on cue, with more warning than a whole reef takes and less
+    // than the whole of shortening down. That gap is the game.
+    squallAt: 20 * 60,                 // her own seconds after she sails
+    squallWarning: 10,                 // minutes of warning from the horizon
+
+    plan: [{ bearing: 180, miles: 14, said: 'the mark', near: 1.5 }],
+
+    allow: ['sail', 'helm', 'clock', 'look', 'allhands', 'manoeuvre']
+  },
+
+  {
     key: 'cruise',
     n: null,
     title: 'A cruise',

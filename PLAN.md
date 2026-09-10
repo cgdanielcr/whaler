@@ -79,15 +79,23 @@ Tacking and wearing now refuse like the sail orders do, and tell you to call all
 
 *Test: steer straight at the mark. She stops. Call all hands, tack her, and get there anyway.*
 
-### M19 — Voyage three: shortening down
+### M19 — Voyage three: shortening down. BUILT.
 
-A fresh breeze, rising, and one squall summoned on cue a few minutes in — `weather.summon()`
-already exists for exactly this. The royals, the topgallants and the topsail reefs come
-onto the board, and the damage rule is live. The objective is to fetch the mark with every
-sail whole. A short account at the end says what carried away and what did not.
+Fourteen miles south, in a fresh breeze that freshens. She sails under all plain sail,
+which is already more than the wind will bear, so the board says so from the first minute
+and the royals want coming in before anything else happens.
 
-*Test: see the dark line on the horizon, take in the royals, and come through with all your
-canvas whole.*
+Twenty minutes out, one squall on cue with ten minutes of warning. Single-reefing the
+topsails takes twelve, so you cannot get it all off her in the time and must choose what
+comes off first — which is the whole of the design in SPEC §7.6. Her clock is pinned to her
+own time while a squall is in sight, so there is no running past it.
+
+Sailed as a test without shortening: the squall came up a strong gale, the board read
+*dangerously over-pressed*, and the main topsail yard sprang. Mending is not on this
+voyage, so she carries the loss to the mark — which is the lesson.
+
+*Test: see the dark line on the horizon, take in the royals and the topgallants, and come
+through with all your canvas whole.*
 
 ### M20 — The shipping office, and voyages four and five
 
