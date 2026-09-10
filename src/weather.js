@@ -9,10 +9,14 @@ const rand = (lo, hi) => lo + Math.random() * (hi - lo);
 
 // swing is how far the force wanders of its own accord: one for the open sea,
 // less for a quiet morning in home water.
-export function makeWeather(baseFrom, baseForce, swing = 1) {
+// every is how often she may throw a squall, in minutes. Half an hour suits a
+// morning in the bay; on a trade-wind passage of three months it wants to be
+// days, which is also what the sailing directions say.
+export function makeWeather(baseFrom, baseForce, swing = 1, every = [18, 40]) {
+  /* eslint-disable no-param-reassign */    // the belts move her base wind about
   let clock = 0;
   let squall = null;
-  let nextSquall = rand(18, 40) * MINUTE;
+  let nextSquall = rand(every[0], every[1]) * MINUTE;
   let held = null;      // the wind set by hand, while you have the glass
 
   // She never blows quite steady: two slow swells in the force, hours apart.
@@ -42,6 +46,16 @@ export function makeWeather(baseFrom, baseForce, swing = 1) {
   }
 
   return {
+    // The world's wind belts move under her as she runs south. She does not
+    // go from the trades to the westerlies in an afternoon: it comes on over
+    // days, so the base she blows from eases toward wherever she now is.
+    settle(gameDt, from, force) {
+      const k = 1 - Math.exp(-gameDt / 43200);      // half a day to come round
+      const turn = ((from - baseFrom + 540) % 360) - 180;
+      baseFrom = (baseFrom + turn * k + 360) % 360;
+      baseForce += (force - baseForce) * k;
+    },
+
     // Hold the weather quiet a while. The tutorial wants the first squall on
     // its own cue, not the weather's.
     quiet(minutes) { nextSquall = Math.max(nextSquall, clock + minutes * MINUTE); },
@@ -61,7 +75,7 @@ export function makeWeather(baseFrom, baseForce, swing = 1) {
         squall.age += gameDt;
         if (squall.age > squall.warning + squall.blow + 4 * MINUTE) {
           squall = null;
-          nextSquall = clock + rand(25, 70) * MINUTE;
+          nextSquall = clock + rand(every[0] * 1.4, every[1] * 1.75) * MINUTE;
         }
       } else if (clock > nextSquall) {
         squall = raise(hourOfDay < 5 || hourOfDay >= 19);

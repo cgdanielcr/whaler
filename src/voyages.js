@@ -11,6 +11,8 @@
 //
 // She is not named. If you want her named, put it in the letter below.
 
+import { ROUTE } from './route.js';
+
 // The keys on the board, gathered into groups a voyage can allow or withhold.
 export const GROUPS = {
   sail: 'making and shortening sail',
@@ -578,6 +580,56 @@ export const VOYAGES = [
         well: 'In, and whole. That is the last of your five voyages — the ground is next.'
       }
     ]
+  },
+
+  {
+    key: 'horn',
+    n: null,
+    title: 'The passage round the Horn',
+    teaches: 'The wind belts of the world, and why a passage is not a straight line.',
+
+    letter: [
+      'New Bedford, the sixth day of September, 1841.',
+      'Sir — you are to proceed to the Offshore Ground in the Pacific and there ' +
+      'take sperm whales until your casks are full. You will not see this port ' +
+      'again for three years, and we do not expect to hear from you.',
+      'Do not steer at it. The wind will not have it. Stand to the south-east ' +
+      'into the north-east trades, cross the line about thirty west so as to ' +
+      'weather Cape São Roque, run south through the south-east trades, and ' +
+      'take the westerlies down to the Horn. Round it, and the trades will ' +
+      'carry you north-west to the ground.',
+      'It is above ten thousand miles and something over three months. Your ' +
+      'clock will run on while nothing is happening, and come back to her own ' +
+      'time the instant anything does.',
+      'We are, sir, your obedient servants.'
+    ],
+
+    task: 'Round Cape Horn and raise the Offshore Ground — ten thousand miles.',
+
+    // She begins in the westerlies off New Bedford; from there the belts take
+    // her wind out of her master's hands and give it to her latitude.
+    wind: { from: 265, force: 4.6 },
+    heading: 150,
+    swing: 0.8,
+    fair: false,
+    ground: false,
+    belts: true,             // her wind follows the latitude she is in
+    wellSailed: 0.7,         // ten thousand miles of it will not be sailed straight
+    from: NEW_BEDFORD,
+
+    // She fills her casks to the brim for a passage of this length.
+    stores: { water: 260, provisions: 400 },
+
+    // On a trade-wind passage a squall is a thing that happens every day or
+    // three, not every half hour.
+    squallEvery: [1400, 4300],
+
+    plan: ROUTE.map((w, i) => ({
+      ...w, near: 60,        // a landfall of sixty miles: this is ocean sailing
+      then: i === 6 ? 'Cape Horn is astern of you, and few enough ships can say it.' : undefined
+    })),
+
+    allow: ALL
   },
 
   {

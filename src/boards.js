@@ -207,7 +207,7 @@ export function makeBoards(rig, crew, company, allows = () => true, legend = tru
       putText(out.speed, air.knots < 0.05 ? 'no way on her' : `${air.knots.toFixed(1)} knots`);
     }
     put(out.pace, (pace === 0 ? 'hove to' : `her clock at ×${pace}`) +
-      (sea.held ? '<br><span class="held-back">no speeding up with a squall in sight</span>' : ''));
+      (sea.held ? '<br><span class="held-back">her clock is held back</span>' : ''));
     out.pace.className = 'pace' + (pace === 0 ? ' paused' : '');
   };
 

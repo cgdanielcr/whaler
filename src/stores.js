@@ -28,8 +28,10 @@ const UNIT = {
   water: (n) => `${Math.floor(n)} days`
 };
 
-export function makeStores() {
-  const have = { ...START };
+// A voyage may fill her deeper than usual: a ship bound round the Horn topped
+// her water casks to the brim, and often again at Fayal or the Cape Verdes.
+export function makeStores(over = {}) {
+  const have = { ...START, ...over };
 
   return {
     get all() {

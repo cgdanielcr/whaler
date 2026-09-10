@@ -423,3 +423,42 @@ and the closing stroke then cut straight across the gap, which turned North Amer
 wedge. Every point is now drawn and the sheet does its own clipping.
 
 *Test: press k. New Bedford is where New Bedford is.*
+
+## M20h — The passage round the Horn. BUILT.
+
+The chart made real geography possible; this makes the voyage real.
+
+**`passage.js` now reckons in latitude and longitude.** It used to work in metres east and
+north on a flat plane, which is fine for a mark seven miles off and quite wrong over ten
+thousand, where a degree of longitude is fifty-two sea miles at New Bedford and thirty-four
+off Cape Horn. She is worked by plane sailing on the middle latitude — dead reckoning, and
+exactly what a log line and a compass give you. Legs may be a bearing and a distance, or a
+real place.
+
+**`src/route.js`** — the passage, and the wind belts.
+
+- **The route**: New Bedford, windward of Bermuda, the north-east trades, the line at 30° W
+  to weather Cape São Roque, the south-east trades, off the River Plate, the Falklands,
+  **Cape Horn**, clear of it, and the Offshore Ground at 12° S 108° W. **10,657 sea miles**
+  — every distance falling out of the coordinates, none of them invented. About 97 days at
+  four and a half knots, which is what the passage really took.
+- **The wind belts**: northern westerlies, horse latitudes, north-east trades, doldrums,
+  south-east trades, southern horse latitudes, westerlies, roaring forties — each at its
+  real latitude, interpolated between centres. Her wind is no longer her master's to choose:
+  it is whatever the latitude she has reached happens to blow, easing over half a day.
+  **This is why the route bends** instead of running straight, and the game now teaches
+  that by making you sail it.
+
+**Her clock runs to ×600** — five hours a second — because nothing happens for most of a
+hundred days. It is **capped rather than stopped**: your hand on the helm brings her to her
+own time, and a squall in sight or canvas she cannot carry holds her to ×8, which is fast
+enough to cross an ocean and slow enough to shorten sail in.
+
+Two faults found by sailing it: **a squall every half hour** pinned the clock at ×1 and made
+the passage impossible, so a voyage now says how often the weather may throw one — days, on
+a trade-wind passage. And **being over-pressed did not hold her back**, so at ×600 she tore
+her royals, topgallants and a topsail to pieces in the westerlies before anything could be
+seen to happen.
+
+*Test: sail the Horn passage and press k. Ten thousand miles of real sea, and the wind backs
+as you go south.*

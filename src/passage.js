@@ -1,11 +1,22 @@
-// The passage: the water she has to cross, and an account of how she came by
-// it. A voyage may be one leg out, as the run down to the cruising ground is,
-// or out and home again, as a morning in the bay is.
+// The passage: where she is on the round world, and how she came by it.
+//
+// She used to be reckoned in metres east and north of where she sailed, which
+// is fine for a morning in the bay and quite wrong for a voyage round the
+// Horn, where a degree of longitude is fifty-two sea miles at New Bedford and
+// thirty-four off Cape Horn. So she is reckoned in latitude and longitude now,
+// and worked the way her master worked her: plane sailing on the middle
+// latitude, which is what a log line and a compass actually give you and what
+// he did on a slate every noon.
+//
+// A voyage's legs may be given either as a bearing and a distance -- good for
+// a mark seven miles off -- or as a real latitude and longitude, which is how
+// the passage round the Horn is written.
 import { compassPoint, wrap } from './wind.js';
 
-const NM = 1852;          // metres in a nautical mile
-const KNOT = 0.5144;
-const LANDFALL = 1;       // nautical miles: near enough to call it arrived
+const RAD = Math.PI / 180, DEG = 180 / Math.PI;
+const R_NM = 3440.065;      // the earth's radius in sea miles
+const KNOT_NM = 1 / 3600;   // sea miles run in a second at one knot
+const LANDFALL = 1;         // near enough to call a mark fetched
 
 export const DESTINATION = { bearing: 225, miles: 60 };
 
@@ -16,104 +27,114 @@ function spellTime(seconds) {
   const parts = [];
   if (days) parts.push(`${days} day${days > 1 ? 's' : ''}`);
   if (hours) parts.push(`${hours} hour${hours > 1 ? 's' : ''}`);
-  if (minutes) parts.push(`${minutes} minute${minutes > 1 ? 's' : ''}`);
+  if (!days && minutes) parts.push(`${minutes} minute${minutes > 1 ? 's' : ''}`);
   return parts.join(', ').replace(/, ([^,]*)$/, ' and $1') || 'no time at all';
 }
 
-// plan is a list of legs, each reckoned from where the last one ended, so
-// { bearing: 45, miles: 7 } then { bearing: 225, miles: 7 } brings her home.
-export function makePassage(rig, plan = [DESTINATION]) {
+// How far apart two places are, round the curve of the earth.
+export function apart(a, b) {
+  const dLat = (b.lat - a.lat) * RAD, dLon = (b.lon - a.lon) * RAD;
+  const h = Math.sin(dLat / 2) ** 2 +
+    Math.cos(a.lat * RAD) * Math.cos(b.lat * RAD) * Math.sin(dLon / 2) ** 2;
+  return 2 * R_NM * Math.asin(Math.min(1, Math.sqrt(h)));
+}
+
+// What course to steer to raise a place.
+export function bearingTo(a, b) {
+  const p1 = a.lat * RAD, p2 = b.lat * RAD, dLon = (b.lon - a.lon) * RAD;
+  const y = Math.sin(dLon) * Math.cos(p2);
+  const x = Math.cos(p1) * Math.sin(p2) - Math.sin(p1) * Math.cos(p2) * Math.cos(dLon);
+  return wrap(Math.atan2(y, x) * DEG);
+}
+
+// Sailing a distance on a course, by the middle latitude.
+function sail(from, course, miles) {
+  const lat = from.lat + (miles * Math.cos(course * RAD)) / 60;
+  const mid = ((from.lat + lat) / 2) * RAD;
+  const dLon = (miles * Math.sin(course * RAD)) / (60 * Math.max(0.03, Math.cos(mid)));
+  return { lat: Math.max(-85, Math.min(85, lat)), lon: from.lon + dLon };
+}
+
+export function makePassage(rig, plan = [DESTINATION], from = { lat: 41.63, lon: -70.93 }) {
+  // Every leg becomes a real place, whether it was written as one or as a
+  // bearing and a distance from the last.
   const legs = [];
-  let px = 0, pz = 0;
+  let walk = { lat: from.lat, lon: from.lon };
   for (const l of plan) {
-    const from = { x: px, z: pz };
-    const b = l.bearing * Math.PI / 180;
-    px += Math.sin(b) * l.miles * NM;
-    pz += Math.cos(b) * l.miles * NM;
-    legs.push({ from, x: px, z: pz, miles: l.miles, then: l.then,
-                near: l.near || LANDFALL,
-                said: l.said || 'her destination' });
+    const to = l.lat !== undefined ? { lat: l.lat, lon: l.lon } : sail(walk, l.bearing, l.miles);
+    legs.push({
+      from: walk, lat: to.lat, lon: to.lon,
+      miles: l.miles !== undefined ? l.miles : apart(walk, to),
+      near: l.near || LANDFALL, then: l.then,
+      said: l.said || 'her destination'
+    });
+    walk = to;
   }
 
-  let leg = 0;              // which one she is on
-  let x = 0, z = 0;         // where she is, in metres from where she began
-  let sailed = 0;           // through the water
+  let leg = 0;
+  let at = { lat: from.lat, lon: from.lon };
+  let sailed = 0;             // sea miles through the water
   let elapsed = 0;
-  let most = 0;             // her best speed of the voyage
+  let most = 0;
   let arrived = null;
-  // What each leg cost her, which is the whole of the lesson about going to
-  // windward: the same six miles out and home are not the same six miles.
   let legBegan = 0, legSailed = 0;
 
-  const at = () => legs[Math.min(leg, legs.length - 1)];
-  const toRun = () => Math.hypot(at().x - x, at().z - z) / NM;
+  const mark = () => legs[Math.min(leg, legs.length - 1)];
+  const toRun = () => apart(at, mark());
 
   return {
-    // Her reckoning runs on her own clock, not on your eye. onLeg is called
-    // when she fetches a mark with another leg still to run.
+    // Her reckoning runs on her own clock, not on your eye.
     run(gameDt, knots, courseRad, onLeg) {
       if (arrived) return;
       elapsed += gameDt;
       if (knots > most) most = knots;
-      const metres = knots * KNOT * gameDt;
-      sailed += metres;
-      x += Math.sin(courseRad) * metres;
-      z += Math.cos(courseRad) * metres;
 
-      if (toRun() > at().near) return;
+      const miles = knots * KNOT_NM * gameDt;
+      sailed += miles;
+      if (miles > 0) at = sail(at, wrap(courseRad * DEG), miles);
 
-      // Close the leg's own account before moving on to the next.
-      const done = at();
+      if (toRun() > mark().near) return;
+
+      const done = mark();
       done.took = spellTime(elapsed - legBegan);
-      done.through = (sailed - legSailed) / NM;
+      done.through = sailed - legSailed;
       legBegan = elapsed;
       legSailed = sailed;
 
       if (leg < legs.length - 1) {
         leg += 1;
-        if (onLeg) onLeg(done, at());
+        if (onLeg) onLeg(done, mark());
         return;
       }
 
-      const hours = elapsed / 3600;
-      const run = sailed / NM;
       const straight = legs.reduce((n, l) => n + l.miles, 0);
       arrived = {
         elapsed,
         took: spellTime(elapsed),
-        sailed: run,
+        sailed,
         made: this.made,
-        average: hours > 0 ? run / hours : 0,
-        // How much of every mile through the water counted towards where she
-        // was going. Beating to windward is where this is spent.
-        worth: run > 0 ? Math.min(1, straight / run) : 1,
+        average: elapsed > 0 ? sailed / (elapsed / 3600) : 0,
+        // How much of every mile through the water counted. Beating to
+        // windward is where this is spent.
+        worth: sailed > 0 ? Math.min(1, straight / sailed) : 1,
         lost: rig.hurt()
       };
     },
 
     get leg() { return leg; },
-    // Where she is, in metres east and north of where she sailed from, so the
-    // chart can turn it into a latitude and a longitude.
-    get where() { return { x, z }; },
-    // The marks of her voyage, likewise.
-    get marks() { return legs.map((l) => ({ x: l.x, z: l.z, said: l.said })); },
+    get where() { return at; },
+    get marks() { return legs.map((l) => ({ lat: l.lat, lon: l.lon, said: l.said })); },
     get toRun() { return toRun(); },
-    get sailed() { return sailed / NM; },
+    get sailed() { return sailed; },
     get most() { return most; },
-    // Each leg, once she has run it: what it took and how far she sailed to
-    // do it. Two legs of the same length may be nothing like each other.
     get legs() { return legs.filter((l) => l.took); },
-    // The leg she is on: how long it is, and what lies at the end of it.
-    get total() { return at().miles; },
-    get legSaid() { return at().said; },
-    // Distance made good: how far she has come along the line she meant to sail.
+    get total() { return Math.round(mark().miles); },
+    get legSaid() { return mark().said; },
+    // Distance made good along the leg she is on.
     get made() {
-      const l = at();
-      const dx = l.x - l.from.x, dz = l.z - l.from.z;
-      const len = Math.hypot(dx, dz);
-      return Math.max(0, ((x - l.from.x) * dx + (z - l.from.z) * dz) / len / NM);
+      return Math.max(0, apart(mark().from, mark()) - toRun());
     },
-    get bearing() { return wrap(Math.atan2(at().x - x, at().z - z) * 180 / Math.PI); },
+    get bearing() { return bearingTo(at, mark()); },
     get bearingSaid() { return compassPoint(this.bearing); },
     get arrived() { return arrived; }
   };

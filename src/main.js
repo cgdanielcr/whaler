@@ -34,6 +34,7 @@ import { makeWorkUp } from './workup.js';
 import { makeTrim } from './trim.js';
 import { chosen, picked, logSailed, NEW_BEDFORD } from './voyages.js';
 import { makeChart } from './chart.js';
+import { beltAt } from './route.js';
 import { makeInstructions, headSaid } from './instructions.js';
 import { makeOffice } from './office.js';
 import { makePilot } from './pilot.js';
@@ -181,7 +182,7 @@ let byHand = null;
 const holdLook = (g) => { byHand = g; };   // null gives it back to the weather
 const greyness = (force, squall) => byHand === null ? gloomFor(force, squall) : byHand;
 
-const weather = makeWeather(V.wind.from, V.wind.force, V.swing);
+const weather = makeWeather(V.wind.from, V.wind.force, V.swing, V.squallEvery);
 
 const held = new Set();
 const helm = { hold: (code) => held.add(code), release: (code) => held.delete(code) };
@@ -190,38 +191,50 @@ const helm = { hold: (code) => held.add(code), release: (code) => held.delete(co
 // and not with your helm over. Her clock carries the helm with it: at eight
 // times, a touch on the arrow swings her half round before you can take your
 // finger off. So while you are conning her she comes back to her own time.
-const PACES = [1, 2, 4, 8];
+// Up to five hours a second, because the passage round the Horn is a hundred
+// days and nothing happens for most of it. Anything at all -- a squall in
+// sight, your hand on the helm -- drops her back to her own time at once.
+const PACES = [1, 2, 4, 8, 30, 120, 600];
 // She lies hove to behind the owners' letter until it has been read.
 let paceStep = 0, hoveTo = true;
-const heldBack = () => !!weather.warning || held.size > 0;
+
+// Her clock is capped rather than stopped. Your hand on the helm brings her
+// back to her own time, because at any speed above that a tap swings her half
+// round. A squall in sight holds her to eight, which is fast enough to cross
+// an ocean and slow enough to shorten sail in -- ten minutes of warning is
+// twenty seconds of yours, which is the same tight choice voyage three makes.
+const capNow = () => {
+  if (held.size > 0) return 1;
+  // Carrying more than the wind will bear holds her back too. Without this she
+  // runs five hours to the second into the westerlies under all plain sail and
+  // tears her canvas to pieces before you have looked up.
+  if (weather.warning || over > 0) return 8;
+  return PACES[PACES.length - 1];
+};
+
 const time = {
   begin: () => { hoveTo = false; },
   toggle: () => { hoveTo = !hoveTo; },
-  faster: () => { if (!weather.warning) paceStep = Math.min(PACES.length - 1, paceStep + 1); },
+  faster: () => { paceStep = Math.min(PACES.length - 1, paceStep + 1); },
   slower: () => { paceStep = Math.max(0, paceStep - 1); },
   slowest: () => { paceStep = 0; },
-  get pace() { return hoveTo ? 0 : PACES[heldBack() ? 0 : paceStep]; }
+  get pace() { return hoveTo ? 0 : Math.min(PACES[paceStep], capNow()); },
+  get held() { return !hoveTo && PACES[paceStep] > capNow(); }
 };
 
 const company = makeCompany();
 const crew = makeCrew(company);
-const stores = makeStores();
+const stores = makeStores(V.stores);
 const lookouts = makeLookouts(company);
 const boards = makeBoards(rig, crew, company, allows, !V.steps);
 const readOut = makeInstruments();
-const passage = makePassage(rig, V.plan);
+const passage = makePassage(rig, V.plan, V.from || NEW_BEDFORD);
 
 const watchBill = makeWatchBill(company, crew);
 
 // The chart. Metres east and north of where she sailed become a real latitude
 // and longitude, so she is on the real sea rather than on a blank one.
 const chart = makeChart(V.from || NEW_BEDFORD);
-const DEG = 111320;                // metres in a degree of latitude
-const fixOf = (x, z) => {
-  const from = V.from || NEW_BEDFORD;
-  const lat = from.lat + z / DEG;
-  return { lat, lon: from.lon + x / (DEG * Math.cos(lat * Math.PI / 180)) };
-};
 const hands = makeHands(company, crew, rig, hull, camera, renderer.domElement);
 const trim = makeTrim({
   weather, sun,
@@ -614,6 +627,12 @@ function frame(now) {
   shown += seen;
   gameSeconds += gameDt;
 
+  // On a passage her wind is not her master's to choose: it is whatever the
+  // latitude she has reached happens to blow.
+  if (V.belts) {
+    const belt = beltAt(passage.where.lat);
+    weather.settle(gameDt, belt.from, belt.force);
+  }
   weather.tick(gameDt, (gameSeconds / 3600) % 24);
 
   // A voyage may be given squalls of its own, on cue, rather than waiting on
@@ -638,15 +657,11 @@ function frame(now) {
   sail(seen, gameDt, shown);
   rideTheSwell(shown);
   stores.tick(gameDt);
-  boards.update(gameSeconds, pace, { over, held: !!warning }, passage, stores,
+  boards.update(gameSeconds, pace, { over, held: time.held }, passage, stores,
                 lookouts, hunt, cruise, workUp, air);
   instructions.update(passage, heading);
   command(air);
-
-  const her = passage.where;
-  const fix = fixOf(her.x, her.z);
-  chart(gameSeconds, fix.lat, fix.lon, heading,
-        passage.marks.map((m) => ({ ...fixOf(m.x, m.z), said: m.said })));
+  chart(gameSeconds, passage.where.lat, passage.where.lon, heading, passage.marks);
   if (pilot && underway) pilot.tick(real, conning());
   watchBill(gameSeconds);
   hands(seen);
