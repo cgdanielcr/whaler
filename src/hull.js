@@ -115,6 +115,42 @@ function buildDeck() {
   return geometry;
 }
 
+// Her false gunports. The Morgan carried no cannon, but had gunports painted
+// black on her sides to frighten off would-be pirates -- a whaleship three
+// years from home in the Pacific being worth robbing and unable to defend
+// herself. Documented; the number and spacing are inferred.
+//
+// They are laid on the buff sheer band by working out the same surface points
+// the planking uses, so they sit on her skin and follow her curve.
+const PORTS = 9;
+
+function buildPorts() {
+  const vertices = [], indices = [];
+  const at = (u, t, side) => {
+    const beam = halfBeamAt(u), keel = keelAt(u), sheer = sheerAt(u);
+    // A hair proud of the planking, or she will fight it for the same pixels.
+    const x = side * beam * Math.pow(Math.sin(t * Math.PI / 2), 0.45) * 1.012;
+    return [x, keel + t * (sheer - keel), u * LENGTH / 2 + rakeAt(u, t)];
+  };
+
+  let n = 0;
+  for (let side = -1; side <= 1; side += 2) {
+    for (let i = 0; i < PORTS; i++) {
+      const u = -0.70 + (1.48 * i) / (PORTS - 1);
+      for (const [du, t] of [[-0.026, 0.905], [0.026, 0.905], [0.026, 0.985], [-0.026, 0.985]]) {
+        vertices.push(...at(u + du, t, side));
+      }
+      indices.push(n, n + 1, n + 2, n, n + 2, n + 3);
+      n += 4;
+    }
+  }
+
+  const geometry = new THREE.BufferGeometry();
+  geometry.setAttribute('position', new THREE.Float32BufferAttribute(vertices, 3));
+  geometry.setIndex(indices);
+  return geometry;
+}
+
 export function makeHull() {
   const ship = new THREE.Group();
 
@@ -129,6 +165,11 @@ export function makeHull() {
   })));
   deck.receiveShadow = true;
   ship.add(deck);
+
+  const ports = new THREE.Mesh(buildPorts(), new THREE.MeshBasicMaterial({
+    color: HUE.hull, side: THREE.DoubleSide
+  }));
+  ship.add(ports);
 
   // The bowsprit. The headsails will hang from it later.
   const spar = new THREE.Mesh(

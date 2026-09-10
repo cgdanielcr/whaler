@@ -140,7 +140,7 @@ export function bindSection(panel, company) {
     const m = company.all.find((x) => x.id === Number(g.dataset.id));
     if (!m) return;
     const deeds = m.deeds && m.deeds.length ? ` — ${m.deeds.join('; ')}` : '';
-    whois.innerHTML = `<b>${m.name}</b>, ${m.berth.toLowerCase()}` +
+    whois.innerHTML = `<b>${m.name}</b>, ${m.age}, ${m.berth.toLowerCase()}` +
       `${m.watch ? `, ${m.watch} watch` : ', no watch'}` +
       ` — ${m.rate}, ${m.strength}, ${m.health}${deeds}`;
   });

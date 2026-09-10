@@ -32,7 +32,8 @@ export function makeWatchBill(company, crew) {
       '<table>' + men.map((m) =>
         `<tr><td class="who"><span class="name" contenteditable="true" ` +
         `spellcheck="false" data-id="${m.id}">${m.name}</span></td>` +
-        `<td class="rate">${m.berth === 'Foremast hand' ? m.rate : m.berth.toLowerCase()}</td>` +
+        `<td class="rate">${m.berth === 'Foremast hand' ? m.rate : m.berth.toLowerCase()}` +
+        `<span class="age">${m.age}</span></td>` +
         `<td class="post">${STATION_SAID[m.station]}</td></tr>`).join('') +
       `</table><p class="tally">${men.length} hands</p></div>`;
   }
@@ -44,7 +45,7 @@ export function makeWatchBill(company, crew) {
       '<table>' + company.idlers.map((m) =>
         `<tr><td class="who"><span class="name" contenteditable="true" ` +
         `spellcheck="false" data-id="${m.id}">${m.name}</span></td>` +
-        `<td class="rate">${m.berth.toLowerCase()}</td>` +
+        `<td class="rate">${m.berth.toLowerCase()}<span class="age">${m.age}</span></td>` +
         `<td class="post${m.job ? ' set' : ''}">${m.job || m.idler}</td></tr>`).join('') +
       `</table><p class="tally">${company.idlers.length} hands</p></div>`;
   }
@@ -60,9 +61,13 @@ export function makeWatchBill(company, crew) {
       '<h2 class="bill">The watch bill</h2>' +
       '<div class="watches">' + column('starboard', onDeck) + column('larboard', onDeck) +
       idlerColumn() + '</div>' +
-      '<p class="note">Twenty-nine hands under you. Twenty-four keep watches, ' +
-      'twelve to a watch, four hours on deck and four below. The five idlers ' +
-      'keep no watch and work at their trades through the day.<br>' +
+      '<p class="note">Thirty-two hands under you, which with yourself makes ' +
+      'the thirty-three a whaleship of this size averaged. Twenty-seven keep ' +
+      'watches, four hours on deck and four below; the five idlers keep no ' +
+      'watch and work at their trades through the day.<br>' +
+      'Look at their ages. A whaleship was worked by boys: on this ship&rsquo;s ' +
+      'real first voyage in 1841, twelve of her thirty hands were between ' +
+      'fifteen and nineteen.<br>' +
       'A watch of twelve cannot reef topsails or tack ship on its own. Both ' +
       'want all hands, and always did.<br>' +
       'Click a name to change it. <b>b</b> or <b>esc</b> to close.</p>';

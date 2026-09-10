@@ -146,9 +146,11 @@ Also worth having in hard copy: John F. Leavitt, *The Charles W. Morgan* (Mystic
    section can be drawn true instead of plausible.
 3. Three things this note says the game already gets right, and should not be "improved":
    ship rig with single topsails in 1841, the five idlers by name, and the shipkeepers.
-4. Three things it says are wrong or missing: the crew is too old, thirty-three is the
-   truer complement than thirty, and she should have **false gunports painted on her
-   sides**.
+4. Three things it said were wrong or missing have been **put right (10 September)**:
+   she now ships two-and-thirty hands under the master for a company of thirty-three;
+   every man has an age, and a third of them are boys; and she has **false gunports
+   painted black along her buff sheer band**, which is the most recognisable thing about
+   the real ship.
 
 ---
 

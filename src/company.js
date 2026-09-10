@@ -1,5 +1,5 @@
-// The ship's company: thirty hands under you, each with a name, a rating and
-// a watch.
+// The ship's company: two-and-thirty hands under you, each with a name, a
+// rating, an age and a watch.
 //
 // A whaleship's crew was the most mixed afloat. New Bedford and Nantucket
 // families, Azoreans and Cape Verdeans shipped on the outward passage, Black
@@ -9,8 +9,9 @@
 // 1840s. They are plausible, not particular: no man here is meant to be any
 // real person, and nothing is quoted from any crew list.
 //
-// You are the master, and are not one of the thirty. A crew list of the period
-// names the master separately from the hands he ships.
+// You are the master, and are not one of them. A crew list of the period names
+// the master separately from the hands he ships. The Morgan's crews averaged
+// three-and-thirty souls all told -- see MORGAN.md.
 
 const NAMES = [
   { weight: 5,   // New England whaling families
@@ -60,10 +61,10 @@ function nameMaker() {
   };
 }
 
-// What she ships, and in what numbers. Twenty-nine hands under you, which
-// with yourself makes the thirty souls the spec counts.
+// What she ships, and in what numbers. Two-and-thirty hands under you, which
+// with yourself makes the three-and-thirty a whaleship of her size averaged.
 //
-// Twenty-four of them keep watches, twelve to a watch. The other five are
+// Seven-and-twenty of them keep watches. The other five are
 // idlers: they work through the day at their trades and keep no night watch
 // at all, which is what the word meant -- not that they were idle, but that
 // they did not stand a watch. They turn out with everyone else when all hands
@@ -73,9 +74,9 @@ const BERTHS = [
   { berth: 'Second mate',   rate: 'mate',            station: 'the deck',   n: 1 },
   { berth: 'Third mate',    rate: 'mate',            station: 'the deck',   n: 1 },
   { berth: 'Boatsteerer',   rate: 'boatsteerer',     station: 'topman',     n: 4 },
-  { berth: 'Foremast hand', rate: 'able seaman',     station: 'topman',     n: 5 },
-  { berth: 'Foremast hand', rate: 'ordinary seaman', station: 'afterguard', n: 6 },
-  { berth: 'Foremast hand', rate: 'green hand',      station: 'waister',    n: 6 },
+  { berth: 'Foremast hand', rate: 'able seaman',     station: 'topman',     n: 6 },
+  { berth: 'Foremast hand', rate: 'ordinary seaman', station: 'afterguard', n: 7 },
+  { berth: 'Foremast hand', rate: 'green hand',      station: 'waister',    n: 7 },
 
   { berth: 'Cooper',    rate: 'tradesman',  idler: 'the casks',        n: 1 },
   { berth: 'Carpenter', rate: 'tradesman',  idler: 'her woodwork',     n: 1 },
@@ -85,6 +86,26 @@ const BERTHS = [
 ];
 
 const STRENGTH = ['weak', 'middling', 'middling', 'strong'];
+
+// How old they were. On the Morgan's first voyage out of New Bedford in 1841
+// she carried thirty hands and twelve of them were between fifteen and
+// nineteen -- a whaleship was crewed largely by boys, and that is the single
+// most surprising true thing about her. Her master that voyage was thirty-four.
+// Documented; the spread within each rating is inferred.
+const YEARS = {
+  'Cabin boy': [13, 16],
+  mate: [26, 42],
+  boatsteerer: [21, 33],
+  tradesman: [24, 48],
+  'able seaman': [20, 32],
+  'ordinary seaman': [17, 23],
+  'green hand': [15, 19]
+};
+
+const aged = (berth, rate) => {
+  const [lo, hi] = YEARS[berth] || YEARS[rate] || [20, 30];
+  return lo + Math.floor(Math.random() * (hi - lo + 1));
+};
 
 export function makeCompany() {
   const name = nameMaker();
@@ -98,6 +119,7 @@ export function makeCompany() {
         station: b.idler ? 'day work' : b.station,
         idler: b.idler || null,          // what he is at when nothing else calls
         job: null,                       // what you have set him to instead
+        age: aged(b.berth, b.rate),
         strength: pick(STRENGTH), health: 'sound', watch: null
       });
     }

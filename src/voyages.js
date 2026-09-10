@@ -262,8 +262,8 @@ export const VOYAGES = [
     letter: [
       'New Bedford, the second day of November, 1841.',
       'Sir — a longer run today, and a lesson in your people rather than in ' +
-      'your canvas. Four-and-twenty of them keep watches, twelve to a watch, ' +
-      'four hours on deck and four below. That is not a kindness. It is the ' +
+      'your canvas. Seven-and-twenty of them keep watches, four hours on deck ' +
+      'and four below. That is not a kindness. It is the ' +
       'only way a ship is worked for three years together without her company ' +
       'being used up in the first six months.',
       'Calling all hands turns out every man aboard, the watch below with the ' +
