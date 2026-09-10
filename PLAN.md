@@ -237,4 +237,20 @@ wind blew, and no way to tell whether she was moving at all.
 - **A step landing** stamps a filled tick beside the mate's word and rings the whole panel
   in rust; a step arriving slides up from below.
 
+**Feedback, after the owner asked for it to be more evident (10 September).** He wanted
+confirmation you can see and feel — "sparks flying would be too much, but think in that
+direction". So the pilot now *points* and *lands*:
+
+- **He points at what he names.** The canvas he is talking about lights up on the ship
+  herself, reusing the glossary's `rig.mark`; the pennant swells and pales; the board
+  carrying the figure is ringed with a slow pulse. He holds his finger there four seconds
+  and lets go, so he does not fight the glossary's own hover.
+- **A closing gauge** on every steering step: a track with the mark at its centre and her
+  head as a needle walking in from the side, reading *54° to larboard* and closing as she
+  comes round. Inside the tolerance the whole bar goes solid blue and reads **on the mark**.
+- **The helm buttons fill solid and press in** while held, so the wheel feels held rather
+  than clicked.
+- **A step landing** stamps a filled tick beside the mate's word and rings the whole panel
+  in rust. A step arriving slides up from below.
+
 *Test: press Sail, and do what the mate tells you, one step at a time.*
