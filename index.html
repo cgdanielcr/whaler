@@ -248,13 +248,21 @@
       font-size: 1.15rem; letter-spacing: 0.18em; text-transform: uppercase;
       border: 1px solid var(--edge); padding: 0.55rem 1.9rem;
     }
-    #letter .sail:hover { border-color: var(--rust); }
+    /* The next voyage carries its whole name, so it is set at reading size
+       rather than in the Sail button's capitals. */
+    #voyage-done .on {
+      font-size: 0.98rem; border: 1px solid var(--edge); padding: 0.5rem 1.3rem;
+    }
+    #letter .sail:hover, #voyage-done .on:hover { border-color: var(--rust); }
 
     #voyage-done .home { font-size: 1.1rem; margin: 0 0 1.1rem; }
     #voyage-done dl { margin: 0 0 1.1rem; display: grid; grid-template-columns: 1fr auto; gap: 0.3rem 1.2rem; }
     #voyage-done dt { font-size: 0.84rem; color: var(--faint); }
     #voyage-done dd { margin: 0; font-size: 0.92rem; text-align: right; }
     #voyage-done p { margin: 0 0 0.8rem; font-size: 0.9rem; line-height: 1.55; }
+    #voyage-done dd .through {
+      display: block; font-size: 0.74rem; color: var(--faint); font-style: italic;
+    }
 
     /* --- the account at the end ---------------------------------------------- */
 

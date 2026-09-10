@@ -41,6 +41,9 @@ export function makePassage(rig, plan = [DESTINATION]) {
   let elapsed = 0;
   let most = 0;             // her best speed of the voyage
   let arrived = null;
+  // What each leg cost her, which is the whole of the lesson about going to
+  // windward: the same six miles out and home are not the same six miles.
+  let legBegan = 0, legSailed = 0;
 
   const at = () => legs[Math.min(leg, legs.length - 1)];
   const toRun = () => Math.hypot(at().x - x, at().z - z) / NM;
@@ -59,10 +62,16 @@ export function makePassage(rig, plan = [DESTINATION]) {
 
       if (toRun() > at().near) return;
 
+      // Close the leg's own account before moving on to the next.
+      const done = at();
+      done.took = spellTime(elapsed - legBegan);
+      done.through = (sailed - legSailed) / NM;
+      legBegan = elapsed;
+      legSailed = sailed;
+
       if (leg < legs.length - 1) {
-        const fetched = at();
         leg += 1;
-        if (onLeg) onLeg(fetched, at());
+        if (onLeg) onLeg(done, at());
         return;
       }
 
@@ -85,6 +94,9 @@ export function makePassage(rig, plan = [DESTINATION]) {
     get toRun() { return toRun(); },
     get sailed() { return sailed / NM; },
     get most() { return most; },
+    // Each leg, once she has run it: what it took and how far she sailed to
+    // do it. Two legs of the same length may be nothing like each other.
+    get legs() { return legs.filter((l) => l.took); },
     // The leg she is on: how long it is, and what lies at the end of it.
     get total() { return at().miles; },
     get legSaid() { return at().said; },

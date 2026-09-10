@@ -237,6 +237,13 @@ function manoeuvre(which) {
   }
 
   const e = MANOEUVRES[which];
+  // Tacking and wearing both want more hands than a watch of twelve can find.
+  // Without this the order goes into the queue and waits there for ever, with
+  // nothing to tell you why she will not come round.
+  if (!crew.allHands && crew.wantsAllHands(e.hands)) {
+    boards.say(`${e.name} wants ${e.hands} hands, and the watch has ${crew.onDeck}. Call all hands.`);
+    return;
+  }
   crew.issue({
     name: e.name, hands: e.hands, minutes: e.minutes, swing: true,
     onStart() {

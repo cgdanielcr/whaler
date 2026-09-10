@@ -57,6 +57,7 @@ export const VOYAGES = [
     swing: 0.35,          // how much the force wanders. A quiet day.
     fair: true,           // no squalls
     ground: false,        // no whaling: this is home water
+    wellSailed: 0.9,      // a reach: he expects you to hold her on it
 
     plan: [
       { bearing: 45, miles: 7, said: 'the mark', near: 1.5,
@@ -66,6 +67,58 @@ export const VOYAGES = [
     ],
 
     allow: ['sail', 'helm', 'clock', 'look', 'allhands']
+  },
+
+  {
+    key: 'windward',
+    n: 2,
+    title: 'Working to windward',
+    teaches: 'What it costs to go where the wind comes from, and how to tack.',
+
+    letter: [
+      'New Bedford, the eleventh day of October, 1841.',
+      'Sir — you have the feel of her now. Today we would have you learn what ' +
+      'it costs to go where the wind comes from. The mark lies six miles to ' +
+      'the north-west, and the wind is out of the north-west, so she cannot be ' +
+      'steered at it. No square-rigged ship will lie closer than six points to ' +
+      'the wind; try to point her nearer and she will stop and be taken aback.',
+      'What you must do is beat. Stand as close to the wind as she will lie on ' +
+      'one tack, then put her about and stand as close on the other, making a ' +
+      'staircase of it up to the mark. Every mile she sails will gain you a ' +
+      'little over half a mile toward it, and the board will show you both ' +
+      'figures so that you may see the difference.',
+      'She comes about one of two ways. Tacking carries her head through the ' +
+      'wind: it is quick, and it can fail, and a ship that misses stays hangs ' +
+      'in irons and loses all her way. Wearing carries her stern through ' +
+      'instead: it never fails, but it is slower and it throws away ground to ' +
+      'leeward. Below four knots, do not trust her to stay.',
+      'Either way it is all hands. A watch of twelve cannot bring a ship of ' +
+      'this burthen round, and never could; call your people up before you ' +
+      'put her about.',
+      'Coming home you will have the wind behind you, and you may judge the ' +
+      'difference for yourself.',
+      'We are, sir, your obedient servants.'
+    ],
+
+    task: 'Beat six miles up to the mark to the north-west, and run home again.',
+
+    wind: { from: 315, force: 3.5 },
+    heading: 245,         // close-hauled on the larboard tack, already standing toward it
+    swing: 0.5,
+    fair: true,
+    ground: false,
+    // Beating gains a little over half a mile in every mile even when it is
+    // well done, so she is not judged against a reach.
+    wellSailed: 0.6,
+
+    plan: [
+      { bearing: 315, miles: 6, said: 'the mark', near: 1.5,
+        then: 'The mark is fetched, and the worst of it is behind you. Put her ' +
+              'before the wind and run home.' },
+      { bearing: 135, miles: 6, said: 'home', near: 1.5 }
+    ],
+
+    allow: ['sail', 'helm', 'clock', 'look', 'allhands', 'manoeuvre']
   },
 
   {

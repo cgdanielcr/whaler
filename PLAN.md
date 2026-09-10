@@ -59,14 +59,25 @@ Two things found by sailing it, and fixed:
 
 *Test: load the page, read your orders, steer for the mark, and watch the miles come down.*
 
-### M18 — Voyage two: working to windward
+### M18 — Voyage two: working to windward. BUILT.
 
-The mark lies dead to windward, so she will not point at it and you have to beat. `t` and
-`w` come onto the board; missing stays is live; the mate already speaks when you try to
-steer inside six points. The objective board shows miles made good beside miles sailed, so
-the cost of beating is visible rather than merely felt.
+Six miles dead to windward, then six miles home before the wind — the same six miles twice,
+and nothing like each other. `t` and `w` are on the board, missing stays is live, and the
+mate speaks when you steer her inside six points.
 
-*Test: steer straight at the mark. She stops. Tack her, and get there anyway.*
+The orders board gained two rows, **Sailed** and **Made good**, which part company the
+moment you begin to beat. The account is now written leg by leg: *to the mark, 1 hour 52 —
+10.4 miles sailed for 6*, then *to home, 51 minutes — 6.2 miles sailed for 6*. That
+comparison is the whole voyage.
+
+The mate's verdict is now judged against what the voyage can be sailed in, since seventy
+per cent is poor on a reach and good on a beat.
+
+One dead end fixed, which was in the cruise too: **ordering a tack with one watch on deck
+queued an order that could never run**, and nothing said why she would not come round.
+Tacking and wearing now refuse like the sail orders do, and tell you to call all hands.
+
+*Test: steer straight at the mark. She stops. Call all hands, tack her, and get there anyway.*
 
 ### M19 — Voyage three: shortening down
 

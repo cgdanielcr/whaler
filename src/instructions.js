@@ -4,7 +4,13 @@
 // The letter is the first thing on the screen and she lies hove to behind it
 // until you have read it. Nothing here touches how she sails.
 import { compassPoint, signedDiff } from './wind.js';
-import { choose } from './voyages.js';
+import { VOYAGES, choose } from './voyages.js';
+
+// A voyage named as it would be on a list of them.
+const named = (o) => (o.n ? `Voyage ${o.n} — ${o.title.toLowerCase()}` : o.title);
+const link = (o, said) => `<button class="link" data-to="${o.key}">${said || named(o)}</button>`;
+const others = (v, but) => VOYAGES.filter((o) => o.key !== v.key && o !== but)
+  .map((o) => link(o)).join(' &nbsp;·&nbsp; ');
 
 const SPELT = ['right on', 'one', 'two', 'three', 'four', 'five', 'six', 'seven', 'eight'];
 
@@ -50,11 +56,7 @@ export function makeInstructions(v, { begin }) {
     KEYS.filter(([g]) => allows(g)).map(([, said]) => `<li>${said}</li>`).join('') +
     '</ul>' +
     '<p class="go"><button class="sail">Sail</button></p>' +
-    (v.key === 'cruise'
-      ? '<p class="other">Or <button class="link" data-to="feel">sail voyage one first</button> ' +
-        '&mdash; a morning in home water, and nothing in the weather.</p>'
-      : '<p class="other">Or <button class="link" data-to="cruise">go whaling instead</button> ' +
-        '&mdash; the ship as she stands, and the whole Pacific.</p>');
+    `<p class="other">Or sail instead: ${others(v)}</p>`;
   document.body.appendChild(letter);
 
   letter.querySelector('.sail').addEventListener('click', () => {
@@ -82,7 +84,11 @@ export function makeInstructions(v, { begin }) {
       '<dt>Now</dt><dd class="leg"></dd>' +
       '<dt>Bears</dt><dd class="bear"></dd>' +
       '<dt>To run</dt><dd class="run"></dd>' +
-      '<dt>Her head</dt><dd class="head"></dd></dl>';
+      '<dt>Her head</dt><dd class="head"></dd>' +
+      // Sailed against made good. On a beating leg these two part company,
+      // and watching them do it is the lesson.
+      '<dt>Sailed</dt><dd class="through"></dd>' +
+      '<dt>Made good</dt><dd class="made"></dd></dl>';
     const right = document.getElementById('right') || document.body;
     right.insertBefore(board, right.firstChild);
   }
@@ -91,7 +97,9 @@ export function makeInstructions(v, { begin }) {
     leg: board.querySelector('.leg'),
     bear: board.querySelector('.bear'),
     run: board.querySelector('.run'),
-    head: board.querySelector('.head')
+    head: board.querySelector('.head'),
+    through: board.querySelector('.through'),
+    made: board.querySelector('.made')
   } : null;
 
   const putText = (el, text) => { if (el.__said !== text) { el.__said = text; el.textContent = text; } };
@@ -103,15 +111,20 @@ export function makeInstructions(v, { begin }) {
   done.style.display = 'none';
   document.body.appendChild(done);
 
-  // What the mate makes of how you sailed her. Her best point of sail is a
-  // broad reach, and she will do four knots in a light breeze if you keep her
-  // there; hang about in the wind's eye and she will not.
+  // What the mate makes of how you sailed her, judged against what this
+  // voyage could be sailed in. A reach he expects you to hold; a beat to
+  // windward gains a little over half a mile in every mile even when it is
+  // done well, so the same figure means quite different things.
+  const well = v.wellSailed || 0.9;
+
   function word(passage) {
     if (passage.lost && passage.lost.length) {
       return 'She is home, but not whole. That is what carrying too much canvas costs.';
     }
-    if (passage.worth > 0.93) return 'Handsomely done, sir. She was never out of her best water.';
-    if (passage.worth > 0.8) return 'Well enough. A little more attention to her head and you would have saved half an hour.';
+    if (passage.worth >= well) return 'Handsomely sailed, sir. You did not waste a mile of it.';
+    if (passage.worth >= well * 0.85) {
+      return 'Well enough. A little more attention to her head and you would have saved half an hour.';
+    }
     return 'You wandered, sir. Every mile she sails off her course is a mile she sails twice.';
   }
 
@@ -122,15 +135,27 @@ export function makeInstructions(v, { begin }) {
       putText(out.bear, `${compassPoint(passage.bearing)} — ${Math.round(passage.bearing)}°`);
       putText(out.run, `${passage.toRun.toFixed(1)} miles to ${passage.legSaid}`);
       putText(out.head, headSaid(passage.bearing, heading));
+      putText(out.through, `${passage.sailed.toFixed(1)} miles`);
+      putText(out.made, `${passage.made.toFixed(1)} of ${passage.total}`);
     },
 
     // Written up when she has run her legs. The whaling cruise never comes
     // here; it has an account of its own.
     account(passage, clockAt) {
       const a = passage.arrived;
+      const next = VOYAGES[VOYAGES.indexOf(v) + 1];
+      // Leg by leg, when there is more than one. Six miles to windward and six
+      // miles home are the same six miles only on the chart.
+      const legs = passage.legs;
+      const byLeg = legs.length > 1
+        ? legs.map((l) => `<dt>To ${l.said}</dt><dd>${l.took}` +
+            `<span class="through">${l.through.toFixed(1)} miles sailed for ${l.miles}</span></dd>`).join('')
+        : '';
+
       done.innerHTML =
         `<h2>Voyage ${v.n} — ${v.title}</h2>` +
         '<p class="home">She is home, and the anchor down.</p><dl>' +
+        byLeg +
         `<dt>Out and home in</dt><dd>${a.took}</dd>` +
         `<dt>Sailed through the water</dt><dd>${a.sailed.toFixed(1)} miles</dd>` +
         `<dt>Her best</dt><dd>${passage.most.toFixed(1)} knots</dd>` +
@@ -140,8 +165,12 @@ export function makeInstructions(v, { begin }) {
           ? `<p>She is not whole: ${a.lost.map((d) => `${d.name.toLowerCase()} — ${d.kind}`).join('; ')}.</p>`
           : '<p>Every sail and every spar she began with.</p>') +
         `<p class="mate">&ldquo;${word(a)}&rdquo;</p>` +
-        '<p class="go"><button class="link" data-to="feel">Sail her again</button> &nbsp; ' +
-        '<button class="link" data-to="cruise">Go whaling</button></p>';
+        (next ? `<p class="go"><button class="on" data-to="${next.key}">${named(next)}</button></p>` : '') +
+        `<p class="other">Or ${link(v, 'sail this one again')} &nbsp;·&nbsp; ${others(v, next)}</p>`;
+
+      for (const b of done.querySelectorAll('.on')) {
+        b.addEventListener('click', () => choose(b.dataset.to));
+      }
 
       for (const b of done.querySelectorAll('.link')) {
         b.addEventListener('click', () => choose(b.dataset.to));
