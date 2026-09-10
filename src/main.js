@@ -37,6 +37,7 @@ import { makeOffice } from './office.js';
 import { makePilot } from './pilot.js';
 import { makeVane } from './vane.js';
 import { makeDrift } from './drift.js';
+import { makeCommand } from './command.js';
 import { HUE, weather as weather2, gloomFor } from './palette.js';
 
 const renderer = new THREE.WebGLRenderer({ antialias: true });
@@ -266,6 +267,14 @@ const pilot = V.steps ? makePilot(V.steps, {
 }) : null;
 
 // Everything a step might want to look at, in the words the boards use.
+// The command bar along the bottom: every order as a button, pressing the
+// same keys you would.
+const command = makeCommand({
+  rig, crew, allows,
+  press: (key, shift) => window.dispatchEvent(new KeyboardEvent('keydown',
+    { code: key, key, shiftKey: !!shift, bubbles: true }))
+});
+
 const conning = () => {
   const rel = signedDiff(weather.windFrom, heading);
   return {
@@ -617,6 +626,7 @@ function frame(now) {
   boards.update(gameSeconds, pace, { over, held: !!warning }, passage, stores,
                 lookouts, hunt, cruise, workUp, air);
   instructions.update(passage, heading);
+  command(air);
   if (pilot && underway) pilot.tick(real, conning());
   watchBill(gameSeconds);
   hands(seen);

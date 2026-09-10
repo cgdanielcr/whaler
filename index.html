@@ -207,6 +207,81 @@
     }
     #rose .squall:empty { display: none; }
 
+    /* --- the command bar ----------------------------------------------------- */
+
+    /* Anchored along the bottom, the way a real-time strategy game does it: her
+       state on the left, the orders themselves as a card of buttons. */
+    #command {
+      position: fixed; z-index: 8;
+      left: 0; right: 0; bottom: 0;
+      display: flex; align-items: stretch; gap: 0.9rem;
+      padding: 0.5rem 0.9rem;
+      background: linear-gradient(0deg, var(--paper2) 0%, var(--paper) 100%);
+      border-top: 1px solid var(--edge);
+      box-shadow: 0 -3px 18px rgba(0, 0, 0, 0.35);
+      user-select: none;
+    }
+
+    #command .her {
+      flex: 0 0 11rem;
+      display: grid; grid-template-columns: auto 1fr; gap: 0.1rem 0.6rem;
+      align-content: center;
+      padding-right: 0.9rem; border-right: 1px solid var(--rule);
+    }
+    #command .her .tag {
+      font-size: 0.58rem; letter-spacing: 0.16em; text-transform: uppercase;
+      color: var(--faint); align-self: center;
+    }
+    #command .her b {
+      font-weight: normal; font-size: 0.92rem; text-align: right;
+      font-variant-numeric: tabular-nums;
+    }
+    #command .her em { font-style: normal; color: var(--faint); font-size: 0.76rem; }
+
+    #command .card { flex: 1; display: flex; flex-direction: column; gap: 0.3rem; min-width: 0; }
+    #command .row { display: flex; align-items: center; gap: 0.6rem; }
+    #command .rowname {
+      flex: 0 0 4.6rem; font-size: 0.58rem; letter-spacing: 0.16em;
+      text-transform: uppercase; color: var(--faint); text-align: right;
+    }
+    /* Rows never wrap: the bar stays three rows tall on any window, and a
+       narrow one scrolls its cards sideways instead of growing upward. */
+    #command .cards {
+      display: flex; gap: 0.3rem; flex-wrap: nowrap;
+      overflow-x: auto; overflow-y: hidden; scrollbar-width: thin;
+    }
+
+    #command .ord {
+      position: relative; font-family: inherit; cursor: pointer;
+      flex: 0 0 auto; min-width: 5.4rem; padding: 0.32rem 0.5rem 0.3rem;
+      background: rgba(80, 62, 38, 0.06); color: var(--ink);
+      border: 1px solid var(--edge); border-radius: 2px;
+      display: flex; align-items: center; gap: 0.35rem;
+    }
+    #command .ord:hover { border-color: var(--blue); background: rgba(44, 88, 110, 0.14); }
+    #command .ord:active { transform: translateY(1px); background: var(--blue); color: var(--paper); }
+    #command .ord .what { font-size: 0.76rem; white-space: nowrap; }
+    #command .ord .badge {
+      font-size: 0.56rem; letter-spacing: 0.04em; color: var(--paper);
+      background: var(--faint); border-radius: 2px;
+      min-width: 1.05rem; padding: 0.05rem 0.16rem; text-align: center;
+    }
+    #command .ord:hover .badge { background: var(--blue); }
+    #command .ord .glyph { margin-left: auto; }
+    #command .ord .glyph:empty { display: none; }
+    #command .ord .glyph .sail { width: 1.35rem; height: 1rem; margin: 0; }
+
+    /* An order that would do nothing looks like it would do nothing. */
+    #command .ord.spent { opacity: 0.38; cursor: default; }
+    #command .ord.spent:hover { border-color: var(--edge); background: rgba(80, 62, 38, 0.06); }
+    #command .ord.busy { border-color: var(--blue); }
+
+    /* Everything else keeps off the bar. */
+    #orders-board { bottom: 9.5rem !important; max-height: 40vh !important; }
+    #pilot { bottom: 9.9rem !important; }
+    #rose { bottom: 9.9rem !important; }
+    #glass { bottom: 9.9rem !important; }
+
     /* --- the pilot: one step at a time --------------------------------------- */
 
     #pilot {

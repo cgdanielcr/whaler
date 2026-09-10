@@ -330,3 +330,32 @@ already close-hauled**, so the step asking you to come up to the wind completed 
 touched anything; she now starts well off it.
 
 *Test: sail any voyage. The mate is there on all five.*
+
+## M20e — The command bar. BUILT.
+
+The owner asked for a usable menu the way *StarCraft II* and *Warcraft III* do it: anchored
+along the bottom, with buttons you press rather than hotkeys you have to know.
+
+`src/command.js` draws it. Her state on the left — head, speed, hands free — and the orders
+themselves as a command card of three rows:
+
+- **Shorten** — the six tiers, and all round
+- **Make sail** — the same six with shift, and all round
+- **Ship** — all hands, tack, wear, mend, lower away, cut in, bring her to
+
+Each button carries **its key in the corner**, the way a command card does, so the buttons
+teach the keyboard rather than replacing it. Each sail button also carries the tier's
+current state as the same drawn glyph the canvas board uses, so the card shows what she is
+wearing as well as what you may do.
+
+**A button presses the same key you would**, so there is nothing it can do that the
+keyboard cannot, and nothing to keep in step. Orders that would do nothing — royals already
+furled, a tier the hands are working on — go faint and stop responding.
+
+The card is filtered by the voyage, like everything else: voyage one shows no tack, wear,
+mend or boats, because it has not been given them.
+
+Rows never wrap. On a narrow window each row scrolls sideways rather than growing upward,
+so the bar stays three rows tall and the sea stays visible. At 1366 wide nothing scrolls.
+
+*Test: press a button instead of a key. Watch eight named men go to the sheets.*
