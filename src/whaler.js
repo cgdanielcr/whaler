@@ -24,7 +24,7 @@ const PLANK = cutLight(new THREE.MeshLambertMaterial({ color: HUE.spar, flatShad
 const BOAT_LEN = 8.6, BOAT_BEAM = 1.85, BOAT_DEPTH = 0.95;
 
 // A whaleboat: double-ended, sharp at both ends, with a good sheer to her.
-function whaleboat() {
+export function whaleboat() {
   const g = new THREE.Group();
   const STATIONS = [-1, -0.78, -0.5, -0.16, 0.16, 0.5, 0.78, 1];
   const RINGS = [0, 0.42, 0.78, 1];

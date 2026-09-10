@@ -359,3 +359,33 @@ Rows never wrap. On a narrow window each row scrolls sideways rather than growin
 so the bar stays three rows tall and the sea stays visible. At 1366 wide nothing scrolls.
 
 *Test: press a button instead of a key. Watch eight named men go to the sheets.*
+
+## M20f — Her deck furniture. BUILT.
+
+The owner noticed she had no helm. She had not — she had a hull, three masts, four boats,
+a try-works and a cutting stage, and nothing else at all. No wheel to steer her, no
+windlass to get her anchor, no hatch to go below by, no galley to cook in.
+
+`src/deck.js` puts them aboard, all from Three.js primitives as the locked stack requires:
+
+- **The wheel**, right aft abaft the mizzen, on its wheel box — a rim with eight spokes
+  running out through it into handles, which is what makes a ship's wheel read as one.
+  **It turns as you put the helm over**, and it is the only thing on deck that answers you
+  directly.
+- **The binnacle** just forward of it, where the man steering can see the compass.
+- **The windlass** forward: the barrel her cable comes in over, on its bitts.
+- **Three hatches** — the companion aft to the cabin, the main hatch, and the fore scuttle
+  down to the forecastle. They are the only sign on deck that there is a below.
+- **The galley** in a deckhouse, with its stovepipe. The cook's whole kingdom, and the only
+  fire aboard except the try-works.
+- **The skids** amidships, carrying **two spare boats bottom-up** — documented in
+  `MORGAN.md`: she carried five on davits and two more stowed over the deck.
+
+**On art assets.** The owner offered to get them. Declined, and why: `SPEC.md` §4 locks the
+stack to procedural geometry from Three.js primitives with no image files. What would
+actually help is **reference, not assets** — the Mystic deck plan sheet (Allyn, 1971), and
+photographs of her wheel, binnacle, windlass, deckhouse and skids. With those the shapes
+stop being inferred.
+
+*Test: press c to go on deck. She has a galley, a hatch and a windlass now. Hold the helm
+over and the wheel turns.*
