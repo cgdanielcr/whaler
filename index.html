@@ -207,6 +207,49 @@
     }
     #rose .squall:empty { display: none; }
 
+    /* --- the pilot: one step at a time --------------------------------------- */
+
+    #pilot {
+      position: fixed; z-index: 10;
+      bottom: 1.1rem; left: 50%; transform: translateX(-50%);
+      width: min(38rem, calc(100vw - 26rem));
+      padding: 1rem 1.3rem 0.9rem;
+      background: linear-gradient(160deg, var(--paper) 0%, var(--paper2) 100%);
+      border: 1px solid var(--edge);
+      box-shadow: 0 6px 30px rgba(0, 0, 0, 0.45);
+      pointer-events: auto; user-select: none;
+    }
+    #pilot .tally {
+      margin: 0 0 0.5rem; font-size: 0.58rem; letter-spacing: 0.2em;
+      text-transform: uppercase; color: var(--faint);
+    }
+    #pilot .say { margin: 0; font-size: 1rem; line-height: 1.6; }
+    #pilot .how {
+      margin: 0.6rem 0 0; font-size: 0.86rem; color: var(--blue); font-style: italic;
+    }
+    #pilot .how:empty, #pilot .well:empty, #pilot .acts:empty { display: none; }
+    #pilot .acts { margin: 0.9rem 0 0; display: flex; flex-wrap: wrap; gap: 0.6rem; }
+    #pilot .act {
+      font-family: inherit; font-size: 0.95rem; color: var(--blue);
+      background: rgba(44, 88, 110, 0.06); cursor: pointer;
+      border: 1px solid var(--edge); border-radius: 2px;
+      padding: 0.6rem 1.1rem; flex: 1 1 auto; min-width: 9rem;
+    }
+    #pilot .act:hover { border-color: var(--blue); background: rgba(44, 88, 110, 0.13); }
+    #pilot .act.down { background: var(--blue); color: var(--paper); border-color: var(--blue); }
+    #pilot .well {
+      margin: 0.7rem 0 0; font-size: 1rem; line-height: 1.5; color: var(--rust);
+    }
+    #pilot .shut {
+      margin-top: 0.8rem; font-family: inherit; font-size: 0.68rem;
+      letter-spacing: 0.1em; color: var(--faint); background: none;
+      border: none; padding: 0; cursor: pointer;
+    }
+    #pilot .shut:hover { color: var(--rust); }
+
+    /* With the pilot up, the orders board keeps out of its way. */
+    #pilot ~ #orders-board, #orders-board { max-height: 44vh; }
+
     /* --- the shipping office ------------------------------------------------- */
 
     #office .preamble { color: var(--faint); font-size: 0.88rem; }
@@ -335,8 +378,10 @@
     }
     .term:hover { color: var(--blue); border-bottom-color: var(--blue); }
 
+    /* Above the letter and the office: a definition you cannot read is no
+       definition at all. */
     #gloss, #man {
-      position: fixed; z-index: 11;
+      position: fixed; z-index: 20;
       padding: 0.7rem 0.9rem;
       background: linear-gradient(160deg, var(--paper) 0%, var(--paper2) 100%);
       border: 1px solid var(--edge);

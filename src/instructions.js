@@ -16,7 +16,7 @@ const SPELT = ['right on', 'one', 'two', 'three', 'four', 'five', 'six', 'seven'
 
 // How her head lies against the bearing of the mark, in points of the compass,
 // which is how it would have been said. A point is eleven and a quarter degrees.
-function headSaid(bearing, heading) {
+export function headSaid(bearing, heading) {
   const off = signedDiff(bearing, heading);
   const points = Math.round(Math.abs(off) / 11.25);
   if (points === 0) return 'right on the mark';
@@ -51,10 +51,12 @@ export function makeInstructions(v, { begin, letterFirst = true }) {
   letter.innerHTML =
     '<h2>The owners to the master</h2>' +
     v.letter.map((p, i) => `<p class="${i === 0 ? 'dateline' : ''}">${p}</p>`).join('') +
-    '<h3>How she is worked</h3>' +
-    '<ul class="keys">' +
-    KEYS.filter(([g]) => allows(g)).map(([, said]) => `<li>${said}</li>`).join('') +
-    '</ul>' +
+    // A voyage with a pilot does not get a wall of keys: he hands you one
+    // button at a time, which is the whole point of him.
+    (v.steps ? '' :
+      '<h3>How she is worked</h3><ul class="keys">' +
+      KEYS.filter(([g]) => allows(g)).map(([, said]) => `<li></li>`).join('') +
+      '</ul>') +
     '<p class="go"><button class="sail">Sail</button></p>' +
     `<p class="other">Or sail instead: ${others(v)}</p>`;
   // When the shipping office is up, the letter waits behind it.

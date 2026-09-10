@@ -32,8 +32,10 @@ import { makeCruise, remember } from './cruise.js';
 import { makeWorkUp } from './workup.js';
 import { makeTrim } from './trim.js';
 import { chosen, picked, logSailed } from './voyages.js';
-import { makeInstructions } from './instructions.js';
+import { makeInstructions, headSaid } from './instructions.js';
 import { makeOffice } from './office.js';
+import { makePilot } from './pilot.js';
+import { makeVane } from './vane.js';
 import { HUE, weather as weather2, gloomFor } from './palette.js';
 
 const renderer = new THREE.WebGLRenderer({ antialias: true });
@@ -51,10 +53,10 @@ const scene = new THREE.Scene();
 scene.fog = new THREE.Fog(HORIZON_COLOUR, 240, 660);
 
 const camera = new THREE.PerspectiveCamera(48, window.innerWidth / window.innerHeight, 0.5, 8000);
-camera.position.set(74, 22, 64);
+camera.position.set(78, 30, 68);
 
 const controls = new OrbitControls(camera, renderer.domElement);
-controls.target.set(0, 13, 0);
+controls.target.set(0, 19, 0);
 controls.enableDamping = true;
 controls.dampingFactor = 0.07;
 controls.minDistance = 22;
@@ -77,8 +79,8 @@ function stand(where) {
   if (where === 'quarterdeck') {
     controls.minDistance = 22;
     controls.maxDistance = 300;
-    controls.target.set(0, 13, 0);
-    camera.position.set(74, 22, 64);
+    controls.target.set(0, 19, 0);
+    camera.position.set(78, 30, 68);
   } else {
     // Forward on the forecastle, and always on the weather side -- which is
     // where the officer of the watch keeps, and also the side her canvas is
@@ -115,6 +117,9 @@ const rig = makeRig();
 hull.add(rig.group);
 const whaler = makeWhalerDeck();
 hull.add(whaler.group);
+// The pennant at the main truck: the wind, where your eye already is.
+const vane = makeVane();
+hull.add(vane);
 ship.add(hull);
 scene.add(ship);
 
@@ -191,7 +196,7 @@ const company = makeCompany();
 const crew = makeCrew(company);
 const stores = makeStores();
 const lookouts = makeLookouts(company);
-const boards = makeBoards(rig, crew, company, allows);
+const boards = makeBoards(rig, crew, company, allows, !V.steps);
 const readOut = makeInstruments();
 const passage = makePassage(rig, V.plan);
 
@@ -214,8 +219,38 @@ const trim = makeTrim({
 // The letter first, so that every sea term in it is marked by the glossary
 // along with the boards. With no voyage chosen she lies in the shipping
 // office instead, and the letter waits behind it.
-const instructions = makeInstructions(V, { begin: () => time.begin(), letterFirst: picked() });
+let underway = false;      // the letter has been read and she is away
+let acked = false;         // a step the pilot needs you only to look at
+const instructions = makeInstructions(V, {
+  begin: () => { time.begin(); underway = true; },
+  letterFirst: picked()
+});
 if (!picked()) makeOffice();
+
+// The first mate at your elbow, on a voyage that carries steps. He presses
+// the same keys you would, so there is nothing he can do that you cannot.
+const pilot = V.steps ? makePilot(V.steps, {
+  helm,
+  press(key, shift) {
+    if (key === 'PilotOn') { acked = true; return; }
+    window.dispatchEvent(new KeyboardEvent('keydown',
+      { code: key, key, shiftKey: !!shift, bubbles: true }));
+  }
+}) : null;
+
+// Everything a step might want to look at, in the words the boards use.
+const conning = () => ({
+  acked,
+  knots,
+  leg: passage.leg,
+  toRun: passage.toRun,
+  offMark: signedDiff(passage.bearing, heading),
+  headSaid: `Her head is ${headSaid(passage.bearing, heading)}`,
+  bearSaid: passage.bearingSaid,
+  windSaid: air ? air.from : '',
+  stateOf: (tier) => rig.stateOf(tier),
+  working: (tier) => rig.working(tier)
+});
 makeGlossary(rig, allows);
 if (V.fair) weather.quiet(24 * 60);      // nothing in the weather today
 
@@ -224,6 +259,13 @@ if (V.fair) weather.quiet(24 * 60);      // nothing in the weather today
 for (const d of V.damaged || []) {
   const s = rig.sails.find((x) => x.name === d.name);
   if (s) rig.damage(s, d.kind);
+}
+
+// And it may begin under less than all plain sail, so that making sail is
+// something you do rather than something already done for you.
+for (const [tier, state] of Object.entries(V.canvas || {})) {
+  rig.begin(tier, state);
+  rig.finish(tier);
 }
 
 
@@ -534,10 +576,12 @@ function frame(now) {
   boards.update(gameSeconds, pace, { over, held: !!warning }, passage, stores,
                 lookouts, hunt, cruise, workUp, air);
   instructions.update(passage, heading);
+  if (pilot && underway) pilot.tick(real, conning());
   watchBill(gameSeconds);
   hands(seen);
   trim();
   whaler.smoke.userData.update(shown);
+  vane.userData.update(shown, weather.windFrom, heading);
 
   // A short voyage ends when she has run her legs and is home again. The
   // cruise runs her distance first, and then she is on the ground: it ends

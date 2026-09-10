@@ -197,3 +197,31 @@ faint lines between the figures in the section.
 - Money is barrels turned into an allowance. The lay, a man's fractional share of the
   voyage, is a later flourish and not part of this plan.
 - No schooner. The ladder is built on the ship she is.
+
+---
+
+## M21 — The pilot, the pennant, and the wake. BUILT.
+
+From the owner's first play of voyage one, 10 September 2026. His complaint: one card at
+the start telling him everything, no sense of what to do next, no way to tell which way the
+wind blew, and no way to tell whether she was moving at all.
+
+- **`src/pilot.js`** — the first mate at your elbow. One step at a time, each naming one
+  thing, giving you a **big button that does it**, and waiting for the ship herself to say
+  it is done before moving on. The helm buttons are held down, not tapped. Voyage one has
+  six steps: see the wind, set the courses, put her head on the mark, make more sail, run
+  her down, and round for home. `I have the hang of her` closes it.
+- **`src/vane.js`** — a red pennant at the main truck, streaming away from the wind. It is
+  what a real officer of the watch read the wind off, and it is now the first thing the
+  pilot points at. Its cloth hangs vertically; a flag lying flat is a hairline.
+- **Voyage one now begins under her topsails only**, so that making sail is something you
+  do rather than something already done for you.
+- **The wall of keys is gone on a guided voyage** — no legend on the canvas board, no key
+  list in the letter. The pilot hands you one button at a time instead.
+- **The default view is lifted** so her mastheads stand clear of the boards. They were
+  behind the canvas board, which is why the pennant could not be seen at first.
+- **The wake is bolder and half as long again.** With the camera fixed on her and open sea
+  all round, it is the one thing that says she is moving.
+- **Fixed: glossary cards appeared behind the letter**, so a definition could not be read.
+
+*Test: press Sail, and do what the mate tells you, one step at a time.*

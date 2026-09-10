@@ -91,6 +91,7 @@ export function makePassage(rig, plan = [DESTINATION]) {
       };
     },
 
+    get leg() { return leg; },
     get toRun() { return toRun(); },
     get sailed() { return sailed / NM; },
     get most() { return most; },

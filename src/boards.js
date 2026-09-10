@@ -58,7 +58,7 @@ const LEGEND = [
   ['look', '<b>?</b> all orders']
 ];
 
-export function makeBoards(rig, crew, company, allows = () => true) {
+export function makeBoards(rig, crew, company, allows = () => true, legend = true) {
   const canvas = panel('canvas-board',
     '<h2>Canvas</h2>' +
     '<table><thead><tr><td></td>' +
@@ -68,8 +68,12 @@ export function makeBoards(rig, crew, company, allows = () => true) {
     [['set', 'set'], ['1st reef', 'reefed'], ['2nd reef', 'twice'],
      ['close-reefed', 'close'], ['furled', 'furled']]
       .map(([s, said]) => `<span>${sailGlyph(s, false)}<i>${said}</i></span>`).join('') + '</p>' +
-    '<p class="legend">' +
-    LEGEND.filter(([g]) => allows(g)).map(([, said]) => said).join(' &nbsp; ') + '</p>');
+    // On a voyage with a pilot at your elbow the legend is noise: he gives you
+    // the button for the one thing that is wanted now.
+    (legend
+      ? '<p class="legend">' +
+        LEGEND.filter(([g]) => allows(g)).map(([, said]) => said).join(' &nbsp; ') + '</p>'
+      : ''));
 
   const body = canvas.querySelector('tbody');
   const cells = {};

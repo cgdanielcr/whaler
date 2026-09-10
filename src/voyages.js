@@ -32,23 +32,23 @@ export const VOYAGES = [
     title: 'Getting the feel of her',
     teaches: 'How she goes, and what the wind has to do with it.',
 
-    // The owners' letter, in their own voice. The keys are not in it; they go
-    // underneath, where they do not spoil the year.
+    // Short, on purpose. The pilot below teaches the working of her one step
+    // at a time; a letter that listed every key would be the tutorial that
+    // was thrown out after M6, which named things you could not find.
     letter: [
       'New Bedford, the fourth day of October, 1841.',
       'Sir — before we send you round the Horn we would have you and your ' +
-      'people shake down together. Take her out this morning, in what little ' +
-      'wind there is, and fetch the mark seven miles to the north-east. Then ' +
-      'bring her home again.',
-      'There is nothing in the weather today and nothing to do but sail her. ' +
-      'Put your helm over and watch what she makes of it. Keep her off the ' +
-      'wind and she goes; bring her too near it and she stops, for no ' +
-      'square-rigged ship will lie closer than six points. If you have a mind ' +
-      'to, take a sail off her and see how long your people are about it. The ' +
-      'topsails want more hands than one watch can find, so call all hands if ' +
-      'you would reef them.',
+      'people shake down together. Take her out this morning, fetch the mark ' +
+      'seven miles to the north-east, and bring her home again.',
+      'She is under her topsails only. Your first mate will see you through ' +
+      'the rest of it.',
       'We are, sir, your obedient servants.'
     ],
+
+    // She lies under her topsails, which is how a ship gets under way: the
+    // working canvas first, and the rest made afterwards.
+    canvas: { course: 'furled', topgallant: 'furled', royal: 'furled',
+              spanker: 'furled', headsail: 'furled' },
 
     task: 'Fetch the mark seven miles to the north-east, and bring her home again.',
 
@@ -66,7 +66,86 @@ export const VOYAGES = [
       { bearing: 225, miles: 7, said: 'home', near: 1.5 }
     ],
 
-    allow: ['sail', 'helm', 'clock', 'look', 'allhands']
+    allow: ['sail', 'helm', 'clock', 'look', 'allhands'],
+
+    // The first mate at your elbow. Each step names one thing, gives you the
+    // button that does it, and waits for the ship herself to say it is done.
+    steps: [
+      {
+        say: 'First, the wind. Look aloft at the pennant on the main masthead — ' +
+             'the red streamer at the very top. It streams away from the wind, ' +
+             'so it points where the wind is going. The blue arrow on the compass ' +
+             'below says the same thing.',
+        how: (s) => `The wind is out of the ${s.windSaid}, and light.`,
+        acts: [{ said: 'I see it', key: 'PilotOn' }],
+        done: (s) => s.acked,
+        well: 'Good. Everything she does today comes off that.'
+      },
+      {
+        say: 'She lies under her topsails, which is barely enough to move her. ' +
+             'Set her courses — the great lowest sails — and she will begin to ' +
+             'walk. Eight hands will be eight minutes about it, and you will see ' +
+             'them at work in the orders board.',
+        how: (s) => (s.working('course')
+          ? 'The hands are on the sheets and tacks now.'
+          : `She is making ${s.knots.toFixed(1)} knots.`),
+        acts: [{ said: 'Set the courses', key: 'Digit1', shift: true }],
+        done: (s) => s.stateOf('course') === 'set',
+        well: 'Her courses are set, and you can feel her take hold of it.'
+      },
+      {
+        say: 'Now put your head where you are going. The mark bears north-east, ' +
+             'and she is heading east — four points to larboard of it. Hold the ' +
+             'helm over to larboard until her head comes round onto the mark.',
+        how: (s) => `${s.headSaid}. She is making ${s.knots.toFixed(1)} knots.`,
+        acts: [
+          { said: '◀ Helm a-larboard', hold: 'ArrowLeft' },
+          { said: 'Helm a-starboard ▶', hold: 'ArrowRight' }
+        ],
+        done: (s) => Math.abs(s.offMark) < 6,
+        well: 'That is the mark, right under her bowsprit. Now she is going somewhere.'
+      },
+      {
+        say: 'More canvas will carry you there sooner. Set the topgallants — ' +
+             'the third tier up — and then the royals above them. Canvas goes ' +
+             'on from the bottom up and comes off from the top down; that is the ' +
+             'whole rule.',
+        how: (s) => `She is making ${s.knots.toFixed(1)} knots.`,
+        acts: [
+          { said: 'Set the topgallants', key: 'Digit3', shift: true },
+          { said: 'Set the royals', key: 'Digit4', shift: true }
+        ],
+        done: (s) => s.stateOf('topgallant') === 'set' && s.stateOf('royal') === 'set',
+        well: 'Every stitch she owns. Watch her speed — that is what canvas buys you.'
+      },
+      {
+        say: 'Now run her down to the mark. Keep her head on it, and if she ' +
+             'wanders use the helm. You may run her clock on with the = key to ' +
+             'pass the time, and she will come back to her own time the moment ' +
+             'you touch the helm.',
+        how: (s) => `${s.toRun.toFixed(1)} miles to run. ${s.headSaid}.`,
+        acts: [
+          { said: '◀ Helm a-larboard', hold: 'ArrowLeft' },
+          { said: 'Helm a-starboard ▶', hold: 'ArrowRight' },
+          { said: 'Run her clock on', key: 'Equal' }
+        ],
+        done: (s) => s.leg > 0,
+        well: 'The mark is fetched.'
+      },
+      {
+        say: 'Home again, and home lies the other way. Bring her round to ' +
+             'starboard — the long way round, away from the wind. Take her the ' +
+             'short way and you will steer straight into the wind’s eye, where ' +
+             'no square-rigged ship can go, and she will stop dead.',
+        how: (s) => `Home bears ${s.bearSaid}. ${s.headSaid}.`,
+        acts: [
+          { said: 'Helm a-starboard ▶', hold: 'ArrowRight' },
+          { said: '◀ Helm a-larboard', hold: 'ArrowLeft' }
+        ],
+        done: (s) => Math.abs(s.offMark) < 8,
+        well: 'She is pointed at home. Run her in, and that is your first voyage.'
+      }
+    ]
   },
 
   {

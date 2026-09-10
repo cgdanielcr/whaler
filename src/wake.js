@@ -3,7 +3,7 @@
 import * as THREE from 'three';
 import { waveHeight } from './sea.js';
 
-const LENGTH = 95;    // metres astern
+const LENGTH = 130;   // metres astern
 const ROWS = 26;
 
 // Across the wake: nothing at the edges, most of it down the middle, so she
@@ -46,7 +46,9 @@ export function makeWake() {
   // She lies on the water, so she has to ride the same swell the sea does.
   mesh.userData.update = (t, ox, oz, courseRad, knots) => {
     mesh.rotation.y = courseRad;
-    mesh.material.opacity = Math.min(0.42, knots * 0.052);
+    // Bolder than she was. With the camera fixed on her and an open sea all
+    // round, the wake is the one thing that says she is moving at all.
+    mesh.material.opacity = Math.min(0.62, 0.06 + knots * 0.105);
     if (mesh.material.opacity < 0.01) return;
     const sin = Math.sin(courseRad), cos = Math.cos(courseRad);
     for (let i = 0; i < position.count; i++) {
