@@ -229,8 +229,28 @@ if (!picked()) makeOffice();
 
 // The first mate at your elbow, on a voyage that carries steps. He presses
 // the same keys you would, so there is nothing he can do that you cannot.
+// He points at what he is naming: the canvas lights up on the ship herself,
+// the pennant swells and pales, and the board carrying the figure is ringed.
+let litBoard = null;
+
+function unpoint() {
+  rig.unmark();
+  vane.userData.show(false);
+  if (litBoard) { litBoard.classList.remove('lit'); litBoard = null; }
+}
+
+function point(step) {
+  unpoint();
+  if (step.mark) rig.mark(step.mark);
+  if (step.vane) vane.userData.show(true);
+  if (step.board) {
+    litBoard = document.getElementById(step.board);
+    if (litBoard) litBoard.classList.add('lit');
+  }
+}
+
 const pilot = V.steps ? makePilot(V.steps, {
-  helm,
+  helm, point, unpoint,
   press(key, shift) {
     if (key === 'PilotOn') { acked = true; return; }
     window.dispatchEvent(new KeyboardEvent('keydown',

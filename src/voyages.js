@@ -76,6 +76,7 @@ export const VOYAGES = [
              'the red streamer at the very top. It streams away from the wind, ' +
              'so it points where the wind is going. The blue arrow on the compass ' +
              'below says the same thing.',
+        vane: true, board: 'clock-board',
         how: (s) => `The wind is out of the ${s.windSaid}, and light.`,
         acts: [{ said: 'I see it', key: 'PilotOn' }],
         done: (s) => s.acked,
@@ -86,6 +87,7 @@ export const VOYAGES = [
              'Set her courses — the great lowest sails — and she will begin to ' +
              'walk. Eight hands will be eight minutes about it, and you will see ' +
              'them at work in the orders board.',
+        mark: { tier: 'course' }, board: 'canvas-board',
         how: (s) => (s.working('course')
           ? 'The hands are on the sheets and tacks now.'
           : `She is making ${s.knots.toFixed(1)} knots.`),
@@ -97,6 +99,7 @@ export const VOYAGES = [
         say: 'Now put your head where you are going. The mark bears north-east, ' +
              'and she is heading east — four points to larboard of it. Hold the ' +
              'helm over to larboard until her head comes round onto the mark.',
+        board: 'voyage-board', gauge: 6,
         how: (s) => `${s.headSaid}. She is making ${s.knots.toFixed(1)} knots.`,
         acts: [
           { said: '◀ Helm a-larboard', hold: 'ArrowLeft' },
@@ -110,6 +113,7 @@ export const VOYAGES = [
              'the third tier up — and then the royals above them. Canvas goes ' +
              'on from the bottom up and comes off from the top down; that is the ' +
              'whole rule.',
+        mark: { tier: 'topgallant' }, board: 'canvas-board',
         how: (s) => `She is making ${s.knots.toFixed(1)} knots.`,
         acts: [
           { said: 'Set the topgallants', key: 'Digit3', shift: true },
@@ -123,6 +127,7 @@ export const VOYAGES = [
              'wanders use the helm. You may run her clock on with the = key to ' +
              'pass the time, and she will come back to her own time the moment ' +
              'you touch the helm.',
+        board: 'voyage-board', gauge: 10,
         how: (s) => `${s.toRun.toFixed(1)} miles to run. ${s.headSaid}.`,
         acts: [
           { said: '◀ Helm a-larboard', hold: 'ArrowLeft' },
@@ -137,6 +142,7 @@ export const VOYAGES = [
              'starboard — the long way round, away from the wind. Take her the ' +
              'short way and you will steer straight into the wind’s eye, where ' +
              'no square-rigged ship can go, and she will stop dead.',
+        board: 'voyage-board', gauge: 8,
         how: (s) => `Home bears ${s.bearSaid}. ${s.headSaid}.`,
         acts: [
           { said: 'Helm a-starboard ▶', hold: 'ArrowRight' },

@@ -236,9 +236,63 @@
       padding: 0.6rem 1.1rem; flex: 1 1 auto; min-width: 9rem;
     }
     #pilot .act:hover { border-color: var(--blue); background: rgba(44, 88, 110, 0.13); }
-    #pilot .act.down { background: var(--blue); color: var(--paper); border-color: var(--blue); }
+    #pilot .act.down {
+      background: var(--blue); color: var(--paper); border-color: var(--blue);
+      transform: translateY(2px); box-shadow: inset 0 2px 6px rgba(0, 0, 0, 0.35);
+    }
+
+    /* The closing gauge. Her head walks in from the side; when she is near
+       enough the whole bar goes solid, which says "that is right" without
+       anybody having to write it down. */
+    #pilot .gauge { margin: 0.9rem 0 0; display: none; align-items: center; gap: 0.8rem; }
+    #pilot .gauge:not(:empty) { display: flex; }
+    #pilot .gauge .track {
+      position: relative; flex: 1; height: 1.5rem;
+      border: 1px solid var(--rule); border-radius: 2px;
+      background: rgba(80, 62, 38, 0.05);
+    }
+    #pilot .gauge .notch {
+      position: absolute; left: 50%; top: -3px; bottom: -3px; width: 2px;
+      margin-left: -1px; background: var(--rust);
+    }
+    #pilot .gauge .needle {
+      position: absolute; top: 2px; bottom: 2px; width: 0.55rem; margin-left: -0.27rem;
+      background: var(--blue); border-radius: 1px;
+      transition: left 0.12s linear;
+    }
+    #pilot .gauge .reads {
+      font-size: 0.78rem; color: var(--faint); min-width: 7.5rem; text-align: right;
+    }
+    #pilot .gauge.near .track { border-color: var(--blue); background: rgba(44, 88, 110, 0.16); }
+    #pilot .gauge.near .needle { background: var(--blue); box-shadow: 0 0 0 3px rgba(44, 88, 110, 0.3); }
+    #pilot .gauge.near .reads {
+      color: var(--blue); font-size: 0.86rem; letter-spacing: 0.04em;
+    }
+
     #pilot .well {
-      margin: 0.7rem 0 0; font-size: 1rem; line-height: 1.5; color: var(--rust);
+      margin: 0.7rem 0 0; font-size: 1.06rem; line-height: 1.5; color: var(--rust);
+    }
+    #pilot .well .tick {
+      display: inline-block; margin-right: 0.5rem; font-size: 1.2rem;
+      color: var(--paper); background: var(--rust);
+      width: 1.5rem; height: 1.5rem; line-height: 1.5rem; text-align: center;
+      border-radius: 50%; vertical-align: -0.25rem;
+      animation: stamp 0.45s cubic-bezier(0.2, 1.5, 0.4, 1) both;
+    }
+    @keyframes stamp {
+      from { transform: scale(0.1) rotate(-25deg); opacity: 0; }
+      to   { transform: scale(1) rotate(0); opacity: 1; }
+    }
+
+    /* A step landing, and a step arriving. */
+    #pilot.done {
+      border-color: var(--rust);
+      box-shadow: 0 0 0 3px rgba(154, 76, 50, 0.25), 0 6px 30px rgba(0, 0, 0, 0.45);
+    }
+    #pilot.fresh { animation: nudge 0.6s ease-out both; }
+    @keyframes nudge {
+      0%   { transform: translateX(-50%) translateY(10px); opacity: 0.4; }
+      100% { transform: translateX(-50%) translateY(0); opacity: 1; }
     }
     #pilot .shut {
       margin-top: 0.8rem; font-family: inherit; font-size: 0.68rem;
@@ -397,7 +451,16 @@
     #man p { font-size: 0.78rem; color: var(--faint); }
     #man em { color: var(--rust); font-style: normal; }
 
-    .board.lit { border-color: var(--blue); box-shadow: 0 0 0 2px rgba(44, 88, 110, 0.3); }
+    /* A board the glossary or the pilot is pointing at. It breathes, because a
+       still outline on a page of still outlines is not a pointing finger. */
+    .board.lit {
+      border-color: var(--blue);
+      animation: pointing 1.5s ease-in-out infinite;
+    }
+    @keyframes pointing {
+      0%, 100% { box-shadow: 0 0 0 2px rgba(44, 88, 110, 0.22), 0 2px 14px rgba(0, 0, 0, 0.32); }
+      50%      { box-shadow: 0 0 0 6px rgba(44, 88, 110, 0.42), 0 2px 14px rgba(0, 0, 0, 0.32); }
+    }
 
     /* --- the sheets: orders, the watch bill, the glass ----------------------- */
 

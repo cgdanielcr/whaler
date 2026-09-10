@@ -51,10 +51,19 @@ export function makeVane() {
   const position = geometry.attributes.position;
   const flat = positions.slice();
 
+  // When the pilot points at her she swells and pales, so that a man who has
+  // never looked aloft in his life knows which scrap of cloth is meant.
+  let showing = false;
+  group.userData.show = (yes) => { showing = yes; };
+
   // The wind blows away from where it comes from, and the group turns with
   // her, so what it wants is the difference between the two.
   group.userData.update = (t, windFrom, heading) => {
     group.rotation.y = wrap(windFrom + 180 - heading) * Math.PI / 180;
+
+    const beat = showing ? 1 + 0.55 * (0.5 + 0.5 * Math.sin(t * 5.5)) : 1;
+    group.scale.set(beat, beat, 1 + (beat - 1) * 0.35);
+    cloth.material.color.set(showing ? '#ff6a3c' : '#c4442b');
 
     // A slow ripple running out along her length, biggest at the fly, so she
     // reads as cloth in a breeze rather than as a painted stick.
