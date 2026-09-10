@@ -200,7 +200,7 @@ faint lines between the figures in the section.
 
 ---
 
-## M21 — The pilot, the pennant, and the wake. BUILT.
+## M20b — The pilot, the pennant, and the wake. BUILT.
 
 From the owner's first play of voyage one, 10 September 2026. His complaint: one card at
 the start telling him everything, no sense of what to do next, no way to tell which way the
