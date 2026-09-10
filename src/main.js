@@ -32,7 +32,8 @@ import { makeAfloat, makeWhale } from './afloat.js';
 import { makeCruise, remember } from './cruise.js';
 import { makeWorkUp } from './workup.js';
 import { makeTrim } from './trim.js';
-import { chosen, picked, logSailed } from './voyages.js';
+import { chosen, picked, logSailed, NEW_BEDFORD } from './voyages.js';
+import { makeChart } from './chart.js';
 import { makeInstructions, headSaid } from './instructions.js';
 import { makeOffice } from './office.js';
 import { makePilot } from './pilot.js';
@@ -211,6 +212,16 @@ const readOut = makeInstruments();
 const passage = makePassage(rig, V.plan);
 
 const watchBill = makeWatchBill(company, crew);
+
+// The chart. Metres east and north of where she sailed become a real latitude
+// and longitude, so she is on the real sea rather than on a blank one.
+const chart = makeChart(V.from || NEW_BEDFORD);
+const DEG = 111320;                // metres in a degree of latitude
+const fixOf = (x, z) => {
+  const from = V.from || NEW_BEDFORD;
+  const lat = from.lat + z / DEG;
+  return { lat, lon: from.lon + x / (DEG * Math.cos(lat * Math.PI / 180)) };
+};
 const hands = makeHands(company, crew, rig, hull, camera, renderer.domElement);
 const trim = makeTrim({
   weather, sun,
@@ -631,6 +642,11 @@ function frame(now) {
                 lookouts, hunt, cruise, workUp, air);
   instructions.update(passage, heading);
   command(air);
+
+  const her = passage.where;
+  const fix = fixOf(her.x, her.z);
+  chart(gameSeconds, fix.lat, fix.lon, heading,
+        passage.marks.map((m) => ({ ...fixOf(m.x, m.z), said: m.said })));
   if (pilot && underway) pilot.tick(real, conning());
   watchBill(gameSeconds);
   hands(seen);

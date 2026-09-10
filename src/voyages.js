@@ -25,6 +25,11 @@ export const GROUPS = {
 
 const ALL = ['sail', 'helm', 'clock', 'look', 'manoeuvre', 'allhands', 'mend', 'whale'];
 
+// Where she sails from. Every voyage in this file begins off New Bedford,
+// because that is where she was built and where her owners were, and the
+// chart puts her on the real sea from it.
+export const NEW_BEDFORD = { lat: 41.63, lon: -70.93, said: 'New Bedford' };
+
 export const VOYAGES = [
   {
     key: 'feel',

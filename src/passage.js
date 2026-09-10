@@ -92,6 +92,11 @@ export function makePassage(rig, plan = [DESTINATION]) {
     },
 
     get leg() { return leg; },
+    // Where she is, in metres east and north of where she sailed from, so the
+    // chart can turn it into a latitude and a longitude.
+    get where() { return { x, z }; },
+    // The marks of her voyage, likewise.
+    get marks() { return legs.map((l) => ({ x: l.x, z: l.z, said: l.said })); },
     get toRun() { return toRun(); },
     get sailed() { return sailed / NM; },
     get most() { return most; },
