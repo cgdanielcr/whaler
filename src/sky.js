@@ -45,8 +45,7 @@ export function makeSky() {
       }
     `,
     fragmentShader: PLATE + `
-      out vec4 pc_fragColor;
-      #define gl_FragColor pc_fragColor
+      out vec4 fragOut;
 
       uniform vec3 high;
       uniform vec3 low;
@@ -96,8 +95,7 @@ export function makeSky() {
           col = mix(col, engraveTurn(col, value, 1.5708), uBite);
         }
 
-        gl_FragColor = vec4(col, 1.0);
-        #include <colorspace_fragment>
+        fragOut = linearToOutputTexel(vec4(col, 1.0));
       }
     `
   });

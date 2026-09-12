@@ -106,10 +106,11 @@ void main() {
 `;
 
 const FRAGMENT = PLATE + `
-// Under GLSL 3 a shader names its own output, and Three's own colour-space
-// chunk still writes to the old name, so both are wired to the one variable.
-out vec4 pc_fragColor;
-#define gl_FragColor pc_fragColor
+// Under GLSL 3 a shader names its own output rather than writing to the old
+// built-in, and the old name cannot simply be defined back: every name
+// beginning gl_ is reserved and the compiler throws the line out. So the
+// colour-space step at the end is written here instead of included.
+out vec4 fragOut;
 
 uniform vec3  uSun;
 uniform vec3  uSea0;
@@ -193,8 +194,7 @@ void main() {
     col = mix(col, uHaze, far * 0.72);
   }
 
-  gl_FragColor = vec4(col, 1.0);
-  #include <colorspace_fragment>
+  fragOut = linearToOutputTexel(vec4(col, 1.0));
 }
 `;
 
