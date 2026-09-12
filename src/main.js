@@ -43,6 +43,7 @@ import { makeDrift } from './drift.js';
 import { makeCommand } from './command.js';
 import { HUE, weather as weather2, gloomFor } from './palette.js';
 import { cutPlates } from './hatch.js';
+import { cutFigures } from './figures.js';
 
 const renderer = new THREE.WebGLRenderer({ antialias: true });
 renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
@@ -701,8 +702,10 @@ function frame(now) {
 requestAnimationFrame(frame);
 
 // The engraved sheets, fetched while she is already sailing. Until they land
-// she draws in stepped flat colour, exactly as before.
+// she draws in stepped flat colour and her people are pixels, exactly as
+// before, and if the drawings never come she sails on that way.
 cutPlates();
+cutFigures();
 
 window.addEventListener('resize', () => {
   camera.aspect = window.innerWidth / window.innerHeight;
