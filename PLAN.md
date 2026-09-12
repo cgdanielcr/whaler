@@ -545,3 +545,36 @@ voyages, up is hand-tinted), `uPlate` and `uFloor`.
 The clouds, the cartouche, the flourishes and the monster for the chart, the whale for the
 hunt, the compass rose, the wind-head for the wind indicator, and the sheet of twelve
 engraved hands to replace the pixel crew. All packed in `art/`, none wired up yet.
+
+---
+
+## M20k — the drawings go to work. BUILT.
+
+**The crew** (`src/figures.js`). Twelve engraved hands on one sheet, and each man is given
+whichever suits his berth: the cooper carries a cask, the carpenter a spar, the boatsteerer
+his iron, the boy a bucket, and the mates stand about in their coats as mates do. The
+tallest is a man's height and the rest keep their proportion to him, which is how the boy
+stays a boy and the man at the windlass stays bent over it.
+
+Nothing tells the code where the twelve are on the sheet — it scans for columns with
+nothing in them. Two of them touch, though: the cask on one man's shoulder reaches the rope
+the next is hauling, and the three come back as one shape. So a row that gives up fewer
+than six is cut at its thinnest column until it gives six, which lands in the gap every
+time, because a rope crossing a column is ten pixels and a man is two hundred.
+
+**The chart** (`src/chart.js`). The rose is a drawing; the rhumbs running out of it are
+still ruled, because they belong to the sheet and have to cross the width of it. A sperm
+whale breaches in the offing, as one did on every chart of the age, and there is scrollwork
+in two corners. All of it multiplies onto the paper so the stain comes through as a printed
+impression would — except the cartouche, which has to cover the coast and the rhumbs
+running under it or the title is read through a shoreline.
+
+**And the chart stopped redrawing itself sixty times a second.** Forty thousand characters
+of SVG, re-parsed every frame with two turbulence filters over the whole sheet, is why it
+took seconds to appear and flickered while it was up. Twice a second keeps up with her.
+
+*Test: sail, and look at the deck. Then press **k**.*
+
+### Still in `art/`, still unwired
+`clouds.png` for the sky and `whale.png` for when the boats go down. The ornament is only
+loaded where it is used, so neither costs anything until it is.
