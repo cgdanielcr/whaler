@@ -59,11 +59,19 @@ If you think one of these is needed for something in scope, stop and ask.
 | Language | Plain JavaScript, ES modules | No TypeScript, no transpile |
 | Hosting | GitHub Pages from `main` | Push equals deploy |
 | Files | `index.html` + `src/*.js` modules | Small files, one concern each |
-| Art | Procedural geometry from Three.js primitives | No modelling software needed |
+| Shapes | Procedural geometry from Three.js primitives | No modelling software needed |
+| Surfaces | Drawn sheets in `art/`, loaded as textures | Hatching cannot be faked in code |
 | Dependencies | Three.js only | Every added dependency is a new failure mode |
 
 **Do not introduce Vite, npm, TypeScript, a bundler, React, or a physics engine.** If a
 task genuinely cannot be done without one, stop and explain why before adding it.
+
+The Surfaces line was rewritten on 12 September 2026. It used to say art was procedural
+and forbid image files, and that was never a decision the owner made -- it was a habit
+that hardened into a rule. Her *shapes* are still built from primitives and always will
+be. But an engraved line has to be drawn by someone who can draw, so the hatching, the
+paper and the ornament are picture files in `art/`, listed in `ART.md`. Keep that folder
+small: it is served from GitHub Pages and the page must still open on a telephone.
 
 Local testing: `python3 -m http.server 8000`, then open `http://localhost:8000`. ES
 modules will not load from `file://`.

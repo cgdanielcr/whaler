@@ -493,3 +493,55 @@ longer carrying the motion on its own, and at the size it had been it read as is
 as many, a third the size, darker and quieter.
 
 *Test: look at the sea. It has a direction now, and a distance.*
+
+---
+
+## M20j — the engraving. BUILT.
+
+The owner sent a mockup of an antique plate and asked whether the game could look like
+that, then supplied the drawings for it. They are listed in `ART.md` and packed into
+`art/`: seven sheets of hatching, a sheet of aged paper, two torn edges, and the ornament.
+
+**The rule that makes it work, and the one that nearly sank it.** An engraver has no dark
+paint. His plate is white paper and every tone on it is cut, so a black hull is not
+painted black — it is ruled so close that the paper hardly shows. What picks a sheet of
+hatching is therefore not the light alone but how dark a thing is *meant to come out*: its
+own colour multiplied by the light that has landed on it. The first attempt drove the
+sheets from the light alone, and the hull — which is nearly black paint — came out with no
+lines on it at all, because ink on near-black is invisible.
+
+**The ladder** (`src/hatch.js`). The seven sheets are nothing like evenly spaced in tone.
+Measured off the drawings they run 94, 92, 86, 71, 53, 28 and 15 per cent white: the first
+three are all but bare paper and the last three do nearly all the work. Choosing a sheet by
+dividing the tone by seven puts every surface in the picture on sheet two, which is how
+this first looked — a whisper of lines and nothing else. The sheet is found by walking the
+measured ladder instead. Their greys are also how dark a line *looks* rather than how much
+light it carries, so they are squared on the way in.
+
+They live in one texture of seven layers, because seven separate ones could not be chosen
+between by anything that varies across the picture — which is the whole point. That needs
+GLSL 3, and a shader under GLSL 3 names its own output; the old name cannot be defined
+back into place, because every name beginning `gl_` is reserved and the compiler throws
+the line out without saying so plainly.
+
+**Everything is on the one plate.** The ship and her canvas through `flat.js`, which is
+where the light was already being cut into steps. The sea through its own shader, with its
+four blues lifted into the middle of the range first — taken at face value they would all
+be cut nearly solid, a sea of black — and with distance lightening the tone *before* the
+sheet is chosen, which is how an engraver draws haze. The sky the same, with its ruling
+turned across the water's so the two do not run together at the horizon.
+
+**Her papers** (`index.html`). The boards are a tiling photograph of aged stock under a
+cream wash, torn out along a mask rather than ruled as rectangles, with a drop-shadow that
+follows the tear instead of a box-shadow that would trace the rectangle they never had.
+
+Four dials survive on `window.INK`, so the plate can be tuned with the ship in front of
+you: `uBite` (nought is the old flat colour), `uWash` (nought is a plate out of a book of
+voyages, up is hand-tinted), `uPlate` and `uFloor`.
+
+*Test: sail. She is drawn in lines, and so is her sea and her sky.*
+
+### Still wanted from the same set
+The clouds, the cartouche, the flourishes and the monster for the chart, the whale for the
+hunt, the compass rose, the wind-head for the wind indicator, and the sheet of twelve
+engraved hands to replace the pixel crew. All packed in `art/`, none wired up yet.
