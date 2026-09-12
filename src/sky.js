@@ -12,7 +12,7 @@
 // It costs two texture lookups a pixel. The noise that made the cloud was
 // worked out once, at load, on the processor.
 import * as THREE from 'three';
-import { cloudSheet } from './clouds.js';
+import { cloudSheet, drawnCloud } from './clouds.js';
 import { HUE } from './palette.js';
 import { INK, PLATE } from './hatch.js';
 
@@ -29,8 +29,17 @@ export function makeSky() {
     veil:  { value: cloudSheet({ seed: 11, cover: 0.34, edge: 0.05, billow: false, octaves: 3 }) },
     drift: { value: new THREE.Vector2() },
     sun:   { value: new THREE.Vector3(0.76, 0.55, 0.28).normalize() },
-    gloom: { value: 0 }
+    gloom: { value: 0 },
+    drawn: { value: 0 }          // 0 until the engraved cloud has been cut up
   };
+
+  // The drawn cloud, fetched while she is already sailing. If it never comes
+  // she keeps the noise, which is what she had.
+  drawnCloud().then((tex) => {
+    if (!tex) return;
+    uniforms.sheet.value = tex;
+    uniforms.drawn.value = 1;
+  });
 
   const material = new THREE.ShaderMaterial({
     side: THREE.BackSide,
@@ -56,6 +65,7 @@ export function makeSky() {
       uniform vec2 drift;
       uniform vec3 sun;
       uniform float gloom;
+      uniform float drawn;
       varying vec3 vPos;
 
       void main() {
@@ -74,17 +84,43 @@ export function makeSky() {
         // The cloud, on its ceiling. Where the projection begins to stretch it
         // is faded out rather than clamped: clamping smears one patch of it
         // round the whole horizon and hangs it there in curtains.
-        float up = max(h, 0.05);
+        // A drawn cloud will not take the stretch a noise field will. Where the
+        // ceiling is allowed to run out to the horizon it pulls a mass of it
+        // into a streak a mile long, and five drawn masses streaked like that
+        // are five smears. The floor under the divisor holds them to a shape.
+        float up = max(h, drawn > 0.5 ? 0.16 : 0.05);
         vec2 ceiling = d.xz / up;
-        float a = texture2D(sheet, ceiling * 0.090 + drift).a;
-        float b = texture2D(veil,  ceiling * 0.038 + drift * 0.55 + 0.37).a;
         float near = smoothstep(0.05, 0.24, h);
+        float b = texture2D(veil, ceiling * 0.038 + drift * 0.55 + 0.37).a;
 
-        // Cut, not faded. Two thresholds on the one sheet give the lit body
-        // and the heavier core under it.
-        col = mix(col, mix(lit, dim, 0.45), step(0.5, b) * step(0.35, near) * 0.8);
-        col = mix(col, lit, step(0.5, a) * step(0.35, near));
-        col = mix(col, dim, step(0.78, a) * step(0.35, near));
+        if (drawn > 0.5) {
+          // Engraved cloud. It carries its own light and shade, so nothing is
+          // cut here: the drawing's greys go straight into the colour, and the
+          // hatching below picks its sheets off them exactly as it does off a
+          // sail. A faint bank of the old noise is left underneath for the
+          // thin high stuff the drawings do not have.
+          vec4 c = texture2D(sheet, ceiling * 0.075 + drift);
+          col = mix(col, mix(lit, dim, 0.55), step(0.5, b) * step(0.35, near) * 0.35);
+          // Firmed up. A drawn cloud is cut out against a long soft fringe, and
+          // taken at face value that fringe lays a wash of half-cloud over half
+          // the sky. Pulled in, the banks get bodies and the paper between them
+          // stays paper.
+          float cover = smoothstep(0.16, 0.52, c.a) * smoothstep(0.18, 0.78, near);
+          // Opened right out. The drawing's greys all sit close together, and
+          // laid straight down between the two cloud colours they came out as
+          // one flat tone: cloud-shaped, but with no cloud in it. Stretched
+          // across the range, and with the underside allowed to go greyer than
+          // the cloud colour proper, the billows come back.
+          vec3 deep = mix(dim, low, 0.45);
+          col = mix(col, mix(deep, lit, smoothstep(0.16, 0.80, c.r)), cover);
+        } else {
+          // Cut, not faded. Two thresholds on the one sheet give the lit body
+          // and the heavier core under it.
+          float a = texture2D(sheet, ceiling * 0.090 + drift).a;
+          col = mix(col, mix(lit, dim, 0.45), step(0.5, b) * step(0.35, near) * 0.8);
+          col = mix(col, lit, step(0.5, a) * step(0.35, near));
+          col = mix(col, dim, step(0.78, a) * step(0.35, near));
+        }
 
         if (uInked > 0.5) {
           // An engraved sky is mostly bare paper: a few lines in the blue, a
