@@ -6,8 +6,9 @@
   <title>Ship</title>
   <style>
     /* Her papers. Everything you read is on paper laid over the view: aged
-       stock, iron-gall ink, small capitals for the headings. Nothing on the
-       page is a picture file -- the sails and the compass are drawn as SVG. */
+       stock, iron-gall ink, small capitals for the headings. The paper is a
+       real sheet now, and so is the torn edge round it: see art/ and ART.md.
+       The sails and the compass are still drawn as SVG. */
     :root {
       --paper:  #f0e7d3;
       --paper2: #e6dbc2;
@@ -24,12 +25,28 @@
     canvas { display: block; }
     body { font-family: Georgia, "Times New Roman", serif; color: var(--ink); }
 
+    /* A board is a scrap of paper torn out of a book, not a rectangle. The
+       sheet is a tiling photograph of aged stock; the torn edge is a separate
+       mask, white where the paper is and black where it has gone. The shadow
+       is a drop-shadow rather than a box-shadow because a box-shadow would
+       trace the rectangle the board would have had, which gives the whole
+       trick away. Padding is generous: the tear eats into the corners. */
     .board {
       position: fixed;
-      padding: 0.75rem 0.95rem;
-      background: linear-gradient(160deg, var(--paper) 0%, var(--paper2) 100%);
-      border: 1px solid var(--edge);
-      box-shadow: 0 2px 14px rgba(0, 0, 0, 0.32);
+      padding: 1.05rem 1.3rem;
+      /* A cream wash over the sheet. The photograph on its own is far too
+         strong: its blotches fight the text, and the eye picks the tile out
+         and sees it repeat. Held back to about a third it reads as paper and
+         the repeat disappears. */
+      background:
+        linear-gradient(rgba(244, 236, 217, 0.62), rgba(238, 228, 206, 0.62)),
+        url("art/parchment.jpg") repeat;
+      background-size: auto, 460px 460px;
+      -webkit-mask-image: url("art/panel-mask.png");
+              mask-image: url("art/panel-mask.png");
+      -webkit-mask-size: 100% 100%;
+              mask-size: 100% 100%;
+      filter: drop-shadow(0 2px 9px rgba(0, 0, 0, 0.34));
       user-select: none; pointer-events: none;
     }
     .board h2 {
@@ -216,7 +233,12 @@
       left: 0; right: 0; bottom: 0;
       display: flex; align-items: stretch; gap: 0.9rem;
       padding: 0.5rem 0.9rem;
-      background: linear-gradient(0deg, var(--paper2) 0%, var(--paper) 100%);
+      /* The same sheet as the boards. It keeps its straight top edge: this one
+         is not a scrap laid on the table, it is the table. */
+      background:
+        linear-gradient(rgba(244, 236, 217, 0.62), rgba(238, 228, 206, 0.62)),
+        url("art/parchment.jpg") repeat;
+      background-size: auto, 460px 460px;
       border-top: 1px solid var(--edge);
       box-shadow: 0 -3px 18px rgba(0, 0, 0, 0.35);
       user-select: none;
