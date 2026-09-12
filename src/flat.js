@@ -1,4 +1,4 @@
-// Cutting light into steps.
+// Cutting light into steps, and then into lines.
 //
 // The flatness in a drawing like the one we are after does not come from the
 // surface being faceted. It comes from the light on it being cut into a few
@@ -9,8 +9,18 @@
 //
 // So: leave the surface smooth, and cut the light.
 //
-// How big a step in the light. Coarser is more of a poster; finer starts to
-// look like shading again.
+// Once the plates have loaded that stepping becomes engraving, and the rule
+// changes completely. An engraver has no dark paint. His plate is white paper
+// and every tone on it is cut: a black hull is not painted black, it is ruled
+// so close that the paper hardly shows. So what picks the sheet of hatching is
+// not the light alone but how dark the thing is meant to come out -- its own
+// colour multiplied by the light that has landed on it. A tarred hull in
+// sunshine and a cream sail in shadow then get the treatment each deserves,
+// and both of them are drawn on the same sheet of paper. See hatch.js.
+import { INK, PLATE } from './hatch.js';
+
+// How big a step in the light, before the plates arrive. Coarser is more of a
+// poster; finer starts to look like shading again.
 const STEP = '0.30';
 
 const CUT = `
@@ -20,17 +30,26 @@ const CUT = `
     // already has the paint mixed into it, so dividing that back out leaves
     // how brightly lit this point is and nothing else. Cut that, and a dark
     // hull stays a dark hull instead of being dragged up to cream.
-    float paint = dot(diffuseColor.rgb, vec3(0.2126, 0.7152, 0.0722));
-    float landed = dot(reflectedLight.directDiffuse + reflectedLight.indirectDiffuse,
-                       vec3(0.2126, 0.7152, 0.0722));
-    if (paint > 0.001 && landed > 0.0001) {
-      float shade = landed / paint;
-      // Steps of a third, and a floor under the darkest of them, because in a
-      // drawing the shaded side of a thing is never black.
-      float cut = max(0.58, floor(shade / ${STEP} + 0.5) * ${STEP});
-      float k = cut / shade;
-      reflectedLight.directDiffuse *= k;
-      reflectedLight.indirectDiffuse *= k;
+    float paint = dot(diffuseColor.rgb, GREY);
+    vec3 landed = reflectedLight.directDiffuse + reflectedLight.indirectDiffuse;
+
+    if (paint > 0.001 && dot(landed, GREY) > 0.0001) {
+      float shade = dot(landed, GREY) / paint;
+
+      if (uInked > 0.5) {
+        // How dark this spot wants to come out, all told.
+        float value = clamp(paint * min(shade, 1.4), 0.0, 1.0);
+        reflectedLight.directDiffuse = vec3(0.0);
+        reflectedLight.indirectDiffuse =
+          mix(landed, engrave(diffuseColor.rgb, value), uBite);
+      } else {
+        // Steps of a third, and a floor under the darkest of them, because in
+        // a drawing the shaded side of a thing is never black.
+        float want = max(0.58, floor(shade / ${STEP} + 0.5) * ${STEP});
+        float k = want / shade;
+        reflectedLight.directDiffuse *= k;
+        reflectedLight.indirectDiffuse *= k;
+      }
     }
   }
 `;
@@ -39,7 +58,8 @@ const CUT = `
 // wrapped round a declaration.
 export function cutLight(material) {
   material.onBeforeCompile = (shader) => {
-    shader.fragmentShader = shader.fragmentShader
+    Object.assign(shader.uniforms, INK);
+    shader.fragmentShader = PLATE + shader.fragmentShader
       .replace('#include <lights_fragment_end>', CUT);
   };
   // Materials that compile to the same program are shared by Three.js, so a

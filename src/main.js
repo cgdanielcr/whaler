@@ -42,6 +42,7 @@ import { makeVane } from './vane.js';
 import { makeDrift } from './drift.js';
 import { makeCommand } from './command.js';
 import { HUE, weather as weather2, gloomFor } from './palette.js';
+import { cutPlates } from './hatch.js';
 
 const renderer = new THREE.WebGLRenderer({ antialias: true });
 renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
@@ -698,6 +699,10 @@ function frame(now) {
   requestAnimationFrame(frame);
 }
 requestAnimationFrame(frame);
+
+// The engraved sheets, fetched while she is already sailing. Until they land
+// she draws in stepped flat colour, exactly as before.
+cutPlates();
 
 window.addEventListener('resize', () => {
   camera.aspect = window.innerWidth / window.innerHeight;

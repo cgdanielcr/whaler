@@ -14,11 +14,13 @@
 import * as THREE from 'three';
 import { cloudSheet } from './clouds.js';
 import { HUE } from './palette.js';
+import { INK, PLATE } from './hatch.js';
 
 export const HORIZON_COLOUR = new THREE.Color('#a8c4d4');
 
 export function makeSky() {
   const uniforms = {
+    ...INK,
     high:  { value: HUE.skyHigh },
     low:   { value: HUE.skyLow },
     lit:   { value: HUE.cloudLit },
@@ -33,6 +35,7 @@ export function makeSky() {
   const material = new THREE.ShaderMaterial({
     side: THREE.BackSide,
     depthWrite: false,
+    glslVersion: THREE.GLSL3,
     uniforms,
     vertexShader: `
       varying vec3 vPos;
@@ -41,7 +44,10 @@ export function makeSky() {
         gl_Position = projectionMatrix * modelViewMatrix * vec4(position, 1.0);
       }
     `,
-    fragmentShader: `
+    fragmentShader: PLATE + `
+      out vec4 pc_fragColor;
+      #define gl_FragColor pc_fragColor
+
       uniform vec3 high;
       uniform vec3 low;
       uniform vec3 lit;
@@ -80,6 +86,15 @@ export function makeSky() {
         col = mix(col, mix(lit, dim, 0.45), step(0.5, b) * step(0.35, near) * 0.8);
         col = mix(col, lit, step(0.5, a) * step(0.35, near));
         col = mix(col, dim, step(0.78, a) * step(0.35, near));
+
+        if (uInked > 0.5) {
+          // An engraved sky is mostly bare paper: a few lines in the blue, a
+          // few more in the underside of the cloud, and nothing at all in the
+          // lit heads of it. And its ruling is turned across the water's, so
+          // the two do not run together at the horizon.
+          float value = 0.46 + dot(col, GREY) * 0.60;
+          col = mix(col, engraveTurn(col, value, 1.5708), uBite);
+        }
 
         gl_FragColor = vec4(col, 1.0);
         #include <colorspace_fragment>

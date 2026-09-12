@@ -13,6 +13,7 @@
 // It is also markedly cheaper than what it replaces.
 import * as THREE from 'three';
 import { HUE } from './palette.js';
+import { INK, PLATE } from './hatch.js';
 
 const EXTENT = 2800;      // metres across, wider than the eye can see
 const CROWD = 0.35;       // how tight the grid is under her, against the horizon
@@ -104,7 +105,12 @@ void main() {
 }
 `;
 
-const FRAGMENT = `
+const FRAGMENT = PLATE + `
+// Under GLSL 3 a shader names its own output, and Three's own colour-space
+// chunk still writes to the old name, so both are wired to the one variable.
+out vec4 pc_fragColor;
+#define gl_FragColor pc_fragColor
+
 uniform vec3  uSun;
 uniform vec3  uSea0;
 uniform vec3  uSea1;
@@ -169,7 +175,23 @@ void main() {
   // cut: haze is the only thing in the picture that is genuinely not a shape,
   // and drawing it as one puts a hard line across the sea at middle distance.
   float far = smoothstep(0.22, 1.10, length(vWorld.xz) / 1500.0);
-  col = mix(col, uHaze, far * 0.72);
+
+  if (uInked > 0.5) {
+    // An engraver has no haze either. He draws the far water with fewer lines
+    // and lets the paper come through, which is the same thing done properly:
+    // so distance lightens the tone before the sheet is chosen, rather than
+    // washing grey over the lines after they are cut.
+    // Her four blues run from very dark to middling, and taken at face value
+    // they would all be cut nearly solid: a sea of black. An engraver does not
+    // do that either. He keeps the water in the middle of his range, where
+    // there are lines enough to read the shape of a wave, and saves the
+    // darkest sheets for the hull and the hollows. So the four cuts are lifted
+    // into that middle before a sheet is chosen.
+    float value = mix(0.18 + dot(col, GREY) * 1.15, 0.90, far * 0.55);
+    col = mix(col, engrave(col, value), uBite);
+  } else {
+    col = mix(col, uHaze, far * 0.72);
+  }
 
   gl_FragColor = vec4(col, 1.0);
   #include <colorspace_fragment>
@@ -193,6 +215,7 @@ export function makeSea(segments = 160) {
   pos.needsUpdate = true;
 
   const uniforms = {
+    ...INK,
     uTime:   { value: 0 },
     uSwell:  { value: swell },
     uOffset: { value: new THREE.Vector2() },
@@ -205,8 +228,12 @@ export function makeSea(segments = 160) {
     uHaze:   { value: HUE.skyLow }
   };
 
+  // GLSL 3, because a stack of hatching sheets is one texture with seven
+  // layers and the older shading language has no word for that. Three.js
+  // supplies the aliases, so nothing else in these two shaders changes.
   const mesh = new THREE.Mesh(geometry, new THREE.ShaderMaterial({
-    uniforms, vertexShader: VERTEX, fragmentShader: FRAGMENT
+    uniforms, vertexShader: VERTEX, fragmentShader: FRAGMENT,
+    glslVersion: THREE.GLSL3
   }));
 
   let last = 0, started = false;
