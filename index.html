@@ -609,14 +609,24 @@
     }
     #chart .mark path { fill: none; stroke: #7a2f1c; stroke-width: 1.4; }
 
-    #chart .cartouche rect {
-      fill: rgba(239, 228, 201, 0.82); stroke: #4a3a24; stroke-width: 1;
-    }
+    /* The ornament. It is all one ink, laid on the sheet by multiplying, so
+       that the paper's stain comes through it as it would through a printed
+       impression rather than sitting behind a patch of white. */
+    #chart .rose, #chart .monster, #chart .flourish { mix-blend-mode: multiply; }
+    #chart .monster { opacity: 0.62; }
+    #chart .flourish { opacity: 0.46; }
+    /* The cartouche is the one thing that does not multiply. It has to cover
+       the coast and the rhumbs running under it, or the title is read through
+       a shoreline. Its own pale ground does that, and the sheet is tinted to
+       it rather than the other way about. */
+    #chart .cartouche image { opacity: 0.97; }
+
+    #chart .cartouche text { text-anchor: middle; }
     #chart .cartouche .title {
-      font-size: 17px; fill: #33291d; font-family: Georgia, serif; font-style: italic;
+      font-size: 16px; fill: #33291d; font-family: Georgia, serif; font-style: italic;
     }
     #chart .cartouche .sub {
-      font-size: 12px; fill: #4a3a24; font-family: Georgia, serif; font-style: italic;
+      font-size: 11px; fill: #4a3a24; font-family: Georgia, serif; font-style: italic;
     }
     #chart .cartouche .small { font-size: 10px; letter-spacing: 0.14em; font-style: normal; }
 

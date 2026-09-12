@@ -55,15 +55,13 @@ function rose(cx, cy, reach, full) {
   out += '</g>';
   if (!full) return out;
 
-  out += `<g class="rose" transform="translate(${cx.toFixed(1)},${cy.toFixed(1)})">`;
-  for (let i = 0; i < 8; i++) {
-    const a = (i / 8) * Math.PI * 2, r = i % 2 ? 15 : 26;
-    const p = (t, k) => `${(Math.sin(a + t) * k).toFixed(1)} ${(-Math.cos(a + t) * k).toFixed(1)}`;
-    out += `<path class="${i % 2 ? 'minor' : 'major'}" d="M ${p(0, r)} L ${p(Math.PI / 8, 5)} ` +
-      `L 0 0 L ${p(-Math.PI / 8, 5)} Z"/>`;
-  }
-  out += '<circle class="pin" r="3.2"/><circle class="ring" r="27"/><circle class="ring" r="31"/>' +
-    '<text class="np" y="-34">N</text></g>';
+  // The rose itself is a drawing: thirty-two points, engraved, with a
+  // fleur-de-lis at north. The rhumbs above are still ruled, because they
+  // belong to the sheet and have to run the width of it.
+  const r = 62;
+  out += `<image class="rose" href="art/rose.png" ` +
+    `x="${(cx - r).toFixed(1)}" y="${(cy - r).toFixed(1)}" ` +
+    `width="${r * 2}" height="${r * 2}"/>`;
   return out;
 }
 
@@ -235,12 +233,31 @@ export function makeChart(home) {
     const rhumbs = rose(W * 0.74, H * 0.30, W, true) +
       rose(W * 0.22, H * 0.72, W * 0.8, false);
 
+    // The title, in an engraved frame. The drawing carries its own pale ground,
+    // so the words sit in the clear middle of it and nothing is ruled round
+    // them. A chart of the period would have had the engraver's name in here
+    // too, and the price.
+    // Sized so its bottom fleur comes down on the neatline rather than through
+    // it, and wide enough that the title clears the scrollwork at either hand.
+    const cw = 376, ch = Math.round(cw * 640 / 960);
+    const mid = ch * 0.45;
     const cartouche =
-      `<g class="cartouche" transform="translate(${EDGE + 16},${H - EDGE - 58})">` +
-      '<rect x="-8" y="-22" width="286" height="66" rx="2"/>' +
-      '<text class="title" y="-4">A Chart of the Western Ocean</text>' +
-      '<text class="sub" y="14">and the passage to the Pacifick Ground</text>' +
-      '<text class="sub small" y="31">New Bedford · 1841</text></g>';
+      `<g class="cartouche" transform="translate(${EDGE + 6},${H - EDGE - ch})">` +
+      `<image href="art/cartouche.png" x="0" y="0" width="${cw}" height="${ch}"/>` +
+      `<text class="title" x="${cw / 2}" y="${mid.toFixed(0)}">A Chart of the Western Ocean</text>` +
+      `<text class="sub" x="${cw / 2}" y="${(mid + 19).toFixed(0)}">and the passage to the Pacifick Ground</text>` +
+      `<text class="sub small" x="${cw / 2}" y="${(mid + 37).toFixed(0)}">New Bedford · 1841</text></g>`;
+
+    // What every chart of the age carried in the empty water, and what this one
+    // has wanted since it was drawn: something with teeth in the offing, and a
+    // little scrollwork in the corners where the engraver had room.
+    const ornament =
+      `<image class="monster" href="art/monster.png" ` +
+      `x="${(W * 0.40).toFixed(0)}" y="${(H * 0.055).toFixed(0)}" width="230" height="148"/>` +
+      `<image class="flourish" href="art/flourish-1.png" ` +
+      `x="${EDGE + 3}" y="${EDGE + 3}" width="74" height="74"/>` +
+      `<image class="flourish" href="art/flourish-2.png" ` +
+      `x="${W - EDGE - 77}" y="${H - EDGE - 77}" width="74" height="74"/>`;
 
     panel.innerHTML = '<h2>The chart</h2>' +
       // The sheet clips its own edges, so land running off it is simply cut.
@@ -252,7 +269,7 @@ export function makeChart(home) {
       // real chart: the network belongs to the sheet, not to the sea.
       grid + land + rhumbs + laid + her +
       `<rect class="grain" x="0" y="0" width="${W}" height="${H}" filter="url(#foxed)"/>` +
-      neatline(at, step, win.span) + cartouche + scaleBar + '</svg>' +
+      neatline(at, step, win.span) + ornament + cartouche + scaleBar + '</svg>' +
       `<p class="fix">${said}</p>` +
       '<p class="note">Drawn on Mercator, as every sea chart since 1569 has been: on ' +
       'this projection a steady compass course comes out a straight line, which is ' +
@@ -262,6 +279,13 @@ export function makeChart(home) {
   }
 
   // Called every frame. Keeps her position, and lays a breadcrumb now and then.
+  //
+  // It used to redraw the sheet on every one of those frames: forty thousand
+  // characters of SVG re-parsed sixty times a second, with two turbulence
+  // filters over the whole of it. The chart took seconds to appear and flickered
+  // while it was up. She moves a few hundred yards a minute; twice a second is
+  // more than enough to keep up with her.
+  let drawnAt = 0;
   return function tick(gameSeconds, lat, lon, heading, marks) {
     latest = { lat, lon, heading, marks };
     if (gameSeconds - lastLogged > 900) {        // a fix every quarter of an hour
@@ -269,6 +293,7 @@ export function makeChart(home) {
       track.push([lat, lon]);
       if (track.length > 400) track.shift();
     }
-    if (showing()) draw();
+    const now = performance.now();
+    if (showing() && now - drawnAt > 500) { drawnAt = now; draw(); }
   };
 }
