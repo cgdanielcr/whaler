@@ -1,0 +1,5 @@
+
+# The drawings as they arrived, at full size. The packed-down copies the page
+# actually loads are in art/, and those are committed. Keeping the 60 MB of
+# masters out of a repo that is also the web server.
+Art Assets/
