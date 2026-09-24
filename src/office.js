@@ -31,11 +31,14 @@ export function makeOffice() {
         '</li>';
     }).join('') +
     '</ul>' +
+    '<p class="whole"><button class="link" data-to="voyage">The whole voyage</button>' +
+    '<span class="teaches">Three years in the Pacific, on the chart: where to cruise, when to put ' +
+    'into port, whom to rate up, and what every man is paid at the end of it.</span></p>' +
     (done.length
       ? `<p class="note">${done.length} of ${VOYAGES.length} sailed. ` +
-        'Your browser remembers this much and nothing else.</p>'
+        'Your browser remembers this, and where your whole voyage has got to, and nothing else.</p>'
       : '<p class="note">Nothing sailed yet. Your browser will remember which ' +
-        'ones you finish, and nothing else.</p>');
+        'ones you finish, and where your whole voyage has got to, and nothing else.</p>');
   document.body.appendChild(office);
 
   for (const b of office.querySelectorAll('.link')) {

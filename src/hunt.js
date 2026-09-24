@@ -175,6 +175,14 @@ export function makeHunt({ company, crew, stores, say, onScene }) {
       }
     },
 
+    // A whale raised on cue, for a lowering called from the chart.
+    raiseNow() {
+      whale = { miles: 1.6, side: 'larboard bow' };
+      state = 'raised';
+      clock = SOUNDS_OFF * 2;
+      say('There she blows! A sperm whale, and the mastheads have him.');
+    },
+
     // Once he is cut in and tried out, she is looking for the next one.
     finished() {
       state = 'none'; whale = null; barrels = 0;

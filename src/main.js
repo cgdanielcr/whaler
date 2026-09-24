@@ -48,6 +48,7 @@ import { HUE, weather as weather2, gloomFor } from './palette.js';
 import { cutPlates, INK } from './hatch.js';
 import { cutFigures } from './figures.js';
 import { makeAbove } from './above.js';
+import { fitCrew, makeCrisis } from './crisis.js';
 import { makeStationBill } from './stationbill.js';
 import { WEIGH } from './evolutions.js';
 
@@ -237,6 +238,8 @@ const time = {
 };
 
 const company = makeCompany();
+// A crisis from the whole voyage is sailed by that voyage's own men.
+if (V.crisis) fitCrew(company);
 // A crew fresh aboard has no stations until you give them some.
 if (V.unstationed) for (const m of company.all) if (m.rate !== 'mate' && !m.idler) m.station = null;
 const crew = makeCrew(company, { byBill: !!V.byBill });
@@ -480,6 +483,8 @@ function onScene(what, howMany) {
 
 const cruise = makeCruise({ company, stores });
 const hunt = makeHunt({ company, crew, stores, say: boards.say, onScene });
+const crisis = V.crisis ? makeCrisis({ V, company, rig, hunt }) : null;
+if (V.crisis === 'lowering') hunt.raiseNow();
 const workUp = makeWorkUp({
   crew, hunt, cruise, stores, say: boards.say,
   onFire: (lit) => { whaler.smoke.visible = lit; }
@@ -687,7 +692,7 @@ function frame(now) {
   const real = Math.min((now - last) / 1000, 0.1);
   last = now;
   // Once she is in, the clock stops and only the sea keeps moving.
-  const home = cruise.over || (!V.ground && passage.arrived);
+  const home = cruise.over || (!V.ground && passage.arrived) || (crisis && crisis.done);
   const pace = home ? 0 : time.pace;
   const seen = real * (home ? 1 : pace);   // what your eye sees
   const gameDt = pace * real * GAME_SECONDS_PER_SECOND;   // what her clock counts
@@ -744,7 +749,9 @@ function frame(now) {
   // when her water will not stretch any further.
   if (passage.arrived && !told) {
     told = true;
-    if (V.ground) {
+    if (crisis) {
+      crisis.finish();
+    } else if (V.ground) {
       cruise.raise(gameSeconds);
       boards.say('She has raised the cruising ground. Keep a good lookout.');
     } else {
@@ -752,6 +759,7 @@ function frame(now) {
       instructions.account(passage, readClock(gameSeconds).time);
     }
   }
+  if (crisis) crisis.tick();
   if (V.ground) {
     const ended = cruise.tick(gameSeconds);
     if (ended) {

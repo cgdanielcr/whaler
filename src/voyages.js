@@ -13,6 +13,7 @@
 
 import { ROUTE } from './route.js';
 import { UNDERWAY } from './underway.js';
+import { crisisVoyage } from './crises.js';
 
 // The keys on the board, gathered into groups a voyage can allow or withhold.
 export const GROUPS = {
@@ -664,7 +665,10 @@ export const VOYAGES = [
 // Which voyage she is to sail. The page's address chooses it, so that a
 // choice made in the shipping office is remembered across a reload and
 // nothing has to be taken apart and built again while she is afloat.
-const keyed = () => VOYAGES.find((v) => v.key === (location.hash || '').replace('#', ''));
+const keyed = () => {
+  const key = (location.hash || '').replace('#', '');
+  return VOYAGES.find((v) => v.key === key) || crisisVoyage(key);
+};
 
 export const chosen = () => keyed() || VOYAGES[0];
 export const picked = () => !!keyed();      // false means the office, not a voyage

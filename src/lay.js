@@ -11,6 +11,7 @@
 
 const GALLONS = 31.5;              // to the barrel
 const PRICE = 0.94;                // dollars the gallon, sperm oil, 1841
+const WHALE_PRICE = 0.34;          // whale oil, from the right whale, 1841 -- about
 const CHARGES = 0.06;              // wharfage, pilotage, cooperage off the top -- inferred
 const SLOPS_A_MONTH = 2;           // drawn from the slop chest at the master's prices -- inferred
 const MASTER = 15;
@@ -27,31 +28,40 @@ const dollars = (n) => (n < 0 ? '−$' : '$') +
   Math.abs(n).toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
 
 // The whole reckoning, from the barrels stowed down and the days she was out.
-export function reckon(men, barrels, days) {
-  const gross = barrels * GALLONS * PRICE;
-  const net = gross * (1 - CHARGES);
+// A whole voyage also brings whale oil at a lower price, money laid out in
+// ports that comes off the top, and deserters, whose lay is forfeit.
+export function reckon(men, barrels, days, extra = {}) {
+  const { whale = 0, outlays = 0, ambergris = 0, master = MASTER } = extra;
+  const gross = barrels * GALLONS * PRICE + whale * GALLONS * WHALE_PRICE + ambergris;
+  const net = Math.max(0, gross * (1 - CHARGES) - outlays);
   const months = Math.max(1, days / 30);
 
   const shares = men.map((m) => {
     const lay = layOf(m);
-    const share = net / lay;
+    const share = m.health === 'ran' ? 0 : net / lay;
     // The mates and the tradesmen kept no account at the slop chest worth
     // reckoning; the foremast hands and the boy lived on it.
     const slops = /mate|Cooper|Carpenter|Steward/.test(m.berth) ? 0 : SLOPS_A_MONTH * months;
     const due = share - slops;
-    return { name: m.name, lay, share, slops, due, said: `1/${lay} lay &mdash; ${owes(due)}` };
+    const said = m.health === 'ran' ? `1/${lay} lay &mdash; <em>forfeit: he ran</em>`
+      : `1/${lay} lay &mdash; ${owes(due)}${m.health === 'lost' ? ', to his family' : ''}`;
+    return { name: m.name, lay, share, slops, due, said };
   });
 
   return {
     gross, net,
-    master: { lay: MASTER, share: net / MASTER },
+    master: { lay: master, share: net / master },
     shares,
-    said: `The oil fetches <b>${dollars(gross)}</b> at 94 cents the gallon; ` +
-      `${dollars(net)} after the charges of the voyage. Your lay, at 1/${MASTER}, ` +
-      `is <b>${dollars(net / MASTER)}</b>.`,
+    said: `The oil fetches <b>${dollars(gross)}</b>` +
+      (whale ? ' (sperm at 94 cents the gallon, whale oil at 34)' : ' at 94 cents the gallon') +
+      `; ${dollars(net)} after the charges of the voyage` +
+      (outlays ? ` and ${dollars(outlays)} laid out in port` : '') +
+      `. Your lay, at 1/${master}, is <b>${dollars(net / master)}</b>.`,
     inDebt: shares.filter((s) => s.due < 0).length
   };
 }
+
+export { dollars };
 
 function owes(due) {
   if (due < 0) return `<em>owes the ship ${dollars(-due)}</em>`;

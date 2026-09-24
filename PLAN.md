@@ -675,7 +675,9 @@ are inferred.
 
 *Test: finish a cruise and find what the cabin boy was paid.*
 
-### M24 — The voyage on paper
+### M24 — The voyage on paper. SKIPPED.
+
+The owner chose to play the built version first. PAPER-VOYAGE.md stays as a record of the design.
 
 Not code. `PAPER-VOYAGE.md` is the voyage map and eight events, played with a die and a
 pencil in twenty minutes. The owner plays it, rewrites the events in his own voice, and
@@ -683,7 +685,14 @@ says what was dull. Only then is it built.
 
 *Test: play it twice and come home once with a full hold and once clean.*
 
-### M25 — The voyage map
+### M25 — The voyage map. BUILT 24 September.
+
+Built as `#voyage`, reached from the office as *The whole voyage*: `voyagemap.js` (the screen),
+`chartmap.js` (the chart), `stops.js` (seven stops, the real circuit, the Japan Ground a summer
+ground), `months.js` (a month cruising hard or easy, a passage, a lowering drawn boat by boat),
+`ledger.js` (the voyage, kept in the browser). Water, bread, fresh food, weariness, hull, boats
+and the hold. Tuned by playing whole voyages by script: a careless master pays his way, a
+focused one comes home greasy (1,400 barrels in 38 months against the Morgan's 1,600 in 40).
 
 A new first screen after the office: the route as a chart, the stops as marks. Choosing
 the next one spends time, provisions and strength, shown before you choose. Stores and
@@ -691,7 +700,11 @@ the hold carry from leg to leg. The ship is not sailed between stops.
 
 *Test: choose the Offshore Ground over Talcahuano, and see what it cost in water.*
 
-### M26 — Events
+### M26 — Events. BUILT 24 September.
+
+`events.js` (drawn: the gam, the forecastle, man overboard, the carpenter, the cooper, the green
+hand, talk of home, a right whale) and `cards.js` (arrivals, whales raised, gales and typhoons,
+the Horn, scurvy, the terrapin at the Galápagos).
 
 `src/events.js` and a table of written scenes, each with two or three choices and what
 each one costs. Drawn at stops and on the way between. The eight from the paper voyage
@@ -699,7 +712,12 @@ first.
 
 *Test: gam with another ship and hear where the whales are.*
 
-### M27 — Crises from the map
+### M27 — Crises from the map. BUILT 24 September.
+
+`crises.js` and `crisis.js`. A lowering or a blow can be taken into your own hands; the chart
+hands over to the ship with the voyage's own men aboard, and takes back hurt men, damage,
+boats and barrels. Loading both crises and the return were tested; sailing one through to
+the end was not, because the browser used for testing does not run the ship while hidden.
 
 A stop can open one of the existing sailing scenes — a squall, lowering, the boats down
 in a rising wind — as a short, pausable crisis, and what happens in it carries back to
@@ -707,20 +725,31 @@ the map.
 
 *Test: lower from the map, lose a boat's crew to leeward, and sail back for them.*
 
-### M28 — Ports: water, and men who run
+### M28 — Ports: water, and men who run. BUILT 24 September.
+
+`port.js`. Fresh food, salt provisions, repairs, boats, new hands (green at Fayal, island able
+seamen at Honolulu), oil sent home by freighter, and liberty or none, with the risk in words.
 
 A port is a written page. Water and fresh food, at the cost of men who desert and green
 hands shipped in their place.
 
 *Test: put into Talcahuano and lose two men.*
 
-### M29 — What each man wants, and promotion
+### M29 — What each man wants, and promotion. BUILT 24 September.
+
+`wants.js`. Some wants are hidden: a man who means to run shows as keeping his own counsel
+until a boatsteerer tells you. Rating up needs a vacancy, and a boat needs a mate and a
+boatsteerer to lower.
 
 One want per man, shown on his card. Making a man boatsteerer shortens his lay.
 
 *Test: promote a man, and see his lay change in the account.*
 
-### M30 — The next command
+### M30 — The next command. BUILT 24 September.
+
+`owners.js`. Three ships (the old *Hector*, the *Lydia*, the new *Eliza Ann*), your lay
+shortening as your record improves, and up to six men who did well by you shipping again a
+step up. Deserters forfeit their lay.
 
 A clean voyage and the owners give you a worse ship and a longer lay; a greasy one and
 you choose your ship. The browser remembers your record, in one entry, as the office does.

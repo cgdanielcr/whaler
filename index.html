@@ -838,6 +838,7 @@
     }
     #station-bill.lit, #command.lit { animation: pointing 1.5s ease-in-out infinite; }
   </style>
+  <link rel="stylesheet" href="./src/voyage.css">
   <script type="importmap">
   {
     "imports": {
@@ -849,6 +850,11 @@
 </head>
 <body>
   <div id="right"></div>
-  <script type="module" src="./src/main.js"></script>
+  <!-- The whole voyage is a chart and papers, with no ship to draw; everything
+       else is the ship. -->
+  <script type="module">
+    if (location.hash === '#voyage') import('./src/voyagemap.js');
+    else import('./src/main.js');
+  </script>
 </body>
 </html>
