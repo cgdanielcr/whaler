@@ -192,3 +192,4 @@ export const deckAt = (z) => sheerAt(Math.max(-1, Math.min(1, 2 * z / LENGTH)));
 // length. The channels, which the shrouds set up to, are bolted just outside it.
 export const beamAt = (z) => halfBeamAt(Math.max(-1, Math.min(1, 2 * z / LENGTH)));
 export const ON_DECK = LENGTH;
+export const keelUnder = (z) => keelAt(Math.max(-1, Math.min(1, 2 * z / LENGTH)));

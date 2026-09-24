@@ -8,6 +8,8 @@
 import * as THREE from 'three';
 import { deckAt } from './hull.js';
 import { makeFigure } from './figures.js';
+import { placeEveryone } from './cutaway.js';
+import { ROOMS } from './between.js';
 
 const WALK = 2.2;        // metres a second of your own time, going aloft or aft
 const V = new THREE.Vector3();
@@ -21,7 +23,9 @@ const HAUNTS = {
   'day work':  [[0.0, 6.6], [2.2, 6.0], [-2.2, 5.4], [1.4, -0.6], [-1.4, -1.2]]
 };
 
-export function makeHands(company, crew, rig, ship, camera, dom) {
+// `look` says which camera you are looking through and whether her decks
+// below are open to you; `below` is where a man goes when his watch is off.
+export function makeHands(company, crew, rig, ship, look, dom, below) {
   const group = new THREE.Group();
   ship.add(group);
 
@@ -99,8 +103,9 @@ export function makeHands(company, crew, rig, ship, camera, dom) {
   }
 
   // Every man's place this instant: his post if he has one, else his haunt.
-  function whereEveryoneShouldBe() {
+  function whereEveryoneShouldBe(gameSeconds) {
     const want = new Map();
+    const place = placeEveryone(company, crew, gameSeconds);
     for (const order of crew.running) {
       for (const post of order.posted || []) {
         post.men.forEach((m, i) => {
@@ -116,6 +121,9 @@ export function makeHands(company, crew, rig, ship, camera, dom) {
         const p = atMasthead(man.standing.split(' ')[0]);
         if (p) { want.set(man, p); continue; }
       }
+      // The watch below is below, in his berth -- unless all hands are called.
+      const room = place.get(man);
+      if (room in ROOMS && !crew.allHands) { want.set(man, { room }); continue; }
       const [x, z] = spotIn(man.station, man.id);
       want.set(man, onDeck(x, z));
     }
@@ -137,14 +145,17 @@ export function makeHands(company, crew, rig, ship, camera, dom) {
     const box = dom.getBoundingClientRect();
     pointer.x = ((e.clientX - box.left) / box.width) * 2 - 1;
     pointer.y = -((e.clientY - box.top) / box.height) * 2 + 1;
-    ray.setFromCamera(pointer, camera);
-    const hit = ray.intersectObjects([...figures.values()], false)[0];
+    ray.setFromCamera(pointer, look.camera());
+    const seen = [...figures.values()].filter((f) => f.visible && (f.parent === group || look.seesBelow()));
+    const hit = ray.intersectObjects(seen, false)[0];
     const man = hit && hit.object.userData.man;
     if (man === at) { if (man) place(e); return; }
     at = man || null;
     if (!at) { card.style.display = 'none'; return; }
 
-    const doing = at.employed || at.job || (at.idler ? `at ${at.idler}` : null);
+    const room = hit.object.userData.room;
+    const doing = at.employed || at.job ||
+      (room ? `below, in ${ROOMS[room].said.toLowerCase()}` : at.idler ? `at ${at.idler}` : null);
     card.innerHTML = `<h4>${at.name}</h4>` +
       `<p>${at.berth}, rated ${at.rate}<br>` +
       `${at.watch ? `${at.watch} watch` : 'no watch'} &mdash; ${at.strength}` +
@@ -163,14 +174,23 @@ export function makeHands(company, crew, rig, ship, camera, dom) {
 
   // --- the frame --------------------------------------------------------------
 
-  return function tick(seen) {
-    const want = whereEveryoneShouldBe();
+  return function tick(seen, gameSeconds) {
+    const want = whereEveryoneShouldBe(gameSeconds);
     const step = WALK * seen;
     for (const [man, f] of figures) {
       // A man who is hurt keeps out of the way; a man who is gone is gone.
       f.visible = man.health !== 'lost';
       const to = want.get(man);
       if (!to) continue;
+      // Going below he is simply in his berth; coming up he comes by the
+      // main hatch and walks from there.
+      f.userData.room = to.room || null;
+      if (to.room) {
+        if (f.parent !== below.tween) below.tween.add(f);
+        f.position.copy(below.spotIn(to.room, man.id));
+        continue;
+      }
+      if (f.parent !== group) { group.add(f); f.position.set(0, deckAt(1.8) + 0.05, 1.8); }
       V.set(to[0], to[1], to[2]);
       const gap = V.distanceTo(f.position);
       // Going aloft is climbing, not walking, so it is no faster; but a man

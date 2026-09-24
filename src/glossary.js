@@ -150,6 +150,8 @@ export function makeGlossary(rig, allows = () => true) {
     ['helm', '<b>&larr; &rarr;</b> put the helm over.'],
     ['clock', '<b>space</b> brings her to. <b>-</b> and <b>=</b> run her clock slower and faster.'],
     ['look', '<b>c</b> takes you down on deck and back to the quarterdeck.'],
+    ['look', '<b>v</b> looks down on her from above. There <b>x</b> cuts her in section, ' +
+      '<b>d</b> draws out the ’tween decks and then the hold, and <b>z</b> looks straight down.'],
     ['look', '<b>b</b> opens the watch bill: who is in which watch, and what he is rated.'],
     ['whale', '<b>l</b> lowers three boats for a whale the mastheads have raised. Eighteen ' +
       'men go, and the watch on deck falls from twelve to three.'],

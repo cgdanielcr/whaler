@@ -44,6 +44,7 @@ import { makeCommand } from './command.js';
 import { HUE, weather as weather2, gloomFor } from './palette.js';
 import { cutPlates } from './hatch.js';
 import { cutFigures } from './figures.js';
+import { makeAbove } from './above.js';
 
 const renderer = new THREE.WebGLRenderer({ antialias: true });
 renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
@@ -108,6 +109,7 @@ window.addEventListener('keydown', (e) => {
   if (e.metaKey || e.ctrlKey || e.altKey || e.repeat) return;
   if (e.target.isContentEditable) return;
   if (e.key === 'c' || e.key === 'C') {
+    if (above.on) above.toggle(false);
     stand(station === 'deck' ? 'quarterdeck' : 'deck');
     e.preventDefault();
   }
@@ -239,7 +241,12 @@ const watchBill = makeWatchBill(company, crew);
 // The chart. Metres east and north of where she sailed become a real latitude
 // and longitude, so she is on the real sea rather than on a blank one.
 const chart = makeChart(V.from || NEW_BEDFORD);
-const hands = makeHands(company, crew, rig, hull, camera, renderer.domElement);
+// The view from above, with her decks below to open up. v goes up to it.
+const above = makeAbove({ renderer, hull, rig, sky, sea: () => sea, water: [wake, drift] });
+const hands = makeHands(company, crew, rig, hull, {
+  camera: () => (above.on ? above.camera : camera),
+  seesBelow: () => above.seesBelow()
+}, renderer.domElement, above.below);
 const trim = makeTrim({
   weather, sun,
   aim: () => { sea.userData.sun(towardSun()); sky.userData.sun(towardSun()); },
@@ -668,7 +675,7 @@ function frame(now) {
   chart(gameSeconds, passage.where.lat, passage.where.lon, heading, passage.marks);
   if (pilot && underway) pilot.tick(real, conning());
   watchBill(gameSeconds);
-  hands(seen);
+  hands(seen, gameSeconds);
   trim();
   whaler.smoke.userData.update(shown);
   vane.userData.update(shown, weather.windFrom, heading);
@@ -695,8 +702,10 @@ function frame(now) {
     }
   }
 
-  controls.update();
-  renderer.render(scene, camera);
+  above.tick(real);
+  controls.enabled = !above.on;
+  if (!above.on) controls.update();
+  renderer.render(scene, above.on ? above.camera : camera);
   requestAnimationFrame(frame);
 }
 requestAnimationFrame(frame);

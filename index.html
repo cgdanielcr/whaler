@@ -757,6 +757,37 @@
     }
     #glass .rate { margin: 0.6rem 0 0; font-size: 0.76rem; color: var(--faint); }
     #glass .rate.slow { color: var(--rust); }
+
+    /* --- the view from above ------------------------------------------------- */
+
+    #above {
+      position: fixed; z-index: 9; top: 1.1rem; left: 50%; transform: translateX(-50%);
+      display: flex; align-items: center; gap: 0.3rem; flex-wrap: wrap; justify-content: center;
+      max-width: calc(100vw - 32rem); padding: 0.45rem 0.6rem;
+      background: linear-gradient(160deg, var(--paper) 0%, var(--paper2) 100%);
+      border: 1px solid var(--edge); box-shadow: 0 4px 22px rgba(0, 0, 0, 0.4);
+      user-select: none;
+    }
+    #above[hidden] { display: none; }
+    #above h2 {
+      margin: 0 0.4rem 0 0.2rem; font-size: 0.6rem; font-weight: normal;
+      letter-spacing: 0.22em; text-transform: uppercase; color: var(--faint);
+    }
+    #above button {
+      font-family: inherit; font-size: 0.78rem; color: var(--ink); cursor: pointer;
+      padding: 0.28rem 0.5rem; background: rgba(80, 62, 38, 0.06);
+      border: 1px solid var(--edge); border-radius: 2px; white-space: nowrap;
+    }
+    #above button b { font-weight: normal; color: var(--faint); margin-right: 0.15rem; }
+    #above button:hover { border-color: var(--blue); }
+    #above button.on { background: var(--blue); color: var(--paper); border-color: var(--blue); }
+    #above button.on b { color: var(--paper); }
+    .room-tag {
+      position: fixed; z-index: 4; transform: translate(-50%, -100%); pointer-events: none;
+      font-size: 0.66rem; letter-spacing: 0.18em; text-transform: uppercase; white-space: nowrap;
+      color: var(--paper); text-shadow: 0 1px 3px rgba(0, 0, 0, 0.9);
+    }
+    .room-tag[hidden] { display: none; }
   </style>
   <script type="importmap">
   {

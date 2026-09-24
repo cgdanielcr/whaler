@@ -213,8 +213,9 @@ stories from what they did.
 
 Carried forward from SPEC §3, still out:
 
-- Below-deck interiors. The blubber room, the forecastle and the cabin are named and
-  referred to, never shown.
+- Below-deck interiors as places. Since M17 the decks below may be *shown* -- cut in
+  section or drawn out like drawers, as a plate in a book -- but never entered or
+  walked about in.
 - Multiplayer, accounts, leaderboards. A save is now worth discussing, since a cruise is
   longer than a passage, but it is a decision for the owner and a milestone of its own.
 - Islands, ports, a procedural ocean.
@@ -284,6 +285,14 @@ casks stowed down.
 **M16 — A cruise. BUILT, live 8 September.** The voyage frame: weeks on the ground, barrels as the score, the
 account at the end written up man by man.
 *Test: finish a cruise and read what each man did.*
+
+**M17 — The ship from above. BUILT 24 September.** `v` looks down on her at a fixed
+isometric angle, close enough to see each man. There `x` cuts her in section down the
+centreline, `d` draws out the 'tween decks (cabin, steerage, blubber room, forecastle)
+and then the hold, like drawers, and `z` looks straight down. The watch below now goes
+below to its berths instead of standing on deck, and can be found in the drawers. The
+decks below are shown as a plate, never walked into; room lengths are inferred.
+*Test: press v, then d, and find the watch below in the forecastle.*
 
 ## 7. Decisions made (2026-09-08)
 

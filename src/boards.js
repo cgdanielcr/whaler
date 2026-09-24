@@ -53,6 +53,7 @@ const LEGEND = [
   ['whale', '<b>l</b> lower'],
   ['whale', '<b>o</b> cut in and try out'],
   ['look', '<b>c</b> on deck'],
+  ['look', '<b>v</b> from above'],
   ['look', '<b>b</b> the watch bill'],
   ['look', '<b>g</b> the glass'],
   ['look', '<b>?</b> all orders']
