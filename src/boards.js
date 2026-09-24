@@ -4,6 +4,7 @@
 import { readClock } from './clock.js';
 import { compassPoint } from './wind.js';
 import { sailGlyph, foreAftGlyph } from './glyphs.js';
+import { reckon } from './lay.js';
 
 // The sail plan as a grid: the tiers down, her three masts across. The mizzen
 // carries no course -- that yard is the crossjack and it carries nothing --
@@ -225,11 +226,13 @@ export function makeBoards(rig, crew, company, allows = () => true, legend = tru
   // The account of the whole voyage, written up when she turns for home.
   const account = (ended, cruise, arrived, clockAt) => {
     const men = cruise.muster();
+    const pay = reckon(men, cruise.barrels, ended.days);
     const gone = men.filter((m) => m.health === 'lost');
     const hurtMen = men.filter((m) => m.health === 'hurt');
-    const roll = men.map((m) =>
+    const roll = men.map((m, i) =>
       `<li class="${m.health}"><b>${m.name}</b>, ${m.berth.toLowerCase()}` +
       (m.health === 'lost' ? ' &mdash; <em>lost</em>' : m.health === 'hurt' ? ' &mdash; <em>hurt</em>' : '') +
+      ` &middot; ${pay.shares[i].said}` +
       (m.deeds ? `<span>${m.deeds.join('; ')}</span>` : '') + '</li>').join('');
 
     landfall.innerHTML =
@@ -242,6 +245,8 @@ export function makeBoards(rig, crew, company, allows = () => true, legend = tru
       `<dt>Men brought home sound</dt><dd>${men.length - gone.length - hurtMen.length} of ${men.length}</dd>` +
       `<dt>She turned for home because</dt><dd>${ended.why}</dd>` +
       `<dt>At</dt><dd>${clockAt}</dd></dl>` +
+      `<p class="took">${pay.said}</p>` +
+      (pay.inDebt ? `<p class="toll">${pay.inDebt} of your men come home owing the ship for their slops.</p>` : '') +
       (rig.hurt().length
         ? `<p>She is not whole: ${rig.hurt().map((d) => `${d.name.toLowerCase()} &mdash; ${d.kind}`).join('; ')}.</p>`
         : '<p>She has every sail and every spar she began with.</p>') +

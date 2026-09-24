@@ -657,3 +657,72 @@ MORGAN.md cannot place any of it — and should be checked against the Mystic pl
 
 *Test: press c and look aft — a wheel you can pick out and a boat over her stern; in
 voyage one, see her cable run out of the bow, and see the anchor catted when she weighs.*
+
+---
+
+## Plan C — The voyage as a game
+
+From DESIGN §9, agreed 24 September 2026. Same rules: one at a time, each live with a
+one-line test, the next not begun until the last is played.
+
+### M23 — The lay. BUILT 24 September.
+
+New: `src/lay.js`. The account at the end of a cruise now shows what the oil fetched
+(94 cents the gallon, 1841), your own lay at 1/15, and each man's lay and what he is paid
+off with — or what he owes the ship for his slops. The master's and the boy's lays are
+documented for the Morgan; the rest are Hohman's usual lays; the charges and the slops
+are inferred.
+
+*Test: finish a cruise and find what the cabin boy was paid.*
+
+### M24 — The voyage on paper
+
+Not code. `PAPER-VOYAGE.md` is the voyage map and eight events, played with a die and a
+pencil in twenty minutes. The owner plays it, rewrites the events in his own voice, and
+says what was dull. Only then is it built.
+
+*Test: play it twice and come home once with a full hold and once clean.*
+
+### M25 — The voyage map
+
+A new first screen after the office: the route as a chart, the stops as marks. Choosing
+the next one spends time, provisions and strength, shown before you choose. Stores and
+the hold carry from leg to leg. The ship is not sailed between stops.
+
+*Test: choose the Offshore Ground over Talcahuano, and see what it cost in water.*
+
+### M26 — Events
+
+`src/events.js` and a table of written scenes, each with two or three choices and what
+each one costs. Drawn at stops and on the way between. The eight from the paper voyage
+first.
+
+*Test: gam with another ship and hear where the whales are.*
+
+### M27 — Crises from the map
+
+A stop can open one of the existing sailing scenes — a squall, lowering, the boats down
+in a rising wind — as a short, pausable crisis, and what happens in it carries back to
+the map.
+
+*Test: lower from the map, lose a boat's crew to leeward, and sail back for them.*
+
+### M28 — Ports: water, and men who run
+
+A port is a written page. Water and fresh food, at the cost of men who desert and green
+hands shipped in their place.
+
+*Test: put into Talcahuano and lose two men.*
+
+### M29 — What each man wants, and promotion
+
+One want per man, shown on his card. Making a man boatsteerer shortens his lay.
+
+*Test: promote a man, and see his lay change in the account.*
+
+### M30 — The next command
+
+A clean voyage and the owners give you a worse ship and a longer lay; a greasy one and
+you choose your ship. The browser remembers your record, in one entry, as the office does.
+
+*Test: come home clean, and read the owners' letter.*

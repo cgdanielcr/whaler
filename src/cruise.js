@@ -58,6 +58,7 @@ export function makeCruise({ company, stores }) {
       return company.all.map((m) => ({
         name: m.name,
         berth: m.berth,
+        rate: m.rate,
         health: m.health,
         deeds: m.deeds && m.deeds.length ? m.deeds : null
       }));

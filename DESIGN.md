@@ -218,7 +218,8 @@ Carried forward from SPEC §3, still out:
   walked about in.
 - Multiplayer, accounts, leaderboards. A save is now worth discussing, since a cruise is
   longer than a passage, but it is a decision for the owner and a milestone of its own.
-- Islands, ports, a procedural ocean.
+- Islands, ports, a procedural ocean, as places sailed into. Since §9, a port may be a
+  *screen*: one written page with choices, like the shipping office. Never a place.
 - Combat of any kind.
 - Audio, mobile.
 
@@ -324,3 +325,46 @@ play. This does not need deciding until M16, but it shapes how long the cruise i
   it, say so in a comment rather than invent.
 - Files stay under about 200 lines. The crew alone will want three or four: the list and
   names, the watch bill, stations, and the sprites.
+
+## 9. What makes it fun (decided 24 September 2026)
+
+The owner asked for a game designer's read, and took all of it. The diagnosis: the game
+has **systems** but not yet a **loop**. It asks for procedures done right, and a
+procedure has one right answer. Fun is a *dilemma*: two good things you cannot both have.
+The test for any stretch of play: *what did I decide in the last sixty seconds, and what
+did it cost me?* If nothing, skip it or make it a choice.
+
+**Three layers, as in FTL.**
+
+1. **The voyage map — the business.** Pick the next ground or port: Nantucket, the
+   Azores, round the Horn, the Offshore Ground, Talcahuano, the Japan Ground, home. Each
+   leg spends months, provisions, water, her condition and the men's strength; the hold
+   fills. The question the real masters faced: stay out for more oil, or turn for home
+   before she and they are used up. Time between stops is skipped, not sailed.
+2. **Events — the lifestyle and the language.** Short written scenes in period voice,
+   two or three choices each: a gam, a port where men run and green hands ship, scurvy,
+   a fight in the forecastle. The owner's own medium, and the cheapest content there is.
+3. **Crises — the sailing.** The existing engine, in pausable scenes of three to eight
+   minutes: a squall, a lee shore, the wind rising while the boats are down, a man
+   overboard. **The boats-down scene is the set piece of the game** — the ship to
+   windward, the boats to leeward, two things at once, as in a light RTS.
+
+**The score is the lay.** Every man is paid a share of the oil; the account shows what
+each came home with, or owes. It teaches the whole business in one screen. A clean
+voyage costs the master his next command: carry-over between voyages, so failure
+matters without ending the game.
+
+**Each man wants one thing** (after *Heat Signature*): to make boatsteerer, to pay a
+debt in Fayal, to run at Talcahuano. Promotion shortens his lay, which is a cost. Men
+lost stay lost, and the account says so.
+
+**Rules to hold to.**
+
+- Every choice trades two of **speed, safety, the men**. Caution must cost something —
+  time, whales, strength — or it is not a decision.
+- Teach by consequence, never by instruction.
+- Stop adding detail to the ship for now. The next gains are structure, not rigging.
+- Knowing the words is power: the master who knows to heave to rides out the storm.
+
+The Plan A voyages remain, as the training for the crises. The order of work is Plan C
+in PLAN.md; the voyage map is tried on paper first, in `PAPER-VOYAGE.md`.
