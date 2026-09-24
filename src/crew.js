@@ -6,7 +6,11 @@
 // who he sent. A yard full of green hands is slow, and in a gale it is worse
 // than slow.
 
-import { manThePosts } from './stations.js';
+import { manThePosts, lacking } from './stations.js';
+
+const STATION_SAID = {
+  topman: 'topmen', waister: 'waisters', afterguard: 'afterguard', helmsman: 'men at the wheel'
+};
 
 const TIRES_IN = 6 * 3600;    // game seconds of all hands on deck to wear them out
 const RESTS_IN = 8 * 3600;
@@ -17,7 +21,8 @@ const WEARINESS = [[0.15, 'fresh'], [0.4, 'willing'], [0.7, 'tiring'], [0.9, 'we
 // inferred, and deliberately small: falls were rare, and remembered for years.
 const FALL = { 7: 0.05, 8: 0.10, 9: 0.16 };
 
-export function makeCrew(company) {
+// With `byBill`, work is done by the men on the station bill and nobody else.
+export function makeCrew(company, { byBill = false } = {}) {
   let allHands = false;
   let fatigue = 0;
   let watchUp = 'starboard';    // which watch has the deck, from the ship's clock
@@ -30,7 +35,7 @@ export function makeCrew(company) {
   const idle = () => muster().filter((m) => !m.employed);
 
   function start(order) {
-    const took = manThePosts(order.name, idle());
+    const took = manThePosts(order.name, idle(), byBill);
     order.posted = took ? took.manned : [];
     for (const post of order.posted) for (const m of post.men) m.employed = order.name;
 
@@ -79,6 +84,24 @@ export function makeCrew(company) {
     // why both were called for all hands.
     wantsAllHands: (n) => n > company.watchStrength,
 
+    // Which of the bill's men a waiting order is waiting on, if it is them.
+    waitingFor(order) {
+      const short = byBill && lacking(order.name, idle());
+      return short ? STATION_SAID[short.station] : null;
+    },
+
+    // What the mate says when the bill has not the men for a piece of work,
+    // or null when it has. Only a ship worked strictly by the bill refuses.
+    lacking(name) {
+      if (!byBill) return null;
+      const short = lacking(name, muster());
+      if (!short) return null;
+      const who = short.want === 1 && short.station === 'helmsman'
+        ? 'man at the wheel' : STATION_SAID[short.station];
+      return `${name} wants ${short.want} ${who}, and the station bill has ${short.have}. ` +
+        'Put more on the bill — press s.';
+    },
+
     // onHurt is called with the man and the place, when one of them falls.
     tick(gameSeconds, onDeckWatch, atForce, onHurt, onEach) {
       if (onDeckWatch) watchUp = onDeckWatch;
@@ -105,6 +128,8 @@ export function makeCrew(company) {
         const order = waiting[i];
         if (order.hands > this.free) continue;
         if (running.some((o) => o.tier && o.tier === order.tier)) continue;
+        // Worked by the bill, it waits for its own men to come free.
+        if (byBill && lacking(order.name, idle())) continue;
         waiting.splice(i--, 1);
         start(order);
       }

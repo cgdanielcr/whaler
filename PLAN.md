@@ -161,6 +161,37 @@ with.
 
 *Test: press b. See where every man is. Order a reef and watch them go aloft.*
 
+### M22a — Getting under way, and the station bill. BUILT 24 September.
+
+The owner asked for a tutorial that starts from nobody assigned to anything and shows
+him the boards, the buttons, and which men to send where. His choices: a station-bill
+sheet rather than clicking on the ship; the bill stands for every voyage afterwards;
+the bare minimum first; a new voyage ahead of the old voyage one (now voyage two).
+
+- **`src/underway.js`** — voyage one, *Getting under way*. She lies to her anchor,
+  tide-rode with the wind abaft her beam, every sail furled, every hand on deck and
+  no foremast hand on the bill. Fourteen steps: the canvas board, the clock, the
+  orders board and the command bar; open the bill; six topmen, six waisters, one
+  helmsman; weigh anchor; set the topsails (which **wait** for the waisters to leave
+  the windlass — the lesson that men, not orders, run short); put her head on the
+  offing; shake out the reefs she was furled with; run out five miles.
+- **`src/stationbill.js`** on **s** — four rows (topmen, waisters, afterguard, at the
+  wheel) and the hands not yet on it. Pick a row, click names. Hovering a name puts a
+  rust pointer over the man on the ship. *Leave the rest to the mate* fills the gaps.
+- **The bill stands** (`stations.js`): each post draws first from its row — aloft from
+  the topmen, the wheel from the helmsman, braces and spanker from the afterguard,
+  everything else from the waisters. On a voyage worked strictly by the bill an order
+  the bill cannot man is refused with the mate saying what is short, and one whose men
+  are busy **waits for them by name** on the orders board.
+- **Weigh anchor** on **u**: six waisters at the windlass, fifteen minutes (inferred).
+  The anchor coming up brings her clock back to her own time.
+
+What remains of M22 as first written: the watches are not yet chosen by you, and a
+watch falling below a working number is not refused.
+
+*Test: sail voyage one, put six men on each row the mate asks for, and watch the
+topsail order wait until the windlass is done.*
+
 ### M22 — Reassigning
 
 Drag a man between the topmen, the afterguard and the waisters, and between the two

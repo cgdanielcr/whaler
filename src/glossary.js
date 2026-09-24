@@ -153,6 +153,9 @@ export function makeGlossary(rig, allows = () => true) {
     ['look', '<b>v</b> looks down on her from above. There <b>x</b> cuts her in section, ' +
       '<b>d</b> draws out the ’tween decks and then the hold, and <b>z</b> looks straight down.'],
     ['look', '<b>b</b> opens the watch bill: who is in which watch, and what he is rated.'],
+    ['look', '<b>s</b> opens the station bill: which men are topmen, waisters, afterguard, ' +
+      'and at the wheel. Every order draws its hands from there first.'],
+    ['anchor', '<b>u</b> weighs anchor: six waisters at the windlass, a quarter of an hour.'],
     ['whale', '<b>l</b> lowers three boats for a whale the mastheads have raised. Eighteen ' +
       'men go, and the watch on deck falls from twelve to three.'],
     ['whale', '<b>o</b> sets the hands on a whale alongside: cutting in first, which is ' +

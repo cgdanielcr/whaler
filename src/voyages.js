@@ -12,6 +12,7 @@
 // She is not named. If you want her named, put it in the letter below.
 
 import { ROUTE } from './route.js';
+import { UNDERWAY } from './underway.js';
 
 // The keys on the board, gathered into groups a voyage can allow or withhold.
 export const GROUPS = {
@@ -22,7 +23,8 @@ export const GROUPS = {
   manoeuvre: 'tacking and wearing',
   allhands: 'calling all hands',
   mend: 'mending what has carried away',
-  whale: 'the boats and the whale'
+  whale: 'the boats and the whale',
+  anchor: 'weighing anchor'
 };
 
 const ALL = ['sail', 'helm', 'clock', 'look', 'manoeuvre', 'allhands', 'mend', 'whale'];
@@ -33,9 +35,10 @@ const ALL = ['sail', 'helm', 'clock', 'look', 'manoeuvre', 'allhands', 'mend', '
 export const NEW_BEDFORD = { lat: 41.63, lon: -70.93, said: 'New Bedford' };
 
 export const VOYAGES = [
+  UNDERWAY,
   {
     key: 'feel',
-    n: 1,
+    n: 2,
     title: 'Getting the feel of her',
     teaches: 'How she goes, and what the wind has to do with it.',
 
@@ -163,7 +166,7 @@ export const VOYAGES = [
 
   {
     key: 'windward',
-    n: 2,
+    n: 3,
     title: 'Working to windward',
     teaches: 'What it costs to go where the wind comes from, and how to tack.',
 
@@ -287,7 +290,7 @@ export const VOYAGES = [
 
   {
     key: 'shorten',
-    n: 3,
+    n: 4,
     title: 'Shortening down',
     teaches: 'What she may carry at each force, and how little warning a squall gives.',
 
@@ -393,7 +396,7 @@ export const VOYAGES = [
 
   {
     key: 'watch',
-    n: 4,
+    n: 5,
     title: 'Watch and watch',
     teaches: 'Why she is worked in two halves, and what it costs to keep them all on deck.',
 
@@ -491,7 +494,7 @@ export const VOYAGES = [
 
   {
     key: 'mend',
-    n: 5,
+    n: 6,
     title: 'Something carried away',
     teaches: 'What she carries below, and how a ship puts herself to rights at sea.',
 

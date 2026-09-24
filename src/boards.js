@@ -54,6 +54,7 @@ const LEGEND = [
   ['whale', '<b>o</b> cut in and try out'],
   ['look', '<b>c</b> on deck'],
   ['look', '<b>v</b> from above'],
+  ['look', '<b>s</b> the station bill'],
   ['look', '<b>b</b> the watch bill'],
   ['look', '<b>g</b> the glass'],
   ['look', '<b>?</b> all orders']
@@ -172,7 +173,9 @@ export function makeBoards(rig, crew, company, allows = () => true, legend = tru
         crew.waiting.map((o) =>
           `<li class="held"><span class="ring"><svg viewBox="0 0 24 24">` +
           `<circle class="track" cx="12" cy="12" r="9"/></svg></span>` +
-          `<span class="what">${o.name}<em>wants ${o.hands} hands</em></span>` +
+          `<span class="what">${o.name}<em>${crew.waitingFor(o)
+            ? `waits for the ${crew.waitingFor(o)} to come free`
+            : `wants ${o.hands} hands`}</em></span>` +
           `<span class="left">waiting</span></li>`).join('')
       : '<li class="idle">No orders in hand</li>');
 

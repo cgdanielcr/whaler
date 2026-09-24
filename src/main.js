@@ -45,6 +45,8 @@ import { HUE, weather as weather2, gloomFor } from './palette.js';
 import { cutPlates } from './hatch.js';
 import { cutFigures } from './figures.js';
 import { makeAbove } from './above.js';
+import { makeStationBill } from './stationbill.js';
+import { WEIGH } from './evolutions.js';
 
 const renderer = new THREE.WebGLRenderer({ antialias: true });
 renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
@@ -229,7 +231,13 @@ const time = {
 };
 
 const company = makeCompany();
-const crew = makeCrew(company);
+// A crew fresh aboard has no stations until you give them some.
+if (V.unstationed) for (const m of company.all) if (m.rate !== 'mate' && !m.idler) m.station = null;
+const crew = makeCrew(company, { byBill: !!V.byBill });
+if (V.allHands) crew.call(true);
+
+// Riding to her anchor, she goes nowhere until it is hove up.
+let anchored = !!V.anchored;
 const stores = makeStores(V.stores);
 const lookouts = makeLookouts(company);
 const boards = makeBoards(rig, crew, company, allows, !V.steps);
@@ -247,6 +255,7 @@ const hands = makeHands(company, crew, rig, hull, {
   camera: () => (above.on ? above.camera : camera),
   seesBelow: () => above.seesBelow()
 }, renderer.domElement, above.below);
+const stationBill = makeStationBill(company, { mark: (m) => hands.mark(m) });
 const trim = makeTrim({
   weather, sun,
   aim: () => { sea.userData.sun(towardSun()); sky.userData.sun(towardSun()); },
@@ -290,6 +299,8 @@ function point(step) {
   acked = false;
   if (step.mark) rig.mark(step.mark);
   if (step.vane) vane.userData.show(true);
+  if (step.bill) { stationBill.show(true); stationBill.pick(step.bill); }
+  if (step.shutBill) stationBill.show(false);
   if (step.board) {
     litBoard = document.getElementById(step.board);
     if (litBoard) litBoard.classList.add('lit');
@@ -336,7 +347,12 @@ const conning = () => {
     weariness: crew.weariness,
     hurt: rig.hurt().length,
     stateOf: (tier) => rig.stateOf(tier),
-    working: (tier) => rig.working(tier)
+    working: (tier) => rig.working(tier),
+    free: crew.free,
+    anchored,
+    inHand: (tier) => [...crew.running, ...crew.waiting].some((o) => o.tier === tier),
+    bill: (station) => stationBill.count(station),
+    billOpen: stationBill.open
   };
 };
 makeGlossary(rig, allows);
@@ -462,7 +478,25 @@ const workUp = makeWorkUp({
   crew, hunt, cruise, stores, say: boards.say,
   onFire: (lit) => { whaler.smoke.visible = lit; }
 });
-bindOrders({ rig, crew, time, manoeuvre, helm, say: boards.say, repairs, hunt, workUp, allows });
+// Heaving up the anchor: the waisters at the windlass bars, a link at a time.
+const anchor = {
+  weigh() {
+    if (!anchored) { boards.say('She is not at anchor.'); return; }
+    const short = crew.lacking(WEIGH.name);
+    if (short) { boards.say(short); return; }
+    crew.issue({
+      ...WEIGH, tier: 'anchor',
+      // Free of the ground is a moment to decide something, so her clock
+      // comes back to her own time.
+      onDone() {
+        anchored = false;
+        time.slowest();
+        boards.say('The anchor is aweigh. She is free of the ground.');
+      }
+    });
+  }
+};
+bindOrders({ rig, crew, time, manoeuvre, helm, say: boards.say, repairs, hunt, workUp, anchor, allows });
 
 // A man off a yard in a hard blow. It was rare, and it was remembered.
 function fell(man, where) {
@@ -543,12 +577,14 @@ function sail(seen, gameDt, t) {
   // it round with her through a tack.
   let want = speed(off, rig.canvas(), weather.force);
   if (swing) want = Math.max(want, swing.knots0 * 0.6);
+  if (anchored) want = 0;
   knots += (want - knots) * (1 - Math.exp(-gameDt / WAY));
 
   rig.trim(off, side);
 
-  // The helm is not yours while she is coming round.
-  if (!swing) {
+  // The helm is not yours while she is coming round, nor while she is held by
+  // her anchor.
+  if (!swing && !anchored) {
     const authority = Math.min(1, knots / 3);
     if (held.has('ArrowLeft')) heading = wrap(heading - TURN * authority * seen);
     if (held.has('ArrowRight')) heading = wrap(heading + TURN * authority * seen);

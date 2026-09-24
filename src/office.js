@@ -14,7 +14,7 @@ export function makeOffice() {
   office.id = 'office';
   office.innerHTML =
     '<h2>The shipping office</h2>' +
-    '<p class="preamble">Five short voyages out of New Bedford, each one teaching ' +
+    '<p class="preamble">Six short voyages out of New Bedford, each one teaching ' +
     'a piece of how she is worked, and then the whole of her.</p>' +
     '<ul class="berth">' +
     VOYAGES.map((v) => {

@@ -38,7 +38,7 @@ const KEYS = [
   ['allhands', '<b>h</b> calls all hands, when a watch of twelve is not enough'],
   ['clock', '<b>space</b> brings her to; <b>&minus;</b> and <b>=</b> run her clock'],
   ['look', '<b>c</b> takes you down on deck, <b>v</b> looks down on her from above, ' +
-           '<b>b</b> opens the watch bill, ' +
+           '<b>b</b> opens the watch bill, <b>s</b> the station bill, ' +
            '<b>?</b> every order she answers to']
 ];
 

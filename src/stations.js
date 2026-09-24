@@ -118,8 +118,39 @@ export const POSTS = {
     { at: 'the topmast head', n: 5, aloft: true },
     { at: 'the top rope', n: 6 },
     { at: 'the wheel', n: 1 }
+  ],
+
+  // Heaving up by the windlass, the bars worked up and down like a pump.
+  // Inferred: the number at the bars and the time both vary with the depth of
+  // water and the scope of cable out.
+  'Weigh anchor': [
+    { at: 'the windlass', n: 6 }
   ]
 };
+
+// Which row of the station bill a post draws its men from. The topmen go
+// aloft; the afterguard work the braces and the spanker aft; one man has the
+// wheel; and the waisters haul on everything else.
+export function stationFor(post) {
+  if (post.aloft) return 'topman';
+  if (post.at.includes('wheel')) return 'helmsman';
+  if (/brace|spanker|boom|peak|brail|outhaul/.test(post.at)) return 'afterguard';
+  return 'waister';
+}
+
+// Whether the bill has men enough on it for a piece of work, counting every
+// man on the bill whether he is busy or not. Null if it has.
+export function lacking(name, pool) {
+  const posts = POSTS[name];
+  if (!posts) return null;
+  const want = {};
+  for (const p of posts) want[stationFor(p)] = (want[stationFor(p)] || 0) + p.n;
+  for (const station in want) {
+    const have = pool.filter((m) => m.station === station).length;
+    if (have < want[station]) return { station, want: want[station], have };
+  }
+  return null;
+}
 
 // A green hand out on a yard is slow, and in a gale he is in danger. A
 // boatsteerer is the best man she has. These weights multiply the time.
@@ -136,9 +167,11 @@ const DECK_ORDER = ['mate', 'boatsteerer', 'able seaman', 'ordinary seaman', 'tr
 
 export const postsFor = (name) => POSTS[name] || null;
 
-// The men are chosen post by post, the best for the work first. Returns what
-// was manned and how much longer or shorter the work will take for it.
-export function manThePosts(name, pool) {
+// The men are chosen post by post: first the men the station bill puts there,
+// the best for the work first, and only then anyone else. With `byBill` it is
+// the bill or nobody. Returns what was manned and how much longer or shorter
+// the work will take for it.
+export function manThePosts(name, pool, byBill = false) {
   const posts = POSTS[name];
   if (!posts) return null;
 
@@ -155,7 +188,10 @@ export function manThePosts(name, pool) {
       ? ALOFT_ORDER.indexOf(a.rate) - ALOFT_ORDER.indexOf(b.rate)
       : (STRONGER[a.strength] - STRONGER[b.strength]) ||
         (DECK_ORDER.indexOf(a.rate) - DECK_ORDER.indexOf(b.rate)));
-    const took = left.splice(0, post.n);
+    const station = stationFor(post);
+    left.sort((a, b) => (b.station === station) - (a.station === station));
+    const took = (byBill ? left.filter((m) => m.station === station) : left).slice(0, post.n);
+    for (const m of took) left.splice(left.indexOf(m), 1);
     for (const m of took) {
       weight += post.aloft ? (ALOFT[m.rate] || 1) : (HAULING[m.strength] || 1);
       count++;

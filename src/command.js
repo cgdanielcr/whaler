@@ -21,6 +21,8 @@ const TIERS = [
 
 // The third row: everything that is not canvas.
 const SHIP = [
+  ['anchor', 'KeyU', 'u', 'Weigh', 'Heave up the anchor at the windlass. Six waisters, a quarter of an hour.'],
+  ['look', 'KeyS', 's', 'Station bill', 'Who goes where: topmen, waisters, afterguard, and the wheel.'],
   ['allhands', 'KeyH', 'h', 'All hands', 'Turn out every man aboard. Reefing and tacking both want it.'],
   ['manoeuvre', 'KeyT', 't', 'Tack ship', 'Her head through the wind. Quick, and she may miss stays.'],
   ['manoeuvre', 'KeyW', 'w', 'Wear ship', 'Her stern through the wind. Slow, sure, loses ground.'],

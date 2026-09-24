@@ -20,8 +20,24 @@ const HAUNTS = {
   topman:      [[3.0, 8.0], [-3.0, 9.0], [2.6, 11.0], [-2.4, 6.5], [3.2, 4.0], [-3.4, 3.0]],
   afterguard:  [[2.8, -6.0], [-2.8, -6.8], [3.2, -3.0], [-3.2, -3.6], [2.2, -9.0], [-2.2, -9.4]],
   waister:     [[2.6, 1.0], [-2.6, 0.4], [3.2, -1.0], [-3.2, -1.6], [1.6, 2.6], [-1.6, 2.0], [0.0, 4.4]],
-  'day work':  [[0.0, 6.6], [2.2, 6.0], [-2.2, 5.4], [1.4, -0.6], [-1.4, -1.2]]
+  'day work':  [[0.0, 6.6], [2.2, 6.0], [-2.2, 5.4], [1.4, -0.6], [-1.4, -1.2]],
+  helmsman:    [[0.0, -13.2]]
 };
+
+// A rust-red pointer over a man's head, for when his name is pointed at.
+function makePointer() {
+  const c = document.createElement('canvas');
+  c.width = c.height = 32;
+  const g = c.getContext('2d');
+  g.fillStyle = '#9a4c32';
+  g.beginPath(); g.moveTo(4, 6); g.lineTo(28, 6); g.lineTo(16, 28); g.closePath(); g.fill();
+  const s = new THREE.Sprite(new THREE.SpriteMaterial({
+    map: new THREE.CanvasTexture(c), depthTest: false, transparent: true
+  }));
+  s.renderOrder = 5;
+  s.visible = false;
+  return s;
+}
 
 // `look` says which camera you are looking through and whether her decks
 // below are open to you; `below` is where a man goes when his watch is off.
@@ -174,7 +190,12 @@ export function makeHands(company, crew, rig, ship, look, dom, below) {
 
   // --- the frame --------------------------------------------------------------
 
-  return function tick(seen, gameSeconds) {
+  const finger = makePointer();
+  finger.scale.set(0.8, 0.8, 1);
+  ship.add(finger);
+  let pointedAt = null;
+
+  function tick(seen, gameSeconds) {
     const want = whereEveryoneShouldBe(gameSeconds);
     const step = WALK * seen;
     for (const [man, f] of figures) {
@@ -198,5 +219,13 @@ export function makeHands(company, crew, rig, ship, look, dom, below) {
       if (gap < 0.02) continue;
       f.position.lerp(V, Math.min(1, (gap > 24 ? step * 4 : step) / gap));
     }
-  };
+
+    const f = pointedAt && figures.get(pointedAt);
+    finger.visible = !!(f && f.visible && (f.parent === group || below.tween.parent.visible));
+    if (finger.visible) finger.position.copy(ship.worldToLocal(f.getWorldPosition(V))).y += 2.4;
+  }
+
+  // Point a man out on the ship, or nobody.
+  tick.mark = (man) => { pointedAt = man; };
+  return tick;
 }

@@ -36,6 +36,8 @@ export const TOPSAIL = {
 export const SPANKER_REEF = { name: 'Reef the spanker', hands: 8, minutes: 7 };      // inferred
 const SPANKER_SHAKE = { name: 'Shake out the spanker', hands: 6, minutes: 5 }; // inferred
 
+export const WEIGH = { name: 'Weigh anchor', hands: 6, minutes: 15 };   // inferred
+
 export const MANOEUVRES = {
   tack: { name: 'Tack ship', hands: 16, minutes: 4 },   // Dana
   wear: { name: 'Wear ship', hands: 12, minutes: 9 }    // Dana
