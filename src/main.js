@@ -42,7 +42,7 @@ import { makeVane } from './vane.js';
 import { makeDrift } from './drift.js';
 import { makeCommand } from './command.js';
 import { HUE, weather as weather2, gloomFor } from './palette.js';
-import { cutPlates } from './hatch.js';
+import { cutPlates, INK } from './hatch.js';
 import { cutFigures } from './figures.js';
 import { makeAbove } from './above.js';
 import { makeStationBill } from './stationbill.js';
@@ -657,6 +657,21 @@ function weatherLook(force, squall) {
 
 
 
+// How many metres one tile of hatching covers where she is: two hundred and
+// sixty pixels' worth at the distance the eye stands from her. The lines are
+// cut into her, so they do not stay the same size on the screen by themselves;
+// this keeps them to one spacing however near you come.
+const TILE_PX = 260;
+function hatchTile() {
+  const px = renderer.domElement.height;
+  if (above.on) {
+    const c = above.camera;
+    return TILE_PX * (c.top - c.bottom) / c.zoom / px;
+  }
+  const d = camera.position.distanceTo(controls.target);
+  return TILE_PX * 2 * d * Math.tan(camera.fov * Math.PI / 360) / px;
+}
+
 let shown = 0;
 let told = false;
 let last = performance.now();
@@ -741,6 +756,7 @@ function frame(now) {
   above.tick(real);
   controls.enabled = !above.on;
   if (!above.on) controls.update();
+  INK.uTile.value = hatchTile();
   renderer.render(scene, above.on ? above.camera : camera);
   requestAnimationFrame(frame);
 }

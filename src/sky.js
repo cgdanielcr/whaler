@@ -127,8 +127,12 @@ export function makeSky() {
           // few more in the underside of the cloud, and nothing at all in the
           // lit heads of it. And its ruling is turned across the water's, so
           // the two do not run together at the horizon.
+          // Its lines belong to the sky, by bearing and height: twenty-six
+          // tiles round the horizon, a whole number, so there is no seam where
+          // the bearing comes back round to where it started.
           float value = 0.46 + dot(col, GREY) * 0.60;
-          col = mix(col, engraveTurn(col, value, 1.5708), uBite);
+          vec2 onSky = vec2(atan(d.x, d.z), asin(h)) * (26.0 / 6.2831853);
+          col = mix(col, engraveUV(col, value, turned(onSky, 1.5708)), uBite);
         }
 
         fragOut = linearToOutputTexel(vec4(col, 1.0));

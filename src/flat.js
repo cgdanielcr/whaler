@@ -41,7 +41,7 @@ const CUT = `
         float value = clamp(paint * min(shade, 1.4), 0.0, 1.0);
         reflectedLight.directDiffuse = vec3(0.0);
         reflectedLight.indirectDiffuse =
-          mix(landed, engrave(diffuseColor.rgb, value), uBite);
+          mix(landed, engraveTri(diffuseColor.rgb, value, vInkPos, normalize(vInkNrm)), uBite);
       } else {
         // Steps of a third, and a floor under the darkest of them, because in
         // a drawing the shaded side of a thing is never black.
@@ -59,8 +59,13 @@ const CUT = `
 export function cutLight(material) {
   material.onBeforeCompile = (shader) => {
     Object.assign(shader.uniforms, INK);
-    shader.fragmentShader = PLATE + shader.fragmentShader
-      .replace('#include <lights_fragment_end>', CUT);
+    // Where a point is in the thing's own frame, and which way it faces, so
+    // its lines are cut into it and go wherever it goes.
+    shader.vertexShader = 'varying vec3 vInkPos;\nvarying vec3 vInkNrm;\n' +
+      shader.vertexShader.replace('#include <project_vertex>',
+        '#include <project_vertex>\n  vInkPos = transformed;\n  vInkNrm = objectNormal;');
+    shader.fragmentShader = PLATE + 'varying vec3 vInkPos;\nvarying vec3 vInkNrm;\n' +
+      shader.fragmentShader.replace('#include <lights_fragment_end>', CUT);
   };
   // Materials that compile to the same program are shared by Three.js, so a
   // material with an injection needs its own key or it may be handed a

@@ -32,6 +32,9 @@ plates.wrapT = THREE.RepeatWrapping;
 plates.minFilter = THREE.LinearMipmapLinearFilter;
 plates.magFilter = THREE.LinearFilter;
 plates.generateMipmaps = true;
+// The lines lie on the deck and the sea, which are mostly seen edge-on; without
+// this they smear into grey long before they are far away.
+plates.anisotropy = 8;
 plates.needsUpdate = true;
 
 // Shared by every material in the picture, so one assignment when the sheets
@@ -39,7 +42,9 @@ plates.needsUpdate = true;
 export const INK = {
   uPlates: { value: plates },
   uInked:  { value: 0 },      // 0 until the sheets have loaded, then 1
-  uPlate:  { value: 260.0 },  // how many pixels across one tile of hatching
+  uTile:   { value: 24.0 },   // metres across one tile of hatching, near her.
+                              // Set each frame from how far off the eye is, so
+                              // her lines keep one spacing on the screen.
   uBite:   { value: 1.0 },    // how hard the ink bites: 0 is the old flat colour
   uWash:   { value: 0.42 },   // how much of a thing's own colour survives on
                               // the paper: 0 is a plate in a book of voyages,
@@ -58,12 +63,12 @@ window.INK = INK;
 // (the ship, her canvas, the men) and the sea, which has always had a shader
 // of its own. Whatever uses this needs the uniforms above and GLSL 3.
 //
-// Give engrave() a colour and how bright that spot should finally come out,
+// Give engraveUV() or engraveTri() a colour and how bright that spot should finally come out,
 // and it hands back the same thing drawn in lines on paper.
 export const PLATE = `
   uniform sampler2DArray uPlates;
   uniform vec3 uPaper;
-  uniform float uInked, uPlate, uBite, uWash, uFloor, uCeil;
+  uniform float uInked, uTile, uBite, uWash, uFloor, uCeil;
 
   const vec3 GREY = vec3(0.2126, 0.7152, 0.0722);
 
@@ -97,33 +102,54 @@ export const PLATE = `
     return pow(texture(uPlates, vec3(uv, min(n, 6.0))).r, 2.2);
   }
 
-  // turn swings the ruling round. An engraver does not rule his whole plate
-  // one way: the sky gets one set of lines and the water another, and that
-  // alone keeps the two from running into each other at the horizon.
-  vec3 engraveTurn(vec3 col, float value, float turn) {
+  // How much paper shows at a spot, for a tone and a place on the tile.
+  float linesAt(vec2 uv, float value) {
     // uFloor and uCeil are the two ends of the plate: how black the blackest
     // shadow is allowed to go, and whether the brightest lights take a line.
     float rung = rungFor(uFloor + (uCeil - uFloor) * clamp(value, 0.0, 1.0));
     float low = floor(rung);
-    // The lines belong to the paper, not to the thing drawn. An engraver rules
-    // his hatching across the plate and the ship happens to lie under it; he
-    // does not wrap the lines round the hull. So the tile is measured in
-    // screen pixels, and a surface turning underneath keeps its ruling.
-    float c = cos(turn), s = sin(turn);
-    vec2 uv = (mat2(c, -s, s, c) * gl_FragCoord.xy) / uPlate;
     // Blend the two neighbouring sheets, so a surface turning slowly into
     // shadow gains its lines gradually instead of jumping a whole pass.
-    float lines = mix(sheetAt(uv, low - 1.0), sheetAt(uv, low), rung - low);
+    return mix(sheetAt(uv, low - 1.0), sheetAt(uv, low), rung - low);
+  }
 
-    // One cream paper for everything, carrying as much of the thing's own
-    // colour as uWash allows. At nought it is a plate out of a book of
-    // voyages; turned up it is a hand-tinted one.
+  // One cream paper for everything, carrying as much of the thing's own
+  // colour as uWash allows. At nought it is a plate out of a book of voyages;
+  // turned up it is a hand-tinted one.
+  vec3 ink(vec3 col, float lines) {
     float paint = max(dot(col, GREY), 0.004);
     vec3 hue = clamp(col / paint, 0.0, 1.7);
     return uPaper * mix(vec3(1.0), hue, uWash) * max(lines, 0.05);
   }
 
-  vec3 engrave(vec3 col, float value) { return engraveTurn(col, value, 0.0); }
+  vec2 turned(vec2 p, float a) {
+    float c = cos(a), s = sin(a);
+    return mat2(c, -s, s, c) * p;
+  }
+
+  // The lines are cut into the thing, not ruled across the glass. Ruled on the
+  // screen they stayed put while she rolled and turned beneath them, and the
+  // whole picture read as seen through a veil -- and a sea whose lines never
+  // move is a sea she is not moving through. An engraver's hatching follows
+  // the form: so here each thing carries its own.
+
+  // For a surface with a natural place on it: the sea, the sky.
+  vec3 engraveUV(vec3 col, float value, vec2 uv) { return ink(col, linesAt(uv, value)); }
+
+  // For everything built: the lines are laid on from three sides of the
+  // thing's own frame and blended by which way the face looks, each side
+  // ruled at its own angle, so her topsides, her deck and her canvas each
+  // take a different run of line and a turned yard carries its lines round.
+  vec3 engraveTri(vec3 col, float value, vec3 p, vec3 n) {
+    vec3 w = pow(abs(n), vec3(4.0));
+    w /= max(w.x + w.y + w.z, 0.0001);
+    vec3 q = p / uTile;
+    float lines = 0.0;
+    if (w.x > 0.02) lines += w.x * linesAt(turned(q.zy, 0.35), value);
+    if (w.y > 0.02) lines += w.y * linesAt(turned(q.xz, 1.10), value);
+    if (w.z > 0.02) lines += w.z * linesAt(turned(q.xy, -0.45), value);
+    return ink(col, lines / max(w.x * step(0.02, w.x) + w.y * step(0.02, w.y) + w.z * step(0.02, w.z), 0.0001));
+  }
 `;
 
 // Read one sheet off its PNG and lay it into its layer of the stack.

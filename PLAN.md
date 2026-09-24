@@ -568,7 +568,7 @@ follows the tear instead of a box-shadow that would trace the rectangle they nev
 
 Four dials survive on `window.INK`, so the plate can be tuned with the ship in front of
 you: `uBite` (nought is the old flat colour), `uWash` (nought is a plate out of a book of
-voyages, up is hand-tinted), `uPlate` and `uFloor`.
+voyages, up is hand-tinted), `uTile` and `uFloor`.
 
 *Test: sail. She is drawn in lines, and so is her sea and her sky.*
 
@@ -609,3 +609,28 @@ took seconds to appear and flickered while it was up. Twice a second keeps up wi
 ### Still in `art/`, still unwired
 `clouds.png` for the sky and `whale.png` for when the boats go down. The ornament is only
 loaded where it is used, so neither costs anything until it is.
+
+## M20l — the lines cut into things. BUILT 24 September.
+
+The owner: the hatching reads as a veil over the game rather than as the texture of it,
+and he cannot see her moving. Both had one cause. The lines were ruled in screen pixels,
+on the argument that an engraver rules his plate and the ship lies under it — so they
+stayed fixed on the glass while she rolled and turned beneath them. And the sea's own
+markings — its roughness, the torn edges of its foam, its streaks — were worked out
+around her rather than on the water, so they travelled with her. Nothing passed her but
+the weed.
+
+- **Built things** (`flat.js`) carry their lines in their own frame, laid on from three
+  sides and blended by which way a face looks, each side at its own angle: her
+  topsides, deck and canvas each take a different run of line, and a braced yard
+  carries its lines round with it.
+- **The sea** (`sea.js`) is lined, roughened and foamed on the face of the earth — its
+  position plus her run — so she sails past all of it at her own speed.
+- **The sky** (`sky.js`) is lined by bearing and height, fixed to the sky.
+- `INK.uTile` (metres per tile) is set every frame from how far off the eye stands, so
+  her lines keep one spacing on the screen at any distance. It replaces `uPlate`.
+
+The engraving costs about a tenth of the frame rate (54 against 60, measured).
+
+*Test: sail voyage two at her own speed and watch the water's lines and foam go by
+under her; swing round her, and the lines stay on the hull.*

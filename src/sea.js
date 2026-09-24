@@ -120,6 +120,7 @@ uniform vec3  uSea3;
 uniform vec3  uFoam;
 uniform vec3  uHaze;
 uniform float uTime;
+uniform vec2  uOffset;
 varying vec3  vWorld;
 varying vec3  vNorm;
 varying float vLift;
@@ -139,6 +140,10 @@ float vnoise(vec2 p) {
 void main() {
   vec3 N = normalize(vNorm);
   vec2 drift = vec2(uTime * 0.05, uTime * -0.035);
+  // Where this water is on the face of the earth, not where it is from her.
+  // The markings on it are fixed to it, so she runs past them at her own
+  // speed -- which is most of how the eye knows she is moving at all.
+  vec2 E = vWorld.xz + uOffset;
 
   // One number for how this piece of water stands: mostly which way it is
   // turned, and a little of how high it has been lifted.
@@ -147,8 +152,8 @@ void main() {
   // Roughen it before cutting. A perfectly even slope cut into steps gives
   // the smooth concentric bands of a contour map; a little noise in the
   // number first makes the boundary wander and jag, the way a cut edge does.
-  float rough = vnoise(vWorld.xz * 0.13 + drift * 0.3)
-              + vnoise(vWorld.xz * 0.52 - drift * 0.2) * 0.4;
+  float rough = vnoise(E * 0.13 + drift * 0.3)
+              + vnoise(E * 0.52 - drift * 0.2) * 0.4;
   tone = clamp(tone + (rough / 1.4 - 0.5) * 0.10, 0.0, 1.0);
 
   // Cut into four. No blending: the step between two blues is a hard line,
@@ -164,12 +169,12 @@ void main() {
   // ragged border and not a fog of speckles.
   float steep = clamp(1.0 - N.y, 0.0, 1.0);
   float ready = clamp((steep - 0.06) * 3.4, 0.0, 1.0) * clamp((vLift - 0.42) * 2.6, 0.0, 1.0);
-  float torn = vnoise(vWorld.xz * 0.34 + drift);
+  float torn = vnoise(E * 0.34 + drift);
   col = mix(col, uFoam, step(0.60, ready * (0.62 + 0.75 * torn)));
 
   // A few long streaks lying along the swell, well up the face and nowhere
   // else, stretched so they run with the wave rather than dotting it.
-  float streak = vnoise(vec2(vWorld.x * 0.05, vWorld.z * 0.44) + drift * 0.4);
+  float streak = vnoise(vec2(E.x * 0.05, E.y * 0.44) + drift * 0.4);
   col = mix(col, uFoam, step(0.72, clamp((vLift - 0.30) * 1.7, 0.0, 1.0) * streak * 1.5));
 
   // Distance takes the colour toward the sky. This one is a fade and not a
@@ -189,7 +194,7 @@ void main() {
     // darkest sheets for the hull and the hollows. So the four cuts are lifted
     // into that middle before a sheet is chosen.
     float value = mix(0.18 + dot(col, GREY) * 1.15, 0.90, far * 0.55);
-    col = mix(col, engrave(col, value), uBite);
+    col = mix(col, engraveUV(col, value, turned(E, 0.6) / uTile), uBite);
   } else {
     col = mix(col, uHaze, far * 0.72);
   }
