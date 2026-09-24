@@ -634,3 +634,26 @@ The engraving costs about a tenth of the frame rate (54 against 60, measured).
 
 *Test: sail voyage two at her own speed and watch the water's lines and foam go by
 under her; swing round her, and the lines stay on the hull.*
+
+## M20m — more of her. BUILT 24 September.
+
+The owner: "no helm, nothing at the back." She had a wheel, but in deck-wood tone and
+small, and under the old veil of hatching it could not be found; her stern was a bare
+plate. All of the below is **inferred** from New Bedford whaleships of the period —
+MORGAN.md cannot place any of it — and should be checked against the Mystic plans.
+
+- **The quarterdeck** (`deck.js`): the wheel five and a half feet across on a pale box,
+  so it stands out against the deck; the helmsman stands abaft it, facing the binnacle.
+  A cabin skylight and a small companion house replace the bare hatch, which had been
+  standing on the mizzen mast.
+- **The stern** (`stern.js`): five cabin windows in the transom, the taffrail, and a
+  spare boat hung athwartships on stern davits, under the sweep of the spanker boom.
+- **The bow** (`bow.js`): catheads with a bower anchor hung from each, and the bitts.
+  While she rides to her anchor in voyage one the larboard bower is gone from its
+  cathead and its cable runs from the hawse into the sea; weigh, and it is back.
+- **The working gear** (`rails.js`): fife rails at the fore and main mast feet, pin
+  rails inside the bulwarks, belaying pins with rope coiled down on them, and water
+  casks lashed by the mainmast.
+
+*Test: press c and look aft — a wheel you can pick out and a boat over her stern; in
+voyage one, see her cable run out of the bow, and see the anchor catted when she weighs.*

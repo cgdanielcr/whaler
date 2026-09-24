@@ -39,13 +39,16 @@ const post = (r, h, mat, x, y, z) => {
 function helm() {
   const g = new THREE.Group();
 
-  // The wheel box, with the tiller ropes coming up into it.
-  g.add(box(1.1, 0.72, 0.9, OAK, 0, 0, 0));
+  // The wheel box, with the tiller ropes coming up into it. Painted pale, as
+  // the deckhouses are, so the dark wheel stands out against it.
+  g.add(box(1.2, 0.8, 0.95, HOUSE, 0, 0, 0));
 
   const wheel = new THREE.Group();
-  wheel.position.set(0, 1.32, 0.05);
+  wheel.position.set(0, 1.5, 0.05);
 
-  const RIM = 0.72;
+  // Five and a half feet across: a ship's wheel was taller than the boy
+  // who was sometimes sent to hold it.
+  const RIM = 0.85;
   const rim = new THREE.Mesh(new THREE.TorusGeometry(RIM, 0.055, 5, 18), OAK);
   wheel.add(rim);
 
@@ -91,6 +94,29 @@ function windlass() {
     whelp.position.set(side * 1.05, 0.72, 0);
     g.add(whelp);
   }
+  return g;
+}
+
+// The cabin skylight: a glazed box with a pitched top, lighting the cabin
+// below. Inferred in its place and size.
+function skylight() {
+  const g = new THREE.Group();
+  g.add(box(1.5, 0.45, 1.2, HOUSE, 0, 0, 0));
+  for (const side of [-1, 1]) {
+    const pane = box(0.8, 0.05, 1.1, IRON, side * 0.37, 0.52, 0);
+    pane.rotation.z = -side * 0.42;
+    g.add(pane);
+  }
+  return g;
+}
+
+// The companion: a small house over the ladder down to the cabin, with its
+// door facing forward. Inferred.
+function companion() {
+  const g = new THREE.Group();
+  g.add(box(1.1, 1.3, 1.2, HOUSE, 0, 0, 0));
+  g.add(box(1.24, 0.1, 1.34, TRIM, 0, 1.3, 0));
+  g.add(box(0.55, 0.95, 0.04, OAK, 0, 0, 0.61));
   return g;
 }
 
@@ -153,7 +179,8 @@ export function makeDeckGear() {
   // Aft: the wheel and the compass in front of it, abaft the mizzen.
   const wheel = at(helm(), -13.4);
   at(binnacle(), -12.0);
-  at(hatch(1.5, 1.3), -11.0);                 // the companion down to the cabin
+  at(companion(), -9.4, 1.4);                  // the way down to the cabin
+  at(skylight(), -8.4, -0.6);                  // and the light into it
 
   at(skids(-5.4), -5.4);
   at(hatch(2.3, 2.0), -4.6);                  // the main hatch

@@ -16,12 +16,12 @@ const V = new THREE.Vector3();
 
 // Where a man idles when nothing is doing, by his station on the watch bill.
 const HAUNTS = {
-  'the deck':  [[2.4, -11.5], [-2.4, -12.5], [0.0, -13.8]],
+  'the deck':  [[2.4, -11.5], [-2.4, -12.5], [1.8, -14.4]],
   topman:      [[3.0, 8.0], [-3.0, 9.0], [2.6, 11.0], [-2.4, 6.5], [3.2, 4.0], [-3.4, 3.0]],
   afterguard:  [[2.8, -6.0], [-2.8, -6.8], [3.2, -3.0], [-3.2, -3.6], [2.2, -9.0], [-2.2, -9.4]],
   waister:     [[2.6, 1.0], [-2.6, 0.4], [3.2, -1.0], [-3.2, -1.6], [1.6, 2.6], [-1.6, 2.0], [0.0, 4.4]],
   'day work':  [[0.0, 6.6], [2.2, 6.0], [-2.2, 5.4], [1.4, -0.6], [-1.4, -1.2]],
-  helmsman:    [[0.0, -13.2]]
+  helmsman:    [[0.0, -14.3]]      // abaft the wheel, facing the binnacle
 };
 
 // A rust-red pointer over a man's head, for when his name is pointed at.
@@ -93,7 +93,7 @@ export function makeHands(company, crew, rig, ship, look, dom, below) {
 
     // Everything else is deck work. Put them where the rope is.
     const spread = (n0) => (n0 <= 1 ? 0 : ((i % n0) / (n0 - 1) - 0.5));
-    if (s.includes('wheel')) return onDeck(0, -13.2);
+    if (s.includes('wheel')) return onDeck(0, -14.3);
     if (s.includes('head sheet') || s.includes('downhaul') || s.includes('bowline'))
       return onDeck(spread(4) * 4, 13.5 + (i % 2) * 1.4);
     if (s.includes('fore brace')) return onDeck(spread(4) * 5.4, 5.4);

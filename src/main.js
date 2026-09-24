@@ -26,6 +26,9 @@ import { makeRepairs } from './repairs.js';
 import { makeHands } from './hands.js';
 import { makeWhalerDeck } from './whaler.js';
 import { makeDeckGear } from './deck.js';
+import { makeStern } from './stern.js';
+import { makeBow } from './bow.js';
+import { makeRails } from './rails.js';
 import { makeLookouts } from './lookouts.js';
 import { makeHunt } from './hunt.js';
 import { makeAfloat, makeWhale } from './afloat.js';
@@ -137,6 +140,9 @@ hull.add(whaler.group);
 // The things she is worked by: her wheel, her windlass, her hatches, her galley.
 const gear = makeDeckGear();
 hull.add(gear);
+// Her stern, her bow with its anchors, and the rails the ropes are belayed to.
+const bow = makeBow();
+hull.add(makeStern(), bow, makeRails());
 // The pennant at the main truck: the wind, where your eye already is.
 const vane = makeVane();
 hull.add(vane);
@@ -731,6 +737,7 @@ function frame(now) {
   whaler.smoke.userData.update(shown);
   vane.userData.update(shown, weather.windFrom, heading);
   gear.userData.update((held.has('ArrowRight') ? 1 : 0) - (held.has('ArrowLeft') ? 1 : 0));
+  bow.userData.update(anchored);
 
   // A short voyage ends when she has run her legs and is home again. The
   // cruise runs her distance first, and then she is on the ground: it ends
