@@ -7,7 +7,7 @@ const LIFE = 3.2;
 export function makeWake(scene) {
   const geo = new THREE.CircleGeometry(1, 7).rotateX(-Math.PI / 2);
   const pool = [];
-  for (let i = 0; i < 70; i++) {
+  for (let i = 0; i < 40; i++) {
     const m = new THREE.Mesh(geo, new THREE.MeshBasicMaterial({ color: 0xe8f6f8, transparent: true, opacity: 0, depthWrite: false }));
     m.visible = false;
     m.renderOrder = 1;

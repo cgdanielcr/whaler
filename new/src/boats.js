@@ -1,6 +1,7 @@
 // Whaleboats and the men in them. The ship carries boats on her davits; when
 // she lowers for a whale, two pull away, get fast to her, and come back.
 import * as THREE from 'three';
+import { bake } from './bake.js';
 
 const mat = (color) => new THREE.MeshStandardMaterial({ color, flatShading: true, roughness: 0.85 });
 const WHITE = mat(0xe4ddcc), INSIDE = mat(0x8c6c49), COAT = mat(0x27324a), FACE = mat(0xd4a27b), OAR = mat(0xcbb389);
@@ -64,6 +65,7 @@ export function makeBoats(scene) {
     launch(pos, heading) {
       for (const side of [-1, 1]) {
         const b = boatMesh(true);
+        bake(b, b.userData.oars.map((o) => o.pivot));
         b.position.set(pos.x - Math.sin(heading) * side * 3.2, 0, pos.z + Math.cos(heading) * side * 3.2);
         Object.assign(b.userData, { mode: 'out', side, heading });
         scene.add(b);

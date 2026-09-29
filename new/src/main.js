@@ -65,7 +65,6 @@ function frame(dt) {
   whales.update(dt, t, helm.pos);
   boats.update(dt, t, voyage.v.quarry, helm.pos);
   voyage.tick(dt);
-  ice.update(t);
   water.update(t);
   wake.update(dt, helm.pos, helm.heading, helm.speed);
   gulls.update(dt, t, helm.pos);
@@ -86,4 +85,4 @@ function frame(dt) {
 }
 
 // For testing from the browser console: whaler.frame(0.05) steps the world.
-window.whaler = { frame, voyage, helm, whales };
+window.whaler = { frame, voyage, helm, whales, view, scene };

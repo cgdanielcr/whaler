@@ -3,6 +3,7 @@
 // her davits. The bow points along +x.
 import * as THREE from 'three';
 import { boatMesh, figure } from './boats.js';
+import { bake } from './bake.js';
 
 const mat = (color, o = {}) => new THREE.MeshStandardMaterial({ color, flatShading: true, roughness: 0.85, ...o });
 const HULL = mat(0x2e2620), DECK = mat(0xa07a52), RAIL = mat(0x4a3526), BAND = mat(0xd9ceb4);
@@ -138,6 +139,7 @@ export function makeShip() {
   }
 
   g.traverse((o) => { if (o.isMesh) { o.castShadow = true; o.receiveShadow = true; } });
+  bake(g, [...squares, fa, ...lowered]);
 
   return {
     group: g,

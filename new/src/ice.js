@@ -1,11 +1,12 @@
-// Ice: flat floes and a few tall bergs scattered over the sea. They bob a
-// little, and the ship cannot sail through them.
+// Ice: flat floes and a few tall bergs scattered over the sea. The ship
+// cannot sail through them.
 import * as THREE from 'three';
 import { mergeVertices } from 'three/addons/utils/BufferGeometryUtils.js';
 import { shoreX, EDGE, BERTH, seeded } from './world.js';
+import { bake } from './bake.js';
 
 export function makeIce(scene) {
-  const rand = seeded(11), floes = [];
+  const rand = seeded(11), floes = [], all = new THREE.Group();
   const white = new THREE.MeshStandardMaterial({ color: 0xf1f8fb, flatShading: true, roughness: 0.55 });
   const blue = new THREE.MeshStandardMaterial({ color: 0xd6ebf3, flatShading: true, roughness: 0.55 });
 
@@ -28,19 +29,15 @@ export function makeIce(scene) {
 
     const mesh = new THREE.Mesh(geo, berg ? white : blue);
     mesh.scale.y = berg ? 0.9 : 0.22;
-    const base = berg ? 0.4 : 0.05;
-    mesh.position.set(x, base, z);
+    mesh.position.set(x, berg ? 0.4 : 0.05, z);
     mesh.rotation.y = rand() * 6.3;
-    mesh.castShadow = mesh.receiveShadow = true;
-    scene.add(mesh);
-    floes.push({ x, z, r, mesh, base, phase: rand() * 6.3 });
+    all.add(mesh);
+    floes.push({ x, z, r });
   }
+  scene.add(bake(all));        // all the ice drawn as two shapes
 
   return {
     floes,
-    update(t) {
-      for (const f of floes) f.mesh.position.y = f.base + Math.sin(t * 0.6 + f.phase) * 0.08;
-    },
     // Shove a point out of any floe it has run into. True if it hit one.
     push(pos, radius) {
       let hit = false;

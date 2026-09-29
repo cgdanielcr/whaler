@@ -1,38 +1,17 @@
 // The view: an isometric camera that follows the ship, the sun, and the
-// tilt-shift blur that makes the world look like a model on a table.
+// tilt-shift blur (switchable) that makes the world look like a model on a table.
 import * as THREE from 'three';
-import { EffectComposer } from 'three/addons/postprocessing/EffectComposer.js';
-import { RenderPass } from 'three/addons/postprocessing/RenderPass.js';
-import { ShaderPass } from 'three/addons/postprocessing/ShaderPass.js';
-import { OutputPass } from 'three/addons/postprocessing/OutputPass.js';
-import { HorizontalTiltShiftShader } from 'three/addons/shaders/HorizontalTiltShiftShader.js';
-import { VerticalTiltShiftShader } from 'three/addons/shaders/VerticalTiltShiftShader.js';
+import { makePost } from './post.js';
 
 const LOOK = new THREE.Vector3(-1, 1.3, 1).normalize();   // east shows upper right
 const SUN = new THREE.Vector3(-25, 110, -60);             // light from the upper left
-const BLUR = 7;                                           // tilt-shift strength
-
-// A little more colour, and the corners darkened.
-const Grade = {
-  uniforms: { tDiffuse: { value: null }, sat: { value: 1.15 }, vig: { value: 0.45 } },
-  vertexShader: `varying vec2 vUv;
-    void main() { vUv = uv; gl_Position = projectionMatrix * modelViewMatrix * vec4(position, 1.0); }`,
-  fragmentShader: `uniform sampler2D tDiffuse; uniform float sat; uniform float vig; varying vec2 vUv;
-    void main() {
-      vec4 c = texture2D(tDiffuse, vUv);
-      float l = dot(c.rgb, vec3(0.299, 0.587, 0.114));
-      c.rgb = mix(vec3(l), c.rgb, sat);
-      vec2 d = vUv - 0.5;
-      c.rgb *= 1.0 - vig * dot(d, d) * 2.0;
-      gl_FragColor = c;
-    }`,
-};
+const TILT_SHIFT = false;     // the model-on-a-table blur; off for now, it costs too much on this laptop
 
 export function makeView() {
-  const renderer = new THREE.WebGLRenderer({ antialias: false });
-  renderer.setPixelRatio(Math.min(devicePixelRatio, 2));
+  const renderer = new THREE.WebGLRenderer({ antialias: !TILT_SHIFT });
+  renderer.setPixelRatio(Math.min(devicePixelRatio, 1));   // sharper screens cost too much here
   renderer.shadowMap.enabled = true;
-  renderer.shadowMap.type = THREE.PCFSoftShadowMap;
+  renderer.shadowMap.type = THREE.PCFShadowMap;
   renderer.toneMapping = THREE.NeutralToneMapping;
   renderer.domElement.id = 'view';
   document.body.prepend(renderer.domElement);
@@ -53,26 +32,14 @@ export function makeView() {
   sun.shadow.normalBias = 0.06;
   scene.add(sun, sun.target);
 
-  const composer = new EffectComposer(renderer);
-  composer.renderTarget1.samples = 4;
-  composer.renderTarget2.samples = 4;
-  composer.addPass(new RenderPass(scene, camera));
-  const hBlur = new ShaderPass(HorizontalTiltShiftShader);
-  const vBlur = new ShaderPass(VerticalTiltShiftShader);
-  composer.addPass(hBlur);
-  composer.addPass(vBlur);
-  composer.addPass(new ShaderPass(Grade));
-  composer.addPass(new OutputPass());
+  const post = TILT_SHIFT ? makePost(renderer) : null;
 
   function resize() {
     const w = innerWidth, h = innerHeight, a = w / h;
     Object.assign(camera, { left: -viewH * a / 2, right: viewH * a / 2, top: viewH / 2, bottom: -viewH / 2 });
     camera.updateProjectionMatrix();
     renderer.setSize(w, h);
-    composer.setSize(w, h);
-    hBlur.uniforms.h.value = BLUR / w;
-    vBlur.uniforms.v.value = BLUR / h;
-    hBlur.uniforms.r.value = vBlur.uniforms.r.value = 0.5;
+    if (post) post.setSize(w, h);
   }
   resize();
 
@@ -99,5 +66,5 @@ export function makeView() {
     return ray.ray.intersectPlane(plane, hit);
   }
 
-  return { renderer, scene, canvas: renderer.domElement, resize, follow, zoom, pick, render: () => composer.render() };
+  return { renderer, scene, camera, canvas: renderer.domElement, resize, follow, zoom, pick, render: () => (post ? post.render(scene, camera) : renderer.render(scene, camera)) };
 }

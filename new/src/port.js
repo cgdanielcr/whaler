@@ -3,6 +3,7 @@
 import * as THREE from 'three';
 import { PIER, seeded } from './world.js';
 import { groundHeight } from './land.js';
+import { bake } from './bake.js';
 
 const mat = (color, o = {}) => new THREE.MeshStandardMaterial({ color, flatShading: true, roughness: 0.9, ...o });
 const PILE = mat(0x3f2d20), BARREL = mat(0x6a4a2e), CRATE = mat(0x8b6a45), SNOW = mat(0xe9eef2);
@@ -61,7 +62,7 @@ export function makePort(scene) {
   }
 
   g.traverse((o) => { if (o.isMesh) { o.castShadow = true; o.receiveShadow = true; } });
-  scene.add(g);
+  scene.add(bake(g));
 }
 
 function houseMesh(w, d, h, walls) {
