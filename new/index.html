@@ -1,0 +1,65 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Whaler — new approach</title>
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+  <div class="panel" id="ship">
+    <div class="title">The Mastiff</div>
+    <div class="sub">Whaleship, three hundred tons</div>
+    <div class="row"><span>Oil in the hold</span><b id="holdN"></b></div>
+    <div class="bar"><i id="holdB" class="oil"></i></div>
+    <div class="row"><span>Provisions</span><b id="storesN"></b></div>
+    <div class="bar"><i id="storesB" class="stores"></i></div>
+    <div class="row"><span>Crew</span><b id="crewN"></b></div>
+    <div class="bar"><i id="crewB" class="crew"></i></div>
+  </div>
+
+  <div class="panel" id="tally"></div>
+
+  <div id="corner">
+    <div class="panel" id="when"><div id="date"></div><div id="where"></div></div>
+    <canvas id="minimap" width="360" height="360"></canvas>
+  </div>
+
+  <div class="panel" id="objective">
+    <div class="label">Current objective</div>
+    <div id="goal"></div>
+    <ul id="steps"></ul>
+    <div id="hint"></div>
+  </div>
+
+  <div id="dock">
+    <div class="panel" id="chase" hidden>
+      <div id="chaseLabel"></div>
+      <div class="bar" id="chaseBar"><i id="chaseB" class="oil"></i></div>
+    </div>
+    <button id="act" hidden></button>
+  </div>
+
+  <div id="toast"></div>
+
+  <div id="modal" hidden>
+    <div class="panel">
+      <div class="title">The voyage is made</div>
+      <div id="summary"></div>
+      <button id="again">Fit out for another voyage</button>
+    </div>
+  </div>
+
+  <a id="back" href="../">‹ Versions</a>
+
+  <script type="importmap">
+    {
+      "imports": {
+        "three": "https://cdn.jsdelivr.net/npm/three@0.185.1/build/three.module.js",
+        "three/addons/": "https://cdn.jsdelivr.net/npm/three@0.185.1/examples/jsm/"
+      }
+    }
+  </script>
+  <script type="module" src="src/main.js"></script>
+</body>
+</html>

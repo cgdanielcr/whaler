@@ -15,6 +15,16 @@ historical model.
   language that the owner can perform in a browser.
 - **No animated characters, no below-deck interiors, no whaling.** See SPEC section 3.
 
+## Two versions (from 2026-09-29)
+
+- `index.html` is a front page that lets the owner choose a version.
+- `original.html` + `src/` + `art/` is the original game. Leave it alone unless asked.
+- `new/` is the new approach: an isometric, tilt-shift, low-poly sea (reference look:
+  bright teal water, ice floes, snowy coast, whaleboats). It **does include whaling**; the
+  "no whaling" rule and SPEC.md's scope apply to the original only. Built step by step
+  from the most general loop: leave port, find whales, fill the hold, return.
+  Same technical rules: no build step, Three.js only.
+
 ## Vocabulary
 
 Period-correct terms only, in code and UI:
