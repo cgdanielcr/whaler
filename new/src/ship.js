@@ -126,20 +126,20 @@ export function makeShip() {
   flag.position.set(-0.4, DECK_Y + 13.8, 0);
   g.add(flag);
 
-  // Boats on the davits, two each side. The after pair go down for a whale.
-  const lowered = [];
-  for (const side of [-1, 1]) {
-    for (const x of [-1.8, 4.6]) {
+  // Boats on the davits, two each side. The after pair go down first.
+  const davits = [];
+  for (const x of [-1.8, 4.6]) {
+    for (const side of [-1, 1]) {
       const boat = boatMesh(false);
       boat.scale.setScalar(0.8);
       boat.position.set(x, 1.9, side * 2.4);
       g.add(boat);
-      if (x < 0) lowered.push(boat);
+      davits.push(boat);
     }
   }
 
   g.traverse((o) => { if (o.isMesh) { o.castShadow = true; o.receiveShadow = true; } });
-  bake(g, [...squares, fa, ...lowered]);
+  bake(g, [...squares, fa, ...davits]);
 
   return {
     group: g,
@@ -147,6 +147,7 @@ export function makeShip() {
       for (const s of squares) s.scale.set(0.35 + 0.65 * k, 0.07 + 0.93 * k, 1);
       fa.visible = k > 0.4;
     },
-    boatsDown(down) { for (const b of lowered) b.visible = !down; },
+    // Show the boats she still has, less those away after a whale.
+    boats(total, away) { davits.forEach((b, i) => { b.visible = i >= away && i < total; }); },
   };
 }

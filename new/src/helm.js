@@ -10,7 +10,8 @@ export function makeHelm(ship, ice) {
   const object = new THREE.Group();
   object.add(ship.group);
 
-  const s = { object, pos: object.position, heading: Math.PI, speed: 0, target: null, set: false, sail: 0, heel: 0 };
+  const s = { object, pos: object.position, heading: Math.PI, speed: 0, target: null, set: false, sail: 0, heel: 0,
+    hands: 1 };                 // below 1 when short-handed: she can carry less sail
 
   s.steer = (x, z) => {
     x = Math.min(x, shoreX(z) - 6);
@@ -28,7 +29,7 @@ export function makeHelm(ship, ice) {
         const rate = 0.25 + 0.55 * Math.min(1, s.speed / 4);
         turn = THREE.MathUtils.clamp(off, -rate * dt, rate * dt);
         s.heading += turn;
-        if (s.set) want = MAX_SPEED * Math.min(1, 0.25 + d / 20) * (1 - Math.min(0.6, Math.abs(off) / 2.2));
+        if (s.set) want = MAX_SPEED * s.hands * Math.min(1, 0.25 + d / 20) * (1 - Math.min(0.6, Math.abs(off) / 2.2));
       }
     }
     s.speed += (want - s.speed) * Math.min(1, dt * 0.5);

@@ -2,6 +2,9 @@
 // coast, the wharf, the whaling grounds, any whales in sight, and the ship.
 import { shoreX, EDGE, BERTH, GROUNDS } from './world.js';
 
+// Once the kind of whale is made out, she gets her colour on the chart.
+const KINDS = { right: '#0b1a24', bowhead: '#6d8fb0', sperm: '#c79a5b', humpback: '#7d9a73', finback: '#b9b9b9' };
+
 export function makeMinimap(canvas) {
   const ctx = canvas.getContext('2d'), S = canvas.width, k = (S / 2) / EDGE;
   const land = new Path2D();
@@ -30,7 +33,7 @@ export function makeMinimap(canvas) {
       for (const w of whales.list) {
         const p = w.group.position;
         if (!w.sighted || w.state === 'dead' || Math.hypot(p.x - helm.pos.x, p.z - helm.pos.z) > 140) continue;
-        ctx.fillStyle = '#0b1a24'; ctx.strokeStyle = '#fff'; ctx.lineWidth = 3;
+        ctx.fillStyle = w.known ? KINDS[w.kind] : '#0b1a24'; ctx.strokeStyle = '#fff'; ctx.lineWidth = 3;
         ctx.beginPath(); ctx.arc(p.x, p.z, 8, 0, 7); ctx.fill(); ctx.stroke();
       }
       if (helm.target) {

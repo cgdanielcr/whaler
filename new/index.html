@@ -10,12 +10,13 @@
   <div class="panel" id="ship">
     <div class="title">The Mastiff</div>
     <div class="sub">Whaleship, three hundred tons</div>
-    <div class="row"><span>Oil in the hold</span><b id="holdN"></b></div>
-    <div class="bar"><i id="holdB" class="oil"></i></div>
-    <div class="row"><span>Provisions</span><b id="storesN"></b></div>
-    <div class="bar"><i id="storesB" class="stores"></i></div>
+    <div class="row"><span>Hold</span><b id="holdN"></b></div>
+    <div class="bar hold"><i id="hProv" class="stores"></i><i id="hWhale" class="oil"></i><i id="hSperm" class="sperm"></i></div>
+    <div class="key" id="holdKey"></div>
+    <div class="row" id="storesRow"><span>Provisions</span><b id="storesN"></b></div>
     <div class="row"><span>Crew</span><b id="crewN"></b></div>
     <div class="bar"><i id="crewB" class="crew"></i></div>
+    <div class="row"><span>Boats</span><b id="boatsN"></b></div>
   </div>
 
   <div class="panel" id="tally"></div>
@@ -44,9 +45,9 @@
 
   <div id="modal" hidden>
     <div class="panel">
-      <div class="title">The voyage is made</div>
+      <div class="title" id="modalTitle"></div>
       <div id="summary"></div>
-      <button id="again">Fit out for another voyage</button>
+      <div id="choices"></div>
     </div>
   </div>
 

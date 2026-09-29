@@ -63,7 +63,7 @@ button:hover { filter: brightness(1.08); }
 #summary p { color: var(--dim); line-height: 1.5; }
 #summary b { color: var(--gold); font-weight: normal; }
 
-#back { position: fixed; left: 14px; top: 206px; color: var(--dim); font-size: .8rem; text-decoration: none; }
+#back { position: fixed; right: 14px; bottom: 10px; color: var(--dim); font-size: .8rem; text-decoration: none; }
 #back:hover { color: var(--gold); }
 
 @media (max-width: 760px) {
@@ -71,5 +71,20 @@ button:hover { filter: brightness(1.08); }
   #ship .sub, #tally, #when { display: none; }
   #minimap { width: 110px; height: 110px; }
   #objective { width: auto; right: 14px; bottom: 90px; padding: 10px 12px; }
-  #back { top: auto; bottom: 6px; }
+  #back { bottom: 4px; }
 }
+
+/* The hold: provisions, whale oil and sperm oil sharing one bar. */
+.bar.hold { display: flex; height: 10px; }
+.bar.hold i { border-radius: 0; }
+.sperm { background: #f1e2b8; }
+.key { font-size: .7rem; color: var(--dim); margin-top: 4px; }
+.key i { display: inline-block; width: 8px; height: 8px; border-radius: 2px; margin: 0 3px 0 6px; }
+.key i:first-child { margin-left: 0; }
+.row.warn b { color: #e0b252; }
+.row.danger b { color: #e2674f; }
+.boat { display: inline-block; width: 16px; height: 7px; margin-left: 4px; border-radius: 50%; background: #e4ddcc; }
+.boat.gone { background: none; border: 1px solid #6b6454; }
+#choices { display: flex; flex-direction: column; gap: 10px; margin-top: 8px; }
+#choices small { display: block; font-size: .75rem; opacity: .8; margin-top: 3px; font-style: italic; }
+#summary p { text-align: left; }

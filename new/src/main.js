@@ -58,12 +58,13 @@ view.renderer.setAnimationLoop((ms) => {
   last = ms;
 });
 
-function frame(dt) {
+function frame(real) {
+  const dt = voyage.v.paused ? 0 : real;     // the world holds still while a decision is waiting
   t += dt;
 
   helm.update(dt, t);
   whales.update(dt, t, helm.pos);
-  boats.update(dt, t, voyage.v.quarry, helm.pos);
+  boats.update(dt, t, voyage.quarry, helm.pos);
   voyage.tick(dt);
   water.update(t);
   wake.update(dt, helm.pos, helm.heading, helm.speed);
@@ -77,10 +78,10 @@ function frame(dt) {
 
   // Keep the ship in the middle; during a chase, look between her and the whale.
   focus.set(helm.pos.x, 0, helm.pos.z);
-  if (voyage.v.quarry) focus.lerp(voyage.v.quarry.group.position, 0.4).setY(0);
-  view.follow(focus, dt);
+  if (voyage.quarry) focus.lerp(voyage.quarry.group.position, 0.4).setY(0);
+  view.follow(focus, real);
 
-  if ((slow += dt) > 0.15) { slow = 0; voyage.draw(); minimap.draw(helm, whales); }
+  if ((slow += real) > 0.15) { slow = 0; voyage.draw(); minimap.draw(helm, whales); }
   view.render();
 }
 

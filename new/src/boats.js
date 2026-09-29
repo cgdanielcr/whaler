@@ -1,5 +1,6 @@
 // Whaleboats and the men in them. The ship carries boats on her davits; when
-// she lowers for a whale, two pull away, get fast to her, and come back.
+// she lowers for a whale, one or two pull away, get fast to her, and come back,
+// unless the whale stoves one, when it rolls over and goes down.
 import * as THREE from 'three';
 import { bake } from './bake.js';
 
@@ -58,14 +59,17 @@ export function boatMesh(manned) {
 
 export function makeBoats(scene) {
   const boats = [];
+  const active = () => boats.filter((b) => b.userData.mode !== 'stove');
   return {
-    get fast() { return boats.length > 0 && boats.every((b) => b.userData.mode === 'fast'); },
+    get fast() { const a = active(); return a.length > 0 && a.every((b) => b.userData.mode === 'fast'); },
     get aboard() { return boats.length === 0; },
+    get out() { return active().length; },
 
-    launch(pos, heading) {
-      for (const side of [-1, 1]) {
+    launch(pos, heading, n) {
+      for (const side of n === 1 ? [1] : [-1, 1]) {
         const b = boatMesh(true);
         bake(b, b.userData.oars.map((o) => o.pivot));
+        b.rotation.order = 'YXZ';           // so she can roll over along her length
         b.position.set(pos.x - Math.sin(heading) * side * 3.2, 0, pos.z + Math.cos(heading) * side * 3.2);
         Object.assign(b.userData, { mode: 'out', side, heading });
         scene.add(b);
@@ -73,11 +77,25 @@ export function makeBoats(scene) {
       }
     },
 
-    recall() { for (const b of boats) b.userData.mode = 'home'; },
+    recall() { for (const b of active()) b.userData.mode = 'home'; },
+
+    // The whale smashes one of the boats. Says which side she was on.
+    stove() {
+      const a = active(), b = a[Math.floor(Math.random() * a.length)];
+      b.userData.mode = 'stove'; b.userData.sunk = 0;
+      return b.userData.side < 0 ? 'larboard' : 'starboard';
+    },
 
     update(dt, t, whale, ship) {
       for (const b of [...boats]) {
         const u = b.userData;
+        if (u.mode === 'stove') {                    // over she goes, and down
+          u.sunk += dt;
+          b.rotation.x = Math.min(Math.PI, u.sunk * 2.5);
+          b.position.y = u.sunk < 2 ? 0.1 : 0.1 - (u.sunk - 2) * 1.5;
+          if (u.sunk > 5) { scene.remove(b); boats.splice(boats.indexOf(b), 1); }
+          continue;
+        }
         if (!whale || whale.state !== 'fast') u.mode = 'home';
         let tx = ship.x, tz = ship.z, speed = 8;
         if (u.mode !== 'home') {                       // make for the whale's flank
