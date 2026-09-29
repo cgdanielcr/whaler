@@ -1,6 +1,7 @@
 // Whales: they wander the grounds, surface to blow and sound again. When the
 // boats get fast to one she runs; if she gets away she sounds and is lost for
-// a while; when she is killed she rolls fin out, and floats or sinks.
+// a while; when she is killed she rolls fin out, and floats (or sinks) until
+// she is cut in alongside the ship, cast adrift, or eaten.
 import * as THREE from 'three';
 import { shoreX, EDGE, GROUNDS, wrap } from './world.js';
 import { SPECIES, pickKind, bodyGeometry } from './species.js';
@@ -41,7 +42,7 @@ function whaleMesh(kind) {
   return g;
 }
 
-export function makeWhales(scene) {
+export function makeWhales(scene, startEdge) {
   const list = [], puffs = [];
   for (let i = 0; i < 90; i++) {
     const m = new THREE.Mesh(PUFF, new THREE.MeshBasicMaterial({ color: 0xf4fbff, transparent: true, opacity: 0, depthWrite: false }));
@@ -49,16 +50,17 @@ export function makeWhales(scene) {
     scene.add(m);
     puffs.push({ m, age: 99, v: new THREE.Vector3() });
   }
-  let nextPuff = 0;
+  let nextPuff = 0, edge = startEdge;
   const hole = new THREE.Vector3();
 
   function spawn(away) {
     let x, z, tries = 0;
+    const zMin = Math.min(EDGE - 40, Math.max(-EDGE + 40, edge + 20));   // never inside the pack
     do {
-      z = (rand() * 2 - 1) * (EDGE - 40);
+      z = zMin + rand() * (EDGE - 40 - zMin);
       x = GROUNDS.x0 + rand() * (GROUNDS.x1 - GROUNDS.x0);
     } while ((x > shoreX(z) - 40 || (away && Math.hypot(x - away.x, z - away.z) < 110)) && tries++ < 60);
-    const kind = pickKind(z, rand), sp = SPECIES[kind];
+    const kind = pickKind(z, rand, edge), sp = SPECIES[kind];
     const size = sp.size[0] + rand() * (sp.size[1] - sp.size[0]), k = (size - sp.size[0]) / (sp.size[1] - sp.size[0]);
     const group = whaleMesh(kind);
     group.scale.setScalar(size);
@@ -85,15 +87,22 @@ export function makeWhales(scene) {
     }
   }
 
-  function update(dt, t, ship) {
+  function update(dt, t, ship, iceEdge) {
+    edge = iceEdge;
     for (const w of [...list]) {
       const g = w.group, p = g.position;
       if (w.state === 'dead') {
         w.clock += dt;
-        g.rotation.x = Math.min(Math.PI, w.clock * 1.2);
-        const down = w.clock > (w.sinks ? 2 : 6);
+        if (w.alongside) {                         // made fast along the starboard side
+          const h = ship.heading, k = Math.min(1, dt * 2);
+          p.x += (ship.pos.x - Math.sin(h) * 4.8 - p.x) * k;
+          p.z += (ship.pos.z + Math.cos(h) * 4.8 - p.z) * k;
+          w.heading += wrap(h - w.heading) * k;
+        }
+        g.rotation.set(Math.min(Math.PI, w.clock * 1.2), -w.heading, 0);
+        const down = w.sinks ? w.clock > 2 : w.cast;
         p.y += ((down ? -10 : -0.6) - p.y) * Math.min(1, dt * (down ? 0.3 : 1));
-        if (p.y < -8.5) { scene.remove(g); list.splice(list.indexOf(w), 1); spawn(ship); }
+        if (p.y < -8.5) { scene.remove(g); list.splice(list.indexOf(w), 1); spawn(ship.pos); }
         continue;
       }
       if (w.state === 'escaped' && (w.away -= dt) <= 0) {
@@ -109,13 +118,14 @@ export function makeWhales(scene) {
       w.diveT += dt;
 
       if (fleeing) {                               // run from the ship
-        const from = Math.atan2(p.z - ship.z, p.x - ship.x);
+        const from = Math.atan2(p.z - ship.pos.z, p.x - ship.pos.x);
         w.heading += wrap(from - w.heading) * Math.min(1, dt * 0.5);
       } else {                                     // wander, and keep to the grounds
         w.turn = (w.turn + (rand() - 0.5) * dt * 0.6) * 0.98;
         w.heading += w.turn * dt;
       }
-      if (p.x > shoreX(p.z) - 45 || Math.abs(p.z) > EDGE - 40 || p.x < -EDGE + 40) {
+      if (p.z < edge + 15) w.heading += wrap(Math.PI / 2 - w.heading) * Math.min(1, dt * 1.5);   // out of the pack
+      else if (p.x > shoreX(p.z) - 45 || Math.abs(p.z) > EDGE - 40 || p.x < -EDGE + 40) {
         w.heading += wrap(Math.atan2(-p.z, -200 - p.x) - w.heading) * Math.min(1, dt * 0.8);
       }
       const speed = fleeing ? w.sp.flee : w.sp.wander;

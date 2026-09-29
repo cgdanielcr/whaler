@@ -15,6 +15,10 @@ import { makeGulls } from './gulls.js';
 import { makeMinimap } from './minimap.js';
 import { makeVoyage } from './voyage.js';
 import { BERTH } from './world.js';
+import { makePack } from './pack.js';
+import { iceEdge } from './season.js';
+
+const START = new Date(1841, 4, 1);
 
 const view = makeView();
 const { scene } = view;
@@ -26,12 +30,13 @@ const ship = makeShip();
 const helm = makeHelm(ship, ice);
 helm.pos.set(BERTH.x, 0, BERTH.z);
 scene.add(helm.object);
-const whales = makeWhales(scene);
+const whales = makeWhales(scene, iceEdge(START));
+const pack = makePack(scene);
 const boats = makeBoats(scene);
 const wake = makeWake(scene);
 const gulls = makeGulls(scene);
 const minimap = makeMinimap(document.getElementById('minimap'));
-const voyage = makeVoyage({ helm, whales, boats, ship });
+const voyage = makeVoyage({ scene, helm, whales, boats, ship, start: START });
 
 // A ring on the water where she has been sent.
 const marker = new THREE.Mesh(new THREE.RingGeometry(1.2, 1.7, 24).rotateX(-Math.PI / 2),
@@ -52,7 +57,7 @@ addEventListener('wheel', (e) => view.zoom(e.deltaY), { passive: true });
 addEventListener('resize', view.resize);
 
 const focus = new THREE.Vector3();
-let last = null, t = 0, slow = 1;
+let last = null, t = 0, slow = 1, swell = 1;
 view.renderer.setAnimationLoop((ms) => {
   frame(last === null ? 0 : Math.min((ms - last) / 1000, 0.05));
   last = ms;
@@ -63,10 +68,12 @@ function frame(real) {
   t += dt;
 
   helm.update(dt, t);
-  whales.update(dt, t, helm.pos);
+  whales.update(dt, t, helm, voyage.season.edge);
+  pack.update(voyage.season.edge);
   boats.update(dt, t, voyage.quarry, helm.pos);
   voyage.tick(dt);
-  water.update(t);
+  swell += ((voyage.season.gale ? 2.4 : 1) - swell) * Math.min(1, dt * 0.3);
+  water.update(t, swell);
   wake.update(dt, helm.pos, helm.heading, helm.speed);
   gulls.update(dt, t, helm.pos);
 
@@ -81,7 +88,7 @@ function frame(real) {
   if (voyage.quarry) focus.lerp(voyage.quarry.group.position, 0.4).setY(0);
   view.follow(focus, real);
 
-  if ((slow += real) > 0.15) { slow = 0; voyage.draw(); minimap.draw(helm, whales); }
+  if ((slow += real) > 0.15) { slow = 0; voyage.draw(); minimap.draw(helm, whales, voyage.season.edge); }
   view.render();
 }
 

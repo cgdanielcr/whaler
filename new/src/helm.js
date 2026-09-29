@@ -11,7 +11,9 @@ export function makeHelm(ship, ice) {
   object.add(ship.group);
 
   const s = { object, pos: object.position, heading: Math.PI, speed: 0, target: null, set: false, sail: 0, heel: 0,
-    hands: 1 };                 // below 1 when short-handed: she can carry less sail
+    hands: 1,                   // below 1 when short-handed: she can carry less sail
+    slow: 1,                    // below 1 in the pack ice; 0 when she is beset
+    bump: 0 };                  // hull damage from striking ice, gathered until the voyage reads it
 
   s.steer = (x, z) => {
     x = Math.min(x, shoreX(z) - 6);
@@ -29,14 +31,14 @@ export function makeHelm(ship, ice) {
         const rate = 0.25 + 0.55 * Math.min(1, s.speed / 4);
         turn = THREE.MathUtils.clamp(off, -rate * dt, rate * dt);
         s.heading += turn;
-        if (s.set) want = MAX_SPEED * s.hands * Math.min(1, 0.25 + d / 20) * (1 - Math.min(0.6, Math.abs(off) / 2.2));
+        if (s.set) want = MAX_SPEED * s.hands * s.slow * Math.min(1, 0.25 + d / 20) * (1 - Math.min(0.6, Math.abs(off) / 2.2));
       }
     }
     s.speed += (want - s.speed) * Math.min(1, dt * 0.5);
     pos.x += Math.cos(s.heading) * s.speed * dt;
     pos.z += Math.sin(s.heading) * s.speed * dt;
 
-    if (ice.push(pos, 3.4)) s.speed *= 1 - Math.min(1, dt * 2);
+    if (ice.push(pos, 3.4)) { s.bump += Math.max(0, s.speed - 2) * dt * 0.35; s.speed *= 1 - Math.min(1, dt * 2); }   // a nudge is harmless; ramming is not
     // The wharf: slide off whichever side she is on.
     if (pos.x > PIER.x0 - 7 && pos.x < PIER.x1 && pos.z > PIER.z0 - 5 && pos.z < PIER.z1 + 2) {
       pos.z = pos.z > (PIER.z0 + PIER.z1) / 2 ? PIER.z1 + 2 : PIER.z0 - 5;

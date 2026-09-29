@@ -14,7 +14,7 @@ export function makeMinimap(canvas) {
   land.closePath();
 
   return {
-    draw(helm, whales) {
+    draw(helm, whales, edge) {
       ctx.setTransform(1, 0, 0, 1, 0, 0);
       ctx.clearRect(0, 0, S, S);
       ctx.save();
@@ -27,11 +27,15 @@ export function makeMinimap(canvas) {
       ctx.fillStyle = 'rgba(255,255,255,0.09)';
       ctx.fillRect(GROUNDS.x0, -EDGE + 40, GROUNDS.x1 - GROUNDS.x0, EDGE * 2 - 80);
       ctx.fillStyle = '#dfe6ea'; ctx.fill(land);
+      if (edge > -EDGE * 1.5) { ctx.fillStyle = 'rgba(236,244,248,0.92)'; ctx.fillRect(-EDGE * 2, -EDGE * 2, EDGE * 4, edge + EDGE * 2); }
       ctx.fillStyle = '#e8a33c';
       ctx.beginPath(); ctx.arc(BERTH.x + 12, BERTH.z, 11, 0, 7); ctx.fill();
 
       for (const w of whales.list) {
         const p = w.group.position;
+        if (w.state === 'dead' && !w.sinks && !w.cast) {        // a carcass afloat
+          ctx.fillStyle = '#b5552f'; ctx.fillRect(p.x - 7, p.z - 7, 14, 14); continue;
+        }
         if (!w.sighted || w.state === 'dead' || Math.hypot(p.x - helm.pos.x, p.z - helm.pos.z) > 140) continue;
         ctx.fillStyle = w.known ? KINDS[w.kind] : '#0b1a24'; ctx.strokeStyle = '#fff'; ctx.lineWidth = 3;
         ctx.beginPath(); ctx.arc(p.x, p.z, 8, 0, 7); ctx.fill(); ctx.stroke();

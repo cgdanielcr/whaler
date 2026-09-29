@@ -27,10 +27,12 @@ export const SPECIES = {
   },
 };
 
-// Which kinds keep where: bowheads among the northern ice, sperm whales in
-// the south, right whales and humpbacks between. Finbacks anywhere.
-export function pickKind(z, rand) {
-  const w = z < -120 ? { bowhead: 6, right: 3, finback: 1 }
+// Which kinds keep where: bowheads along the edge of the pack ice (or the far
+// north when the ice is out), sperm whales in the south, right whales and
+// humpbacks between. Finbacks anywhere.
+export function pickKind(z, rand, edge) {
+  const nearIce = edge > -380 ? z < edge + 160 : z < -120;
+  const w = nearIce ? { bowhead: 6, right: 3, finback: 1 }
     : z > 120 ? { sperm: 5, humpback: 3, right: 1, finback: 1 }
     : { right: 4.5, humpback: 2.5, sperm: 1.5, finback: 1.5 };
   let r = rand() * Object.values(w).reduce((a, b) => a + b, 0);

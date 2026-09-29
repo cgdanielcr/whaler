@@ -32,4 +32,7 @@ export function verdict(dollars) {
   return 'A greasy voyage! The owners are delighted.';
 }
 
-export const money = (n) => '$' + Math.round(n).toLocaleString('en-US');
+export const money = (n) => (n < 0 ? '−$' : '$') + Math.abs(Math.round(n)).toLocaleString('en-US');
+
+export const REPAIR = 25;             // dollars to make good each point of hull damage
+export const NEW_SHIP = 8000;         // what the owners pay for another ship if she is lost

@@ -14,6 +14,8 @@
     <div class="bar hold"><i id="hProv" class="stores"></i><i id="hWhale" class="oil"></i><i id="hSperm" class="sperm"></i></div>
     <div class="key" id="holdKey"></div>
     <div class="row" id="storesRow"><span>Provisions</span><b id="storesN"></b></div>
+    <div class="row"><span>Hull</span><b id="hullN"></b></div>
+    <div class="bar"><i id="hullB"></i></div>
     <div class="row"><span>Crew</span><b id="crewN"></b></div>
     <div class="bar"><i id="crewB" class="crew"></i></div>
     <div class="row"><span>Boats</span><b id="boatsN"></b></div>
@@ -22,7 +24,7 @@
   <div class="panel" id="tally"></div>
 
   <div id="corner">
-    <div class="panel" id="when"><div id="date"></div><div id="where"></div></div>
+    <div class="panel" id="when"><div id="date"></div><div id="where"></div><div id="wind"></div></div>
     <canvas id="minimap" width="360" height="360"></canvas>
   </div>
 
@@ -38,7 +40,7 @@
       <div id="chaseLabel"></div>
       <div class="bar" id="chaseBar"><i id="chaseB" class="oil"></i></div>
     </div>
-    <button id="act" hidden></button>
+    <div id="acts"><button id="act" hidden></button><button id="act2" class="lesser" hidden></button></div>
   </div>
 
   <div id="toast"></div>

@@ -1,8 +1,7 @@
 // The chase: from lowering the boats to hoisting them in again. Most go to
 // plan, but a whale may stove a boat, sound and run out the line, sink when
-// dead, or simply be too fast; and a full hold wastes what it cannot take.
+// dead, or simply be too fast. A dead whale is left floating, to be cut in.
 import { describe } from './species.js';
-import { room } from './stores.js';
 import { hud } from './hud.js';
 
 const CHASE = 9;          // seconds two boats must hang on to kill her
@@ -53,11 +52,8 @@ export function makeChase({ v, whales, boats, helm }) {
     whales.kill(w, sinks);
     if (sinks) return end(`She is dead, and she sinks! All her oil goes to the bottom.`);
     v.taken += 1;
-    const fit = Math.min(w.barrels, room(v)), kind = w.sp.oil === 'sperm' ? 'sperm oil' : 'oil';
-    v[w.sp.oil] += fit;
-    end(fit === w.barrels
-      ? `She rolls fin out. ${fit} barrels of ${kind} stowed below.`
-      : `She rolls fin out: ${w.barrels} barrels, but room below for only ${fit}. The rest goes to the sharks.`);
+    w.left = w.barrels;
+    end(`She rolls fin out, about ${w.barrels} barrels in her. Bring her alongside before the sharks have her.`);
   }
 
   function tick(dt) {

@@ -21,7 +21,7 @@ export function makeWater(scene) {
   }
   geo.setAttribute('color', new THREE.Float32BufferAttribute(col, 3));
 
-  const uTime = { value: 0 };
+  const uTime = { value: 0 }, uAmp = { value: 1 };
   const mat = new THREE.MeshStandardMaterial({
     vertexColors: true, flatShading: true, roughness: 0.32, metalness: 0.05,
     transparent: true, opacity: 0.82,
@@ -29,12 +29,13 @@ export function makeWater(scene) {
   // The swell is worked out on the graphics card, so the whole sea can move.
   mat.onBeforeCompile = (shader) => {
     shader.uniforms.uTime = uTime;
-    shader.vertexShader = 'uniform float uTime;\n' + shader.vertexShader.replace(
+    shader.uniforms.uAmp = uAmp;
+    shader.vertexShader = 'uniform float uTime;\nuniform float uAmp;\n' + shader.vertexShader.replace(
       '#include <begin_vertex>',
       `vec3 transformed = vec3(position);
-       transformed.y += 0.22 * sin(position.x * 0.31 + uTime * 1.2)
+       transformed.y += uAmp * (0.22 * sin(position.x * 0.31 + uTime * 1.2)
                       + 0.20 * sin(position.z * 0.27 - uTime * 0.9)
-                      + 0.10 * sin((position.x - position.z) * 0.7 + uTime * 2.1);`);
+                      + 0.10 * sin((position.x - position.z) * 0.7 + uTime * 2.1));`);
   };
 
   const sea = new THREE.Mesh(geo, mat);
@@ -48,5 +49,6 @@ export function makeWater(scene) {
   bed.position.y = -8;
   scene.add(bed);
 
-  return { update(t) { uTime.value = t; } };
+  // amp: how heavy the swell is; 1 in fair weather, more in a gale.
+  return { update(t, amp = 1) { uTime.value = t; uAmp.value = amp; } };
 }
