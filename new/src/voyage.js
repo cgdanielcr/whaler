@@ -3,7 +3,7 @@
 import { BERTH, wrap } from './world.js';
 import { effects } from './effects.js';
 import { makeLookout } from './lookout.js';
-import { HOLD, BOATS, FITS, PER_DAY, REPAIR, NEW_SHIP, worth, daysHome, verdict, money } from './stores.js';
+import { HOLD, FITS, PER_DAY, REPAIR, NEW_SHIP, worth, daysHome, verdict, money } from './stores.js';
 import { makeSeason, dayOfYear, LAST_FIT } from './season.js';
 import { makeChase } from './chase.js';
 import { makeTrying } from './trying.js';
@@ -15,14 +15,14 @@ const DAY = 24 / HOURS_PER_SECOND;
 const WAYPOINT = { x: BERTH.x - 26, z: BERTH.z + 5 };   // stand in from here, clear of the wharf's head
 const MONTHS = 'January February March April May June July August September October November December'.split(' ');
 
-export function makeVoyage({ scene, helm, whales, boats, ship, start, company }) {
+export function makeVoyage({ scene, helm, whales, boats, ship, start, company, crews }) {
   const v = {
     phase: 'port', fitted: false, paused: false, date: new Date(start), days: 0, hours: 0,
-    stores: 0, eat: 0, whale: 0, sperm: 0, crew: company.count, boats: BOATS, hull: 100, taken: 0, lost: 0, boatsLost: 0,
+    stores: 0, eat: 0, whale: 0, sperm: 0, crew: company.count, boats: crews.afloat, hull: 100, taken: 0, lost: 0, boatsLost: 0,
     voyages: 0, landed: 0, leg: 0, told: {},
   };
   const season = makeSeason();
-  const chase = makeChase({ v, whales, boats, helm, company });
+  const chase = makeChase({ v, whales, boats, helm, company, crews });
   const lookout = makeLookout({ helm, whales });
   let fx = effects(company);             // what the men at their stations do for her
   const trying = makeTrying(scene, { v, whales, helm });
@@ -40,8 +40,8 @@ export function makeVoyage({ scene, helm, whales, boats, ship, start, company })
     intro += `It is ${dateText(v.date)}. ${season.advice(v.date)}`;
     season.calm();
     hud.fitOut(FITS.map((f) => ({ ...f, room: HOLD - f.days * PER_DAY })), (f) => {
-      company.refit(); fx = effects(company);
-      Object.assign(v, { stores: f.days, eat: 0, crew: company.count, boats: BOATS, hull: 100, fitted: true });
+      company.refit(); crews.refit(); fx = effects(company);
+      Object.assign(v, { stores: f.days, eat: 0, crew: company.count, boats: crews.afloat, hull: 100, fitted: true });
       hud.toast(`${f.days} days' provisions stowed. The hands are aboard.`);
     }, intro);
   }
@@ -59,7 +59,7 @@ export function makeVoyage({ scene, helm, whales, boats, ship, start, company })
       helm.steer(BERTH.x - 40, BERTH.z + 10);
       hud.toast('Cast off! She stands out from the wharf.');
     },
-    lower(w, n) { v.phase = 'hunt'; helm.target = null; chase.start(w, n); },
+    lower(w, ids) { v.phase = 'hunt'; helm.target = null; chase.start(w, ids); },
     alongside(c) { v.phase = 'trying'; trying.alongside(c); },
     castOff() { trying.castOff('The carcass is cast adrift.'); v.phase = 'sea'; helm.set = true; },
     dock() {
@@ -105,6 +105,7 @@ export function makeVoyage({ scene, helm, whales, boats, ship, start, company })
     if (v.stores > 0 && Math.random() < fx.spoil) { v.eat += 1; hud.toast('A cask of beef is broached and found spoiled. A better cooper would have caught it.'); }
     while (v.eat >= 1 && v.stores > 0) { v.eat -= 1; v.stores--; }
     if (!season.gale && helm.slow === 1) v.hull = Math.min(100, v.hull + fx.repair);
+    crews.newDay(fx.scores.carpenter); v.boats = crews.afloat;
     const sick = company.newDay({ trying: v.phase === 'trying', heal: v.stores > 0 ? fx.care : 0,
       sicken: (v.stores === 0 ? 12 * fx.scurvy : 0) + (helm.slow === 0 ? 3 : 0) });
     if (sick.said.length > 2) hud.toast(`${sick.said.length} men have grown handier at their stations.`);
@@ -153,7 +154,7 @@ export function makeVoyage({ scene, helm, whales, boats, ship, start, company })
       if (v.leg === 1 && far(helm.pos, BERTH) < 4) arrive();
     }
     ice(dt);
-    ship.boats(v.boats, boats.out);
+    ship.showBoats(crews.lost.map((gone, b) => !gone && !boats.isOut(b)));
     offer(ctx);
   }
 
@@ -173,7 +174,7 @@ export function makeVoyage({ scene, helm, whales, boats, ship, start, company })
     helm.steer(x, z);
   }
 
-  const ctx = { v, helm, whales, boats, trying, season, chase, acts };
+  const ctx = { v, helm, whales, boats, trying, season, chase, acts, company, crews };
   hud.toast('The Mastiff lies at the wharf, to be fitted out for a whaling voyage.');
   fitOut(true);
   return {

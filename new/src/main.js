@@ -19,6 +19,7 @@ import { makePack } from './pack.js';
 import { iceEdge } from './season.js';
 import { makeShipView } from './shipview.js';
 import { makeCompany } from './company.js';
+import { makeBoatCrews } from './boatcrews.js';
 
 const START = new Date(1841, 4, 1);
 
@@ -39,8 +40,9 @@ const wake = makeWake(scene);
 const gulls = makeGulls(scene);
 const minimap = makeMinimap(document.getElementById('minimap'));
 const company = makeCompany();
-const voyage = makeVoyage({ scene, helm, whales, boats, ship, start: START, company });
-const shipView = makeShipView({ scene, view, ship, helm, voyage, company });
+const crews = makeBoatCrews(company);
+const voyage = makeVoyage({ scene, helm, whales, boats, ship, start: START, company, crews });
+const shipView = makeShipView({ scene, view, ship, helm, voyage, company, crews });
 
 // A ring on the water where she has been sent.
 const marker = new THREE.Mesh(new THREE.RingGeometry(1.2, 1.7, 24).rotateX(-Math.PI / 2),
@@ -102,4 +104,4 @@ function frame(real) {
 }
 
 // For testing from the browser console: whaler.frame(0.05) steps the world.
-window.whaler = { frame, voyage, helm, whales, view, scene, shipView, company };
+window.whaler = { frame, voyage, helm, whales, view, scene, shipView, company, crews };

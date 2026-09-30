@@ -21,9 +21,6 @@ export const room = (v) => Math.max(0, HOLD - oil(v) - v.stores * PER_DAY);
 export const worth = (v) => v.whale * PRICE.whale + v.sperm * PRICE.sperm;
 export const daysHome = (pos) => Math.ceil(Math.hypot(pos.x - BERTH.x, pos.z - BERTH.z) / MILES_A_DAY);
 
-// How many boats can be lowered: no more than two, no more than she has,
-// and only as many as can be manned while leaving enough to work the ship.
-export const lowerable = (v) => Math.max(0, Math.min(2, v.boats, Math.floor((v.crew - SHIPKEEPERS) / PER_BOAT)));
 
 export function verdict(dollars) {
   if (dollars < 1500) return 'A broken voyage. The owners will not soon forget it.';

@@ -156,7 +156,7 @@ export function makeShip() {
       for (const s of squares) s.scale.set(0.35 + 0.65 * k, 0.07 + 0.93 * k, 1);
       fa.visible = k > 0.4;
     },
-    // Show the boats she still has, less those away after a whale.
-    boats(total, away) { davits.forEach((b, i) => { b.visible = i >= away && i < total; }); },
+    // Show each boat on her davits, or not (lost, or away after a whale). In DAVITS order.
+    showBoats(flags) { davits.forEach((b, i) => { b.visible = flags[i]; }); },
   };
 }

@@ -5,13 +5,14 @@ import { STATIONS, SLOTS, slotStation, slotName, STAT_NAMES } from './stations.j
 import { LEVEL_NAMES } from './company.js';
 import { describeEffects } from './effects.js';
 import { SIGHT } from './lookout.js';
+import { BOATS, SEATS } from './boatcrews.js';
 
 const $ = (id) => document.getElementById(id);
 const pips = (n) => '●'.repeat(Math.round(n)) + '○'.repeat(Math.max(0, 5 - Math.round(n)));
 const stars = (lv) => '★'.repeat(lv) + '☆'.repeat(2 - lv);
 const bar = (h) => `<i class="hbar"><i style="width:${Math.max(0, h)}%;background:${h > 60 ? '#7fb069' : h > 30 ? '#d9a441' : '#e2674f'}"></i></i>`;
 
-export function makeRoster({ company, voyage, onChange, onSelect }) {
+export function makeRoster({ company, crews, voyage, onChange, onSelect }) {
   const body = $('rosterBody'), head = $('rosterFx');
   let deck = 'upper', mode = 'stations', arg = null, flash = null;
 
@@ -20,6 +21,25 @@ export function makeRoster({ company, voyage, onChange, onSelect }) {
     return m ? `<b>${m.name}</b> <em>${stars(company.level(m, st.id))} ${company.score(m, st).toFixed(1)}</em>` : '<b class="empty">empty</b>';
   };
   const place = (m) => { const k = company.stationOf(m.id); return k ? slotName(k) : ''; };
+  const seatName = (m) => { const at = crews.seatOf(m.id); return at ? `${SEATS[at[1]].name}, ${BOATS[at[0]].name.toLowerCase()}` : ''; };
+  const pct = (k) => `${Math.round(k * 100)}%`;
+  const sat = (m, s) => (m ? `<b>${m.name}</b> <em>${stars(company.level(m, `boat-${SEATS[s].id}`))} ${crews.score(m, s).toFixed(1)}</em>` : '<b class="empty">empty</b>');
+
+  // The boats: who sits where, whether she is lowered for whales, and what her crew is worth.
+  function boatList() {
+    return BOATS.map((boat, b) => { const q = crews.quality(b);
+      return `<div class="st"><div class="stname">${boat.name} <small>${crews.lost[b] ? 'stove and lost; the carpenter will rig a spare' : `pull ${pct(q.pull)} · dart ${pct(q.dart)} · lance ${pct(q.lance)}`}</small></div>` +
+        `<button class="slot" data-lower="${b}"><span>Lowers</span><b>${crews.lower[b] ? 'when whales are raised' : 'no: kept on the davits'}</b></button>` +
+        SEATS.map((seat, s) => `<button class="slot" data-seat="${b}:${s}"><span>${seat.name}</span>${sat(crews.who(b, s), s)}</button>`).join('') + '</div>';
+    }).join('') + `<p class="quiet">Spare boats on the skids: ${crews.spares}.</p>`;
+  }
+  function seatChoice(b, s) {
+    return `<button class="back" data-back>‹ Back</button><div class="stname">${SEATS[s].name} of the ${BOATS[b].name.toLowerCase()} <small>calls for ${STAT_NAMES[SEATS[s].uses]}</small></div>` +
+      crews.candidates(b, s).map((m) => {
+        const now = seatName(m), made = s === 0 && !m.officer ? ' · would be made mate' : s === 1 && (m.rank === 'able' || m.rank === 'green') ? ' · would be made boatsteerer' : '';
+        return `<button class="man" data-sit="${m.id}"><span><b>${m.name}</b> <small>${m.title}${now ? ` · now ${now}` : ''}${made}</small></span><span><em>${crews.score(m, s).toFixed(1)}</em></span></button>`;
+      }).join('') + '<button class="man quiet" data-sit="">Leave it empty</button>';
+  }
 
   function stations() {
     const list = STATIONS.filter((s) => s.deck === deck);
@@ -57,13 +77,15 @@ export function makeRoster({ company, voyage, onChange, onSelect }) {
       `<div class="row"><span>Health</span>${bar(m.health)}</div>` +
       Object.entries(m.stats).map(([k, n]) => `<div class="row"><span>${STAT_NAMES[k]}</span><b>${pips(n)}</b></div>`).join('') + trades +
       `<div class="grp">Station</div><p class="quiet">${place(m) || 'None: he works where he is told.'}</p>` +
+      `<div class="grp">Boat</div><p class="quiet">${seatName(m) || (m.officer ? 'None' : 'None: he stays aboard as a shipkeeper.')}</p>` +
       (served ? `<div class="grp">Time served</div>${served}` : '');
   }
 
   function render() {
     head.innerHTML = describeEffects(voyage.fx, { sight: SIGHT }).map(([k, t]) => `<div class="row"><span>${k}</span><b>${t}</b></div>`).join('');
-    document.querySelectorAll('#rosterTabs button').forEach((b) => b.classList.toggle('on', b.dataset.tab === mode || (mode === 'choose' && b.dataset.tab === 'stations') || (mode === 'card' && b.dataset.tab === 'company')));
-    body.innerHTML = mode === 'stations' ? stations() : mode === 'company' ? roll() : mode === 'choose' ? choose(arg) : card(arg);
+    document.querySelectorAll('#rosterTabs button').forEach((b) => b.classList.toggle('on', b.dataset.tab === mode || (mode === 'choose' && b.dataset.tab === 'stations') || (mode === 'card' && b.dataset.tab === 'company') || (mode === 'seat' && b.dataset.tab === 'boats')));
+    body.innerHTML = mode === 'stations' ? stations() : mode === 'company' ? roll() : mode === 'boats' ? boatList()
+      : mode === 'seat' ? seatChoice(...arg) : mode === 'choose' ? choose(arg) : card(arg);
   }
 
   document.querySelectorAll('#rosterTabs button').forEach((b) => { b.onclick = () => { mode = b.dataset.tab; render(); }; });
@@ -71,7 +93,10 @@ export function makeRoster({ company, voyage, onChange, onSelect }) {
     const t = e.target.closest('button');
     if (!t) return;
     if (t.dataset.slot) { mode = 'choose'; arg = t.dataset.slot; }
-    else if (t.dataset.back !== undefined) { mode = mode === 'card' ? 'company' : 'stations'; onSelect(null); }
+    else if (t.dataset.seat) { mode = 'seat'; arg = t.dataset.seat.split(':').map(Number); }
+    else if (t.dataset.lower) { const b = Number(t.dataset.lower); crews.lower[b] = !crews.lower[b]; }
+    else if (t.dataset.sit !== undefined) { crews.assign(...arg, t.dataset.sit === '' ? null : Number(t.dataset.sit)); voyage.refresh(); onChange(); mode = 'boats'; }
+    else if (t.dataset.back !== undefined) { mode = mode === 'card' ? 'company' : mode === 'seat' ? 'boats' : 'stations'; onSelect(null); }
     else if (t.dataset.assign !== undefined) {
       company.assign(arg, t.dataset.assign === '' ? null : Number(t.dataset.assign));
       voyage.refresh(); onChange(); mode = 'stations';

@@ -3,6 +3,7 @@
 // worked. A good third of them are boys and young men, as on the real ships
 // (MORGAN.md, section 2). Hawaii is "the Sandwich Islands", as it was in 1841.
 import { SLOTS, slotStation } from './stations.js';
+import { hud } from './hud.js';
 
 const rand = Math.random;
 const pick = (a) => a[Math.floor(rand() * a.length)];
@@ -108,10 +109,19 @@ export function makeCompany() {
     man: (key) => (slots[key] != null ? byId(slots[key]) : null),
     scoreAt: (key) => { const m = slots[key] != null && byId(slots[key]); return m ? score(m, slotStation(key)) : 0; },
 
-    // Men lost overboard or in a stove boat: foremast hands and boatsteerers
-    // first. Returns their names.
-    lose(n) {
-      const pool = men.filter((m) => m.alive && !m.officer).sort(() => rand() - 0.5);
+    // Raise a man: a seaman to boatsteerer, a boatsteerer to mate. A mate keeps
+    // no watch station and moves aft to the cabin.
+    promote(m, rank) {
+      const r = RANKS[rank];
+      Object.assign(m, { rank, title: r.title, berth: r.berth, officer: !!r.officer });
+      if (m.officer) { m.watch = null; const at = stationOf(m.id); if (at && !fits(m, at)) slots[at] = null; }
+      hud.toast(`${m.name} is made ${r.title.toLowerCase()}.`);
+    },
+
+    // Men lost overboard or in a stove boat: from that boat's crew, or else
+    // from the foremast hands and boatsteerers. Returns their names.
+    lose(n, from = null) {
+      const pool = (from || men.filter((m) => m.alive && !m.officer)).filter((m) => m.alive).sort(() => rand() - 0.5);
       const gone = pool.slice(0, n);
       gone.forEach(kill);
       return gone.map((m) => m.name);

@@ -2,21 +2,28 @@
 // the hint under the objective, and everything the panels show.
 import { BERTH } from './world.js';
 import { describe } from './species.js';
-import { room, oil, daysHome, lowerable } from './stores.js';
+import { room, oil, daysHome, SHIPKEEPERS, PER_BOAT } from './stores.js';
 import { hud } from './hud.js';
 
 const REACH = 28;         // how near a whale must be to lower for her
 const ALONGSIDE = 16;     // how near a floating carcass must be to take her alongside
 const far = (p, q) => Math.hypot(p.x - q.x, p.z - q.z);
 
-export function offer({ v, helm, whales, trying, season, acts }) {
+// Which boats go down: the best-manned of those marked to lower, no more than
+// two (one while trying out), and never so many the ship is left without keepers.
+function boatsToLower({ v, crews, company }) {
+  const most = Math.min(v.phase === 'trying' ? 1 : 2, Math.floor((company.count - SHIPKEEPERS) / PER_BOAT));
+  return crews.ready().slice(0, Math.max(0, most));
+}
+
+export function offer(g) {
+  const { v, helm, whales, trying, season, acts } = g;
   if (v.phase === 'port') return hud.action(v.fitted ? 'Set sail' : null, acts.setSail);
   if (v.phase !== 'sea' && v.phase !== 'trying') return hud.action(null);
 
-  // While trying out, only one boat can be spared from the work.
-  const n = Math.min(v.phase === 'trying' ? 1 : 2, lowerable(v));
+  const ids = boatsToLower(g), n = ids.length;
   const w = !season.gale && n > 0 && room(v) >= 10 && whales.nearest(helm.pos, REACH);
-  const lower = w ? [`Lower ${n === 1 ? 'a boat' : 'the boats'} for the ${describe(w)}`, () => acts.lower(w, n)] : [null, null];
+  const lower = w ? [`Lower ${n === 1 ? 'a boat' : 'the boats'} for the ${describe(w)}`, () => acts.lower(w, ids)] : [null, null];
   if (v.phase === 'trying') return hud.action(...lower, 'Cast her off', acts.castOff);
   if (w) return hud.action(...lower);
   const c = trying.near(helm.pos, ALONGSIDE);
@@ -25,7 +32,8 @@ export function offer({ v, helm, whales, trying, season, acts }) {
   hud.action(null);
 }
 
-function hint({ v, helm, trying, season }) {
+function hint(g) {
+  const { v, helm, trying, season } = g;
   if (v.phase === 'port') return v.fitted ? 'Press Set sail, or click the sea.' : 'Choose how much provision to take.';
   if (v.phase === 'docking') return 'Standing in for the wharf. Click the sea to haul off.';
   if (v.phase === 'trying') return season.gale ? 'Too rough to work alongside. The tryworks wait on the weather.'
@@ -36,7 +44,7 @@ function hint({ v, helm, trying, season }) {
   if (room(v) < 10) return 'The hold is full. Make for home: the wharf is the orange mark on the chart.';
   if (v.stores <= daysHome(helm.pos)) return 'There are not provisions enough for the passage home. Turn for home now.';
   if (season.gale) return 'No boat can be lowered in a gale.';
-  if (lowerable(v) === 0) return 'Too few hands or boats left to lower. Make for home.';
+  if (!boatsToLower(g).length) return 'No boat is manned and marked to lower. Look to the boats in the ship view, or make for home.';
   return 'Bowheads keep along the edge of the ice, sperm whales to the south, right whales and humpbacks between. Click the sea to set a course.';
 }
 

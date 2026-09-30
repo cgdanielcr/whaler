@@ -18,7 +18,7 @@ const RIGHT = new THREE.Vector3(1, 0, 1).normalize();     // the screen's right,
 const COLOR = { larboard: new THREE.Color(0x2b3550), starboard: new THREE.Color(0x7a3b2a),
   idler: new THREE.Color(0x6b5a3a), officer: new THREE.Color(0x161616), chosen: new THREE.Color(0xf0c96a) };
 
-export function makeShipView({ scene, view, ship, helm, voyage, company }) {
+export function makeShipView({ scene, view, ship, helm, voyage, company, crews }) {
   const d = makeDecks();
   d.root.visible = false;
   scene.add(d.root);
@@ -46,7 +46,7 @@ export function makeShipView({ scene, view, ship, helm, voyage, company }) {
     }
   }
 
-  const roster = makeRoster({ company, voyage, onChange: relabel, onSelect: (id) => { chosen = id; } });
+  const roster = makeRoster({ company, crews, voyage, onChange: relabel, onSelect: (id) => { chosen = id; } });
   let open = false, k = 0, sel = 0, from = 0, wasH = null;
   const heights = [0, 0, 0], m4 = new THREE.Matrix4(), v3 = new THREE.Vector3(), focus = new THREE.Vector3();
   const tabs = document.getElementById('deckTabs');

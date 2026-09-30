@@ -60,30 +60,38 @@ export function boatMesh(manned) {
 export function makeBoats(scene) {
   const boats = [];
   const active = () => boats.filter((b) => b.userData.mode !== 'stove');
+  let reach = () => true;                   // asked when a boat comes up with the whale: does the dart go home?
   return {
     get fast() { const a = active(); return a.length > 0 && a.every((b) => b.userData.mode === 'fast'); },
     get aboard() { return boats.length === 0; },
     get out() { return active().length; },
+    // The crews (by boat number) now fast to the whale.
+    fastCrews: () => active().filter((b) => b.userData.mode === 'fast').map((b) => b.userData.crew),
+    isOut: (crew) => boats.some((b) => b.userData.crew === crew && b.userData.mode !== 'stove'),
+    onReach(fn) { reach = fn; },
 
-    launch(pos, heading, n) {
-      for (const side of n === 1 ? [1] : [-1, 1]) {
+    // crews: [{ crew: boat number, pull: how fast her oarsmen pull, 1 for ordinary }]
+    launch(pos, heading, crews) {
+      crews.forEach(({ crew, pull }, i) => {
+        const side = crews.length === 1 ? 1 : i ? 1 : -1;
         const b = boatMesh(true);
         bake(b, b.userData.oars.map((o) => o.pivot));
         b.rotation.order = 'YXZ';           // so she can roll over along her length
         b.position.set(pos.x - Math.sin(heading) * side * 3.2, 0, pos.z + Math.cos(heading) * side * 3.2);
-        Object.assign(b.userData, { mode: 'out', side, heading });
+        Object.assign(b.userData, { mode: 'out', side, heading, crew, pull, wait: 0 });
         scene.add(b);
         boats.push(b);
-      }
+      });
     },
 
     recall() { for (const b of active()) b.userData.mode = 'home'; },
 
-    // The whale smashes one of the boats. Says which side she was on.
+    // The whale smashes one of the boats, fast ones first. Says which, and on which side.
     stove() {
-      const a = active(), b = a[Math.floor(Math.random() * a.length)];
+      const a = active(), f = a.filter((b) => b.userData.mode === 'fast'), pool = f.length ? f : a;
+      const b = pool[Math.floor(Math.random() * pool.length)];
       b.userData.mode = 'stove'; b.userData.sunk = 0;
-      return b.userData.side < 0 ? 'larboard' : 'starboard';
+      return { crew: b.userData.crew, side: b.userData.side < 0 ? 'larboard' : 'starboard' };
     },
 
     update(dt, t, whale, ship) {
@@ -97,19 +105,20 @@ export function makeBoats(scene) {
           continue;
         }
         if (!whale || whale.state !== 'fast') u.mode = 'home';
-        let tx = ship.x, tz = ship.z, speed = 8;
+        let tx = ship.x, tz = ship.z, speed = 8 * u.pull;
         if (u.mode !== 'home') {                       // make for the whale's flank
           const h = whale.heading, w = whale.group.position, off = 3.4 * whale.size;
           tx = w.x - Math.cos(h) * 1.5 - Math.sin(h) * u.side * off;
           tz = w.z - Math.sin(h) * 1.5 + Math.cos(h) * u.side * off;
-          speed = 7;
+          speed = 7 * u.pull;
         }
         const dx = tx - b.position.x, dz = tz - b.position.z, d = Math.hypot(dx, dz);
-        if (u.mode === 'out' && d < 1.5) u.mode = 'fast';
+        if (u.mode === 'missed' && (u.wait -= dt) <= 0) u.mode = 'out';       // the line is coiled down again
+        if (u.mode === 'out' && d < 1.5) u.mode = reach(u.crew) ? 'fast' : (u.wait = 3, 'missed');
         if (u.mode === 'home' && d < 3.5) { scene.remove(b); boats.splice(boats.indexOf(b), 1); continue; }
         if (u.mode === 'fast') {                        // towed along beside her
           b.position.x = tx; b.position.z = tz; u.heading = whale.heading;
-        } else if (d > 0.01) {
+        } else if (u.mode !== 'missed' && d > 0.01) {
           const step = Math.min(d, speed * dt);
           b.position.x += (dx / d) * step; b.position.z += (dz / d) * step;
           u.heading = Math.atan2(dz, dx);
@@ -117,8 +126,8 @@ export function makeBoats(scene) {
         b.rotation.y = -u.heading;
         b.position.y = 0.12 + Math.sin(t * 2 + u.side) * 0.06;
         for (const o of u.oars) {                       // pull, or peak the oars when fast
-          const rowing = u.mode !== 'fast';
-          o.pivot.rotation.y = rowing ? Math.sin(t * 5.5) * 0.45 * o.side : 0;
+          const rowing = u.mode === 'out' || u.mode === 'home';
+          o.pivot.rotation.y = rowing ? Math.sin(t * 5.5 * u.pull) * 0.45 * o.side : 0;
           o.pivot.rotation.x = rowing ? o.side * 0.3 : -o.side * 0.45;
         }
       }
