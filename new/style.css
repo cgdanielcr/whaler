@@ -110,7 +110,6 @@ button.small { font-size: .8rem; padding: 5px 12px; margin-top: 10px; width: 100
 /* The ship screen: a screen of its own. The sea's panels go; a top bar, the
    deck carousel below, and the roster down the right take their place. */
 body.inship #ship, body.inship #objective, body.inship #dock, body.inship #back { display: none; }
-#fade { position: fixed; inset: 0; background: #05080b; opacity: 0; pointer-events: none; z-index: 50; }
 #shipTop { display: none; position: fixed; top: 0; left: 180px; right: 380px; padding: 14px 22px 26px; align-items: flex-start;
   justify-content: space-between; gap: 16px; background: linear-gradient(rgba(5, 10, 15, 0.85), rgba(5, 10, 15, 0)); pointer-events: none; }
 body.inship #shipTop { display: flex; }

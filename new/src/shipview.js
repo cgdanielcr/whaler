@@ -1,9 +1,9 @@
-// The ship view: a screen of its own. The sea fades out and the ship stands
-// alone on a dark stage, her three decks lifted apart. The deck in hand is
-// large and near; the others stand off above and below it, and a carousel
-// brings any of them forward. The crew bar runs down the left, the roster down
-// the right; carry a man from either, or off the deck, to where he should work.
-// Let time run, slowly, to watch the watches change.
+// The ship view: the camera closes in and her three decks rise out of the
+// hull to hang over the sea. The deck in hand is full size; the others stand
+// above and below it, shrunk and dimmed, and a carousel brings any of them
+// forward. The crew bar runs down the left, the roster down the right; carry a
+// man from either, or off the deck, to where he should work. Let time run,
+// slowly, to watch the watches change.
 import * as THREE from 'three';
 import { makeDecks } from './decks.js';
 import { makeStage } from './shipstage.js';
@@ -17,17 +17,17 @@ import { makeDrag } from './drag.js';
 import { makePlacing } from './placing.js';
 import { mood, spiritsOf } from './morale.js';
 
-const FADE = 0.3;                        // seconds to fade to black, and back
+const RISE_TIME = 1.1;                   // seconds for her decks to rise out of the sea, or sink back
 const WALK = 2.2;                        // how fast the men walk about the decks
 const SLOW = 8;                          // with time let run, it goes this many times slower than at sea
 const ROSTER_PX = 380, BAR_PX = 180;     // the roster's width on the right, the crew bar's on the left
 const MONTHS = 'January February March April May June July August September October November December'.split(' ');
 
-export function makeShipView({ view, voyage, company, crews }) {
-  const stage = makeStage(view.renderer), d = makeDecks();
-  stage.scene.add(d.root);
-  d.layers.forEach((l) => l.fade(1));
-  const figs = makeCrewFigures(stage.scene, company.men.length);
+export function makeShipView({ view, voyage, company, crews, ship, helm }) {
+  const stage = makeStage({ view, helm, ship }), d = makeDecks();
+  view.scene.add(d.root);
+  d.root.visible = false;
+  const figs = makeCrewFigures(view.scene, company.men.length);
   const marks = makeDeckMarks({ company, stage, layers: d.layers, onStation: (id) => roster.showStation(id) });
 
   let chosen = null;
@@ -38,10 +38,10 @@ export function makeShipView({ view, voyage, company, crews }) {
   const drag = makeDrag({ company, preview: placing.preview, drop: placing.drop, choose });
   const bar = makeCrewBar({ company, drag });
 
-  let want = false, showing = false, black = 0, running = false, sel = 0, at = 0, lastWatch = null, said = 0;
+  let want = false, k = 0, running = false, sel = 0, at = 0, lastWatch = null, said = 0;
   const where = new Map();                 // each man: { deck, p, key, route }
   const v3 = new THREE.Vector3();
-  const tabs = document.getElementById('deckTabs'), fade = document.getElementById('fade');
+  const tabs = document.getElementById('deckTabs');
   DECKS.forEach((deck, i) => { const b = document.createElement('button'); b.textContent = deck.name; b.onclick = () => select(i); tabs.append(b); });
   const runBtn = document.getElementById('runTime'), watchLine = document.getElementById('watchLine');
   function setRun(on) { running = on; runBtn.textContent = on ? 'Hold time' : 'Let time run'; }
@@ -53,15 +53,25 @@ export function makeShipView({ view, voyage, company, crews }) {
     document.getElementById('deckName').textContent = DECKS[sel].name;
     roster.setDeck(DECKS[sel].id);
   }
-  const show = () => { want = true; };
-  const hide = () => { want = false; chosen = null; setRun(false); };
-  addEventListener('resize', () => stage.resize(ROSTER_PX, BAR_PX));
+  function show() {
+    if (want) return;
+    want = true;
+    document.body.classList.add('inship');
+    stage.open(ROSTER_PX, BAR_PX); d.setHold(voyage.v); figs.dress(company.men); marks.relabel(); bar.render(); select(sel);
+  }
+  function hide() {
+    if (!want) return;
+    want = false; chosen = null; setRun(false);
+    document.body.classList.remove('inship');
+    stage.close();
+  }
+  addEventListener('resize', () => { if (want) stage.resize(ROSTER_PX, BAR_PX); });
   document.getElementById('openShip').onclick = show;
   document.getElementById('closeShip').onclick = hide;
   document.getElementById('prevDeck').onclick = () => select(sel - 1);
   document.getElementById('nextDeck').onclick = () => select(sel + 1);
   addEventListener('keydown', (e) => {
-    if (!showing) return;
+    if (!want) return;
     if (e.key === 'Escape') hide();
     if (e.key === 'ArrowLeft' || e.key === 'ArrowUp') select(sel - 1);
     if (e.key === 'ArrowRight' || e.key === 'ArrowDown') select(sel + 1);
@@ -92,7 +102,7 @@ export function makeShipView({ view, voyage, company, crews }) {
     if (!goal) { where.delete(id); return null; }
     let s = where.get(id);
     const key = `${goal.deck}|${goal.p.join()}`;
-    if (!s || !showing) { s = { deck: goal.deck, p: [...goal.p], key, route: [] }; where.set(id, s); return s; }
+    if (!s || k < 1) { s = { deck: goal.deck, p: [...goal.p], key, route: [] }; where.set(id, s); return s; }
     if (s.key !== key) {
       const ladder = LADDERS[goal.berth] || LADDERS.steerage;
       s.route = s.deck === goal.deck ? [goal] : [{ deck: s.deck, p: ladder }, { deck: goal.deck, p: ladder, climb: true }, goal];
@@ -109,7 +119,7 @@ export function makeShipView({ view, voyage, company, crews }) {
 
   // The top bar: the date, the watch and the bells, and how the men are.
   function tellWatch(w, dt) {
-    if (lastWatch !== null && w.index !== lastWatch && showing) {
+    if (lastWatch !== null && w.index !== lastWatch && want) {
       said = 3; watchLine.textContent = `Eight bells! The ${w.onDeck} watch comes on deck, and the other goes below.`;
       roster.render(); bar.render();
     }
@@ -122,20 +132,14 @@ export function makeShipView({ view, voyage, company, crews }) {
   }
 
   function update(dt) {
-    // Fade to black, change screens, fade back.
-    const target = want !== showing ? 1 : 0;
-    black = Math.min(1, Math.max(0, black + (target ? dt : -dt) / FADE));
-    if (black >= 1 && want !== showing) {
-      showing = want;
-      document.body.classList.toggle('inship', showing);
-      if (showing) { stage.resize(ROSTER_PX, BAR_PX); d.setHold(voyage.v); figs.dress(company.men); marks.relabel(); bar.render(); select(sel); }
-    }
-    fade.style.opacity = black;
-    fade.style.pointerEvents = black > 0.05 ? 'auto' : 'none';
-    if (!showing) return;
+    // She comes apart out of the sea, or goes back together into it.
+    k = Math.min(1, Math.max(0, k + (want ? dt : -dt) / RISE_TIME));
+    const e = k * k * (3 - 2 * k);
+    d.root.visible = k > 0.001;
+    if (!d.root.visible) { stage.place(d.root, d.layers, 0, at); for (let i = 0; i < company.men.length; i++) figs.place(i, null, null, 0, false); figs.done(); marks.update(-1, false, null); return; }
 
     at += (sel - at) * Math.min(1, dt * 6);                // the carousel turns
-    stage.place(d.layers, at);
+    stage.place(d.root, d.layers, e, at);
     d.root.updateMatrixWorld(true);
 
     const w = voyage.watch;
@@ -148,15 +152,14 @@ export function makeShipView({ view, voyage, company, crews }) {
       if (p && m.id === chosen) mine = { name: m.name, deck: p.deck, p: p.p };
     });
     figs.done();
-    marks.update(sel, Math.abs(at - sel) < 0.05, mine);
+    marks.update(sel, want && k >= 1 && Math.abs(at - sel) < 0.05, mine);
   }
 
   return {
     update, show, hide, click, press, stage,
-    render: () => stage.render(),
-    get showing() { return showing; },                     // the ship screen is up: draw it, not the sea
-    get busy() { return want || showing; },                // the world stands still while she is open
-    get open() { return showing && want; },
+    look: (sea) => stage.look(sea, k * k * (3 - 2 * k)),   // where the camera should look
+    get busy() { return want || k > 0; },                  // the world stands still while she is open
+    get open() { return want; },
     get slow() { return running ? 1 / SLOW : 0; },         // how fast the world goes while she is open
   };
 }

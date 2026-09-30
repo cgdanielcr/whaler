@@ -42,7 +42,7 @@ const minimap = makeMinimap(document.getElementById('minimap'));
 const company = makeCompany();
 const crews = makeBoatCrews(company);
 const voyage = makeVoyage({ scene, helm, whales, boats, ship, start: START, company, crews });
-const shipView = makeShipView({ view, voyage, company, crews });
+const shipView = makeShipView({ view, voyage, company, crews, ship, helm });
 
 // A ring on the water where she has been sent.
 const marker = new THREE.Mesh(new THREE.RingGeometry(1.2, 1.7, 24).rotateX(-Math.PI / 2),
@@ -66,11 +66,11 @@ view.canvas.addEventListener('pointerup', (e) => {
   if (Math.hypot(p.x - helm.pos.x, p.z - helm.pos.z) < 5) shipView.show();   // a click on the ship opens her up
   else voyage.click(p.x, p.z);
 });
-addEventListener('wheel', (e) => view.zoom(e.deltaY), { passive: true });
+addEventListener('wheel', (e) => { if (!shipView.busy) view.zoom(e.deltaY); }, { passive: true });
 addEventListener('resize', view.resize);
 
 const focus = new THREE.Vector3();
-let last = null, t = 0, slow = 1, swell = 1;
+let last = null, t = 0, slow = 1, swell = 1, waves = 0;
 view.renderer.setAnimationLoop((ms) => {
   frame(last === null ? 0 : Math.min((ms - last) / 1000, 0.05));
   last = ms;
@@ -86,7 +86,8 @@ function frame(real) {
   boats.update(dt, t, voyage.quarry, helm.pos);
   voyage.tick(dt);
   swell += ((voyage.season.gale ? 2.4 : 1) - swell) * Math.min(1, dt * 0.3);
-  water.update(t, swell);
+  waves += real;                                    // the sea keeps running, even while the world stands still
+  water.update(waves, swell);
   wake.update(dt, helm.pos, helm.heading, helm.speed);
   gulls.update(dt, t, helm.pos);
 
@@ -99,12 +100,11 @@ function frame(real) {
   // Keep the ship in the middle; during a chase, look between her and the whale.
   focus.set(helm.pos.x, 0, helm.pos.z);
   if (voyage.quarry) focus.lerp(voyage.quarry.group.position, 0.4).setY(0);
-  view.follow(focus, real);
   shipView.update(real);
+  view.follow(shipView.look(focus), real);        // or close in on her decks, when she is opened up
 
   if ((slow += real) > 0.15) { slow = 0; voyage.draw(); minimap.draw(helm, whales, voyage.season.edge); }
-  if (shipView.showing) shipView.render();       // the ship screen, or the sea
-  else view.render();
+  view.render();
 }
 
 // For testing from the browser console: whaler.frame(0.05) steps the world.
