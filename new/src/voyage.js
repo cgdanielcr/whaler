@@ -3,6 +3,7 @@
 import { BERTH, wrap } from './world.js';
 import { effects } from './effects.js';
 import { makeLookout } from './lookout.js';
+import { watchAt } from './watches.js';
 import { HOLD, FITS, PER_DAY, REPAIR, NEW_SHIP, worth, daysHome, verdict, money } from './stores.js';
 import { makeSeason, dayOfYear, LAST_FIT } from './season.js';
 import { makeChase } from './chase.js';
@@ -24,7 +25,8 @@ export function makeVoyage({ scene, helm, whales, boats, ship, start, company, c
   const season = makeSeason();
   const chase = makeChase({ v, whales, boats, helm, company, crews });
   const lookout = makeLookout({ helm, whales });
-  let fx = effects(company);             // what the men at their stations do for her
+  let watch = watchAt(0, 0);             // the watch now on deck
+  let fx = effects(company, watch.onDeck);   // what the men at their stations do for her
   const trying = makeTrying(scene, { v, whales, helm });
   const far = (p, q) => Math.hypot(p.x - q.x, p.z - q.z);
   const tell = (key, text) => { if (!v.told[key]) { v.told[key] = true; hud.toast(text); } };
@@ -40,7 +42,7 @@ export function makeVoyage({ scene, helm, whales, boats, ship, start, company, c
     intro += `It is ${dateText(v.date)}. ${season.advice(v.date)}`;
     season.calm();
     hud.fitOut(FITS.map((f) => ({ ...f, room: HOLD - f.days * PER_DAY })), (f) => {
-      company.refit(); crews.refit(); fx = effects(company);
+      company.refit(); crews.refit(); fx = effects(company, watch.onDeck);
       Object.assign(v, { stores: f.days, eat: 0, crew: company.count, boats: crews.afloat, hull: 100, fitted: true });
       hud.toast(`${f.days} days' provisions stowed. The hands are aboard.`);
     }, intro);
@@ -100,7 +102,7 @@ export function makeVoyage({ scene, helm, whales, boats, ship, start, company, c
     v.date.setDate(v.date.getDate() + 1);
     season.newDay(v.date);
     trying.newDay(season.gale);
-    fx = effects(company);
+    fx = effects(company, watch.onDeck);
     v.eat += fx.eat;                                           // a good cook makes the provisions go further
     if (v.stores > 0 && Math.random() < fx.spoil) { v.eat += 1; hud.toast('A cask of beef is broached and found spoiled. A better cooper would have caught it.'); }
     while (v.eat >= 1 && v.stores > 0) { v.eat -= 1; v.stores--; }
@@ -141,6 +143,8 @@ export function makeVoyage({ scene, helm, whales, boats, ship, start, company, c
     if (v.phase === 'port' || v.phase === 'ended' || v.phase === 'lost') return offer(ctx);
     v.hours += dt * HOURS_PER_SECOND;
     while (v.hours >= 24) { v.hours -= 24; newDay(); }
+    const w = watchAt(v.days, v.hours);
+    if (w.index !== watch.index) { watch = w; fx = effects(company, watch.onDeck); }   // the watch changes
     helm.hands = Math.min(1, Math.max(0.35, v.crew / 18)) * fx.speed;
     lookout.tick(fx.sight, v.phase === 'sea');
     if (v.phase === 'hunt') {
@@ -180,7 +184,8 @@ export function makeVoyage({ scene, helm, whales, boats, ship, start, company, c
   return {
     v, season, click, draw: () => draw(ctx),
     get fx() { return fx; },
-    refresh() { fx = effects(company); },      // after the owner moves men about
+    get watch() { return { ...watch, trying: v.phase === 'trying' }; },
+    refresh() { fx = effects(company, watch.onDeck); },      // after the owner moves men about
     tick(dt) { tick(dt); settle(dt); },
     get quarry() { return chase.whale || trying.whale; },
   };

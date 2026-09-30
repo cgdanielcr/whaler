@@ -1,14 +1,19 @@
 // What the men at their stations do for the ship. Each number is 1 for an
 // ordinary man (a score of 3) at the work, better for a good one, worse for a
-// poor one, and worst of all for an empty station. Watch stations count both
-// watches alike; which watch is on deck will matter once the watches turn.
+// poor one, and worst of all for an empty station. Watch stations (the wheel,
+// the mastheads) and the handling of the ship go by the watch that has the deck.
 import { SLOTS, slotStation } from './stations.js';
 
 const clamp = (n, a, b) => Math.max(a, Math.min(b, n));
 
-export function effects(co) {
-  const avg = (id) => { const ks = SLOTS.filter((k) => slotStation(k).id === id); return ks.reduce((a, k) => a + co.scoreAt(k), 0) / ks.length; };
-  const hands = co.alive().filter((m) => m.watch);
+export function effects(co, onDeck = null) {
+  const mark = onDeck && (onDeck === 'larboard' ? ':L' : ':S');
+  const avg = (id) => {
+    let ks = SLOTS.filter((k) => slotStation(k).id === id);
+    if (mark && slotStation(ks[0]).watch) ks = ks.filter((k) => k.endsWith(mark));
+    return ks.reduce((a, k) => a + co.scoreAt(k), 0) / ks.length;
+  };
+  const hands = co.alive().filter((m) => (onDeck ? m.watch === onDeck : m.watch));
   const seamen = hands.length ? hands.reduce((a, m) => a + m.stats.seamanship, 0) / hands.length : 1;
 
   const eye = (avg('foreMast') + avg('mainMast')) / 2, helm = avg('wheel');

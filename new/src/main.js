@@ -74,7 +74,7 @@ view.renderer.setAnimationLoop((ms) => {
 });
 
 function frame(real) {
-  const dt = voyage.v.paused || shipView.busy ? 0 : real;   // the world holds still for a decision, or while you look over the ship
+  const dt = voyage.v.paused ? 0 : shipView.busy ? real * shipView.slow : real;   // the world holds still for a decision, or while you look over the ship
   t += dt;
 
   helm.update(dt, t);

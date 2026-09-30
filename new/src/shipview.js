@@ -2,10 +2,11 @@
 // comes apart into her three decks, lifted clear of the sea. The carousel
 // brings one deck to the fore; the decks above it fade so you can look in.
 // The roster beside it names every man; click a man or a station plate.
+// Let time run, slowly, and the men go to and fro as the watches change.
 import * as THREE from 'three';
 import { makeDecks } from './decks.js';
 import { DECKS, STATIONS, SLOTS, LABELS, slotStation } from './stations.js';
-import { placeAll } from './watches.js';
+import { placeAll, LADDERS } from './watches.js';
 import { makeRoster } from './roster.js';
 
 const BASE = 3, GAP = 7;                 // heights of the hold, 'tween deck and upper deck when apart
@@ -13,6 +14,8 @@ const SHUT = [0.9, -0.1, -1.1];          // their heights when she is whole
 const TIME = 1.1;                        // seconds to come apart or go back together
 const SHOW = Math.PI / 4;                // bow to the right of the screen, as a ship's plan is drawn
 const ZOOM = 21;                         // how much of the world shows when looking at a deck
+const WALK = 2.2;                        // how fast the men walk about the decks
+const SLOW = 8;                          // with time let run, it goes this many times slower than at sea
 const ROSTER_PX = 360;                   // the roster's width: the ship is drawn to the left of it
 const RIGHT = new THREE.Vector3(1, 0, 1).normalize();     // the screen's right, on the sea
 const COLOR = { larboard: new THREE.Color(0x2b3550), starboard: new THREE.Color(0x7a3b2a),
@@ -47,10 +50,15 @@ export function makeShipView({ scene, view, ship, helm, voyage, company, crews }
   }
 
   const roster = makeRoster({ company, crews, voyage, onChange: relabel, onSelect: (id) => { chosen = id; } });
-  let open = false, k = 0, sel = 0, from = 0, wasH = null;
+  let open = false, running = false, k = 0, sel = 0, from = 0, wasH = null, lastWatch = null, said = 0;
+  const where = new Map();                 // each man: { deck, p, key, route }
   const heights = [0, 0, 0], m4 = new THREE.Matrix4(), v3 = new THREE.Vector3(), focus = new THREE.Vector3();
   const tabs = document.getElementById('deckTabs');
   DECKS.forEach((deck, i) => { const b = document.createElement('button'); b.textContent = deck.name; b.onclick = () => select(i); tabs.append(b); });
+
+  const runBtn = document.getElementById('runTime'), watchLine = document.getElementById('watchLine');
+  function setRun(on) { running = on; runBtn.textContent = on ? 'Hold time' : 'Let time run'; }
+  runBtn.onclick = () => setRun(!running);
 
   function select(i) {
     sel = (i + DECKS.length) % DECKS.length;
@@ -66,7 +74,7 @@ export function makeShipView({ scene, view, ship, helm, voyage, company, crews }
   }
   function hide() {
     if (!open) return;
-    open = false; view.height(wasH); chosen = null;
+    open = false; view.height(wasH); chosen = null; setRun(false);
     document.body.classList.remove('inship');
   }
   document.getElementById('openShip').onclick = show;
@@ -91,6 +99,38 @@ export function makeShipView({ scene, view, ship, helm, voyage, company, crews }
     else roster.showMan(company.men[hit.instanceId].id);
   }
 
+  // Each man makes his way to where he should be: across his deck, or to the
+  // ladder, up or down it, and on. While the view is shut he is simply there.
+  function walk(id, goal, dt) {
+    if (!goal) { where.delete(id); return null; }
+    let s = where.get(id);
+    const key = `${goal.deck}|${goal.p.join()}`;
+    if (!s || !open) { s = { deck: goal.deck, p: [...goal.p], key, route: [] }; where.set(id, s); return s; }
+    if (s.key !== key) {
+      const ladder = LADDERS[goal.berth] || LADDERS.steerage;
+      s.route = s.deck === goal.deck ? [goal] : [{ deck: s.deck, p: ladder }, { deck: goal.deck, p: ladder, climb: true }, goal];
+      s.key = key;
+    }
+    const next = s.route[0];
+    if (!next) return s;
+    if (next.climb) { s.deck = next.deck; s.p = [...next.p]; s.route.shift(); return s; }
+    const dx = next.p[0] - s.p[0], dz = next.p[2] - s.p[2], dist = Math.hypot(dx, dz), step = WALK * dt;
+    if (dist <= step) { s.p = [...next.p]; s.deck = next.deck; s.route.shift(); }
+    else { s.p[0] += (dx / dist) * step; s.p[2] += (dz / dist) * step; s.p[1] += (next.p[1] - s.p[1]) * Math.min(1, step / dist); }
+    return s;
+  }
+
+  // The watch, the bells, and a word when the watches change.
+  function tellWatch(w, dt) {
+    if (lastWatch !== null && w.index !== lastWatch && open) {
+      said = 3; watchLine.textContent = `Eight bells! The ${w.onDeck} watch comes on deck, and the other goes below.`;
+      roster.render();
+    }
+    lastWatch = w.index;
+    if ((said -= dt) > 0) return;
+    watchLine.textContent = `${w.bells} bell${w.bells > 1 ? 's' : ''} in the ${w.name}. The ${w.onDeck} watch has the deck${w.day ? '' : '; the idlers are asleep'}.`;
+  }
+
   function update(dt) {
     k = Math.min(1, Math.max(0, k + (open ? dt : -dt) / TIME));
     const e = k * k * (3 - 2 * k);
@@ -107,9 +147,11 @@ export function makeShipView({ scene, view, ship, helm, voyage, company, crews }
       l.group.position.y = heights[i];
       l.fade(i < sel ? 1 - 0.88 * e : 1);                  // decks above the one in view fade away
     });
-    const at = placeAll(company);
+    const w = voyage.watch;
+    tellWatch(w, dt);
+    const at = placeAll(company, w);
     company.men.forEach((m, i) => {
-      const p = at.get(m.id), hidden = !p || (p.deck < sel && e > 0.3);
+      const p = walk(m.id, at.get(m.id), dt), hidden = !p || (p.deck < sel && e > 0.3);
       const s = hidden ? 0.0001 : 1, y = p ? heights[p.deck] + p.p[1] : 0, [x, , z] = p ? p.p : [0, 0, 0];
       bodies.setMatrixAt(i, m4.makeScale(s, s, s).setPosition(x, y + 0.375, z));
       heads.setMatrixAt(i, m4.makeScale(s, s, s).setPosition(x, y + 0.86, z));
@@ -141,5 +183,6 @@ export function makeShipView({ scene, view, ship, helm, voyage, company, crews }
     update, look, show, hide, click,
     get busy() { return k > 0; },     // the world stands still while she is open or opening
     get open() { return open; },
+    get slow() { return running ? 1 / SLOW : 0; },   // how fast the world goes while she is open
   };
 }
