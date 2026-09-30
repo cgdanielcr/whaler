@@ -31,6 +31,15 @@ export const STATIONS = [
   { id: 'cooper', deck: 'hold', name: 'Stowing down', says: 'at stowing down', at: [1.2, 0, 0], uses: 'coopering', known: false },
 ];
 
+// How a man stands at his work, and which way he faces there: a turn about the
+// upright, 0 facing the bow, -H facing starboard (toward the one looking on).
+// Where a station has two spots, each has its own facing.
+const H = Math.PI / 2, PI = Math.PI;
+export const POSES = {
+  foreMast: ['lookout', -H], mainMast: ['lookout', -H], wheel: ['wheel', PI], tryworks: ['stir', [-H, H]],
+  cutting: ['spade', -H], galley: ['stir', PI], bench: ['hammer', H], blubber: ['stir', [H, -H]], pantry: ['stir', -H], cooper: ['hammer', 0],
+};
+
 // Every place a man can be set: 'wheel:L' and 'wheel:S' for the two watches, 'tryworks:0', 'tryworks:1'...
 export const SLOTS = STATIONS.flatMap((s) => (s.watch ? ['L', 'S'] : (s.spots || [s.at]).map((_, i) => String(i))).map((k) => `${s.id}:${k}`));
 export const slotStation = (key) => station(key.split(':')[0]);

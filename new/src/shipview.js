@@ -46,6 +46,10 @@ export function makeShipView({ view, voyage, company, crews, ship, helm }) {
   const runBtn = document.getElementById('runTime'), watchLine = document.getElementById('watchLine');
   function setRun(on) { running = on; runBtn.textContent = on ? 'Hold time' : 'Let time run'; }
   runBtn.onclick = () => setRun(!running);
+  // For comparing: the upper deck plain, as she was, or in full detail.
+  let full = true;
+  const detailBtn = document.getElementById('detailBtn');
+  detailBtn.onclick = () => { full = !full; d.setDetail(full); detailBtn.textContent = full ? 'Show plain deck' : 'Show detailed deck'; };
 
   function select(i) {
     sel = (i + DECKS.length) % DECKS.length;
@@ -102,16 +106,17 @@ export function makeShipView({ view, voyage, company, crews, ship, helm }) {
     if (!goal) { where.delete(id); return null; }
     let s = where.get(id);
     const key = `${goal.deck}|${goal.p.join()}`;
-    if (!s || k < 1) { s = { deck: goal.deck, p: [...goal.p], key, route: [] }; where.set(id, s); return s; }
+    if (!s || k < 1) { s = { deck: goal.deck, p: [...goal.p], key, route: [], pose: goal.pose, face: goal.face }; where.set(id, s); return s; }
     if (s.key !== key) {
       const ladder = LADDERS[goal.berth] || LADDERS.steerage;
       s.route = s.deck === goal.deck ? [goal] : [{ deck: s.deck, p: ladder }, { deck: goal.deck, p: ladder, climb: true }, goal];
       s.key = key;
     }
     const next = s.route[0];
-    if (!next) return s;
+    if (!next) { s.pose = goal.pose; s.face = goal.face; return s; }       // arrived: turned to his work
     if (next.climb) { s.deck = next.deck; s.p = [...next.p]; s.route.shift(); return s; }
     const dx = next.p[0] - s.p[0], dz = next.p[2] - s.p[2], dist = Math.hypot(dx, dz), step = WALK * dt;
+    s.pose = 'walk'; if (dist > 0.01) s.face = Math.atan2(-dz, dx);        // facing the way he goes
     if (dist <= step) { s.p = [...next.p]; s.deck = next.deck; s.route.shift(); }
     else { s.p[0] += (dx / dist) * step; s.p[2] += (dz / dist) * step; s.p[1] += (next.p[1] - s.p[1]) * Math.min(1, step / dist); }
     return s;
@@ -148,7 +153,7 @@ export function makeShipView({ view, voyage, company, crews, ship, helm }) {
     let mine = null;
     company.men.forEach((m, i) => {
       const p = walk(m.id, places.get(m.id), dt), g = p && d.layers[p.deck].group;
-      figs.place(i, m, p ? v3.set(...p.p).applyMatrix4(g.matrixWorld) : null, p ? g.scale.x : 0, m.id === chosen);
+      figs.place(i, m, p ? v3.set(...p.p).applyMatrix4(g.matrixWorld) : null, p ? g.scale.x : 0, m.id === chosen, p && p.face, p && p.pose, d.root.quaternion);
       if (p && m.id === chosen) mine = { name: m.name, deck: p.deck, p: p.p };
     });
     figs.done();

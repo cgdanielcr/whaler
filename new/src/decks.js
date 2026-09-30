@@ -8,6 +8,7 @@ import { boatMesh } from './boats.js';
 import { bake } from './bake.js';
 import { STATIONS, TWEEN } from './stations.js';
 import { HOLD, PER_DAY } from './stores.js';
+import { detailUpperDeck } from './deckdetail.js';
 
 const mat = (color, o = {}) => new THREE.MeshStandardMaterial({ color, flatShading: true, roughness: 0.85, ...o });
 const DECK = mat(0xa07a52), PLANK = mat(0x7d5b3d), HULL = mat(0x2e2620), RAIL = mat(0x4a3526);
@@ -129,7 +130,7 @@ function plates(g, deck) {
 function own(g) {
   const copies = new Map();
   g.traverse((o) => {
-    if (!o.isMesh) return;
+    if (!o.isMesh && !o.isLine) return;
     o.material = [].concat(o.material).map((m) => { if (!copies.has(m)) copies.set(m, m.clone()); return copies.get(m); });
     if (o.material.length === 1) o.material = o.material[0];
   });
@@ -138,11 +139,21 @@ function own(g) {
 
 const CASK = { stores: new THREE.Color(0x7fb069), whale: new THREE.Color(0xd9a441), sperm: new THREE.Color(0xf1e2b8), empty: new THREE.Color(0x4b3a2a) };
 
+// The upper deck twice over, plain and in full, so the two can be set side by side.
+function upperBoth() {
+  const g = new THREE.Group(), plain = upper(), rich = detailUpperDeck(upper());
+  bake(plain); bake(rich);
+  plain.visible = false; plain.userData.keep = rich.userData.keep = true;
+  g.add(plain, rich);
+  g.userData.variants = { plain, rich };
+  return g;
+}
+
 export function makeDecks() {
   const root = new THREE.Group();
-  const layers = [['upper', upper()], ['tween', tween()], ['hold', hold()]].map(([deck, g]) => {
+  const layers = [['upper', upperBoth()], ['tween', tween()], ['hold', hold()]].map(([deck, g]) => {
     plates(g, deck);
-    const keep = []; g.traverse((o) => { if (o.userData.station || o.isInstancedMesh) keep.push(o); });
+    const keep = []; g.traverse((o) => { if (o.userData.station || o.userData.keep || o.isInstancedMesh) keep.push(o); });
     bake(g, keep);
     g.traverse((o) => { if (o.isMesh) o.castShadow = o.receiveShadow = true; });
     const mats = own(g);
@@ -171,5 +182,7 @@ export function makeDecks() {
   }
 
   const platesOn = (i) => { const out = []; layers[i].group.traverse((o) => { if (o.userData.station) out.push(o); }); return out; };
-  return { root, layers, setHold, platesOn };
+  // Show the upper deck plain, or in full.
+  function setDetail(full) { const v = layers[0].group.userData.variants; v.rich.visible = full; v.plain.visible = !full; }
+  return { root, layers, setHold, platesOn, setDetail };
 }

@@ -4,7 +4,7 @@
 // day. The idlers work by day and sleep by night. A man is at his station if
 // it is his watch or his work; about the deck if his watch has the deck and he
 // has no station there; otherwise below in his berth.
-import { DECKS, BERTHS, slotStation, slotSpot } from './stations.js';
+import { DECKS, BERTHS, POSES, slotStation, slotSpot } from './stations.js';
 
 const PERIODS = [[0, 'middle watch'], [4, 'morning watch'], [8, 'forenoon watch'], [12, 'afternoon watch'],
   [16, 'first dog watch'], [18, 'last dog watch'], [20, 'first watch']];
@@ -26,17 +26,23 @@ export function watchAt(days, hours) {
     onDeck: n % 2 ? 'starboard' : 'larboard', day: hours >= 6 && hours < 18 };
 }
 
-// A Map from each living man's id to { deck (0 upper, 1 'tween, 2 hold), p: [x, y, z], berth }.
+// A Map from each living man's id to { deck (0 upper, 1 'tween, 2 hold), p: [x, y, z], berth, pose, face }.
 // watch: as from watchAt, with `trying` true while a whale is being tried out.
 export function placeAll(company, watch) {
   const out = new Map(), used = { forecastle: 0, steerage: 0, cabin: 0, waist: 0 };
   const mark = watch.onDeck === 'larboard' ? 'L' : 'S';
-  const put = (m, deck, p) => out.set(m.id, { deck, p, berth: m.berth });
+  // A man at his ease stands as he likes, mostly turned toward the one looking on.
+  const ease = (m) => -Math.PI / 2 + (((m.id * 0.91) % 2) - 1);
+  const put = (m, deck, p, pose = 'idle', face = ease(m)) => out.set(m.id, { deck, p, berth: m.berth, pose, face });
   for (const m of company.alive()) {
     const key = company.stationOf(m.id), st = key && slotStation(key);
     // Gangs work only while trying out; watch stations only in their watch; the rest (the idlers' trades) by day.
     const working = st && (st.gang ? watch.trying : st.watch ? key.endsWith(`:${mark}`) : watch.day);
-    if (working) { put(m, deckIndex(st.deck), slotSpot(key)); continue; }
+    if (working) {
+      const [pose, f] = POSES[st.id];
+      put(m, deckIndex(st.deck), slotSpot(key), pose, Array.isArray(f) ? f[Number(key.split(':')[1])] : f);
+      continue;
+    }
     if (m.watch === watch.onDeck) { put(m, 0, WAIST[used.waist++ % WAIST.length]); continue; }
     if (m.title === (watch.onDeck === 'larboard' ? 'First mate' : 'Second mate')) { put(m, 0, QUARTERDECK); continue; }
     const beds = BERTHS[m.berth], i = used[m.berth]++, p = beds[i % beds.length];
