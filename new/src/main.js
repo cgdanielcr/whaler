@@ -42,7 +42,7 @@ const minimap = makeMinimap(document.getElementById('minimap'));
 const company = makeCompany();
 const crews = makeBoatCrews(company);
 const voyage = makeVoyage({ scene, helm, whales, boats, ship, start: START, company, crews });
-const shipView = makeShipView({ scene, view, ship, helm, voyage, company, crews });
+const shipView = makeShipView({ view, voyage, company, crews });
 
 // A ring on the water where she has been sent.
 const marker = new THREE.Mesh(new THREE.RingGeometry(1.2, 1.7, 24).rotateX(-Math.PI / 2),
@@ -96,11 +96,12 @@ function frame(real) {
   // Keep the ship in the middle; during a chase, look between her and the whale.
   focus.set(helm.pos.x, 0, helm.pos.z);
   if (voyage.quarry) focus.lerp(voyage.quarry.group.position, 0.4).setY(0);
-  view.follow(shipView.look(focus), real);
+  view.follow(focus, real);
   shipView.update(real);
 
   if ((slow += real) > 0.15) { slow = 0; voyage.draw(); minimap.draw(helm, whales, voyage.season.edge); }
-  view.render();
+  if (shipView.showing) shipView.render();       // the ship screen, or the sea
+  else view.render();
 }
 
 // For testing from the browser console: whaler.frame(0.05) steps the world.

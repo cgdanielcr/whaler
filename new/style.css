@@ -107,12 +107,26 @@ button.lesser { background: rgba(13, 25, 37, 0.9); color: var(--text); border-co
 button.small { font-size: .8rem; padding: 5px 12px; margin-top: 10px; width: 100%; }
 .kindness { display: flex; gap: 6px; }
 .kindness button.small { margin-top: 8px; border-color: #7fb069; }
-#shipbar { display: none; left: 50%; bottom: 18px; transform: translateX(-50%); text-align: center; padding: 12px 16px; }
+/* The ship screen: a screen of its own. The sea's panels go; a top bar, the
+   deck carousel below, and the roster down the right take their place. */
+body.inship #ship, body.inship #objective, body.inship #dock, body.inship #back { display: none; }
+#fade { position: fixed; inset: 0; background: #05080b; opacity: 0; pointer-events: none; z-index: 50; }
+#shipTop { display: none; position: fixed; top: 0; left: 0; right: 380px; padding: 14px 22px 26px; align-items: flex-start;
+  justify-content: space-between; gap: 16px; background: linear-gradient(rgba(5, 10, 15, 0.85), rgba(5, 10, 15, 0)); pointer-events: none; }
+body.inship #shipTop { display: flex; }
+#shipTop > * { pointer-events: auto; }
+#shipTop .who, #shipTop .how { flex: none; white-space: nowrap; }
+#shipTop .when { flex: 1; }
+#shipTop .title { font-size: 1.5rem; letter-spacing: .04em; }
+#deckName { color: var(--gold); font-size: 1rem; font-style: italic; }
+#shipTop .when { text-align: center; font-size: .9rem; }
+#shipTop .how { display: flex; gap: 14px; align-items: center; color: var(--dim); font-size: .85rem; font-style: italic; }
+#watchLine { color: var(--dim); font-size: .8rem; font-style: italic; margin-top: 3px; max-width: 460px; }
+#shipbar { display: none; position: fixed; bottom: 16px; left: calc((100vw - 380px) / 2); transform: translateX(-50%); text-align: center; }
 body.inship #shipbar { display: block; }
-body.inship #objective, body.inship #dock, body.inship #toast { display: none; }
-.deckrow { display: flex; gap: 8px; align-items: center; justify-content: center; }
-#deckTabs { display: flex; gap: 6px; }
-#deckTabs button { font-size: .9rem; padding: 7px 14px; background: rgba(13, 25, 37, 0.9); color: var(--dim); border-color: var(--edge); }
+.deckrow { display: flex; gap: 10px; align-items: center; justify-content: center; }
+#deckTabs { display: flex; gap: 8px; }
+#deckTabs button { font-size: 1rem; padding: 9px 20px; background: rgba(13, 25, 37, 0.9); color: var(--dim); border-color: var(--edge); }
 #deckTabs button.on { background: linear-gradient(#f0c96a, #d59c34); color: #1d1409; }
 .legend { font-size: .72rem; color: var(--dim); margin: 10px 0 4px; }
 .legend i { display: inline-block; width: 9px; height: 9px; border-radius: 50%; margin: 0 4px 0 10px; vertical-align: -1px; }
@@ -123,10 +137,11 @@ body.inship #objective, body.inship #dock, body.inship #toast { display: none; }
 @media (max-width: 760px) { #deckTabs button { padding: 6px 8px; font-size: .75rem; } .legend { display: none; } }
 
 /* The roster beside the exploded ship. */
-#roster { display: none; right: 14px; top: 14px; bottom: 14px; width: 360px; flex-direction: column; gap: 8px; padding: 12px 14px; }
+#roster { display: none; right: 0; top: 0; bottom: 0; width: 380px; flex-direction: column; gap: 8px; padding: 16px;
+  border-radius: 0; border-width: 0 0 0 1px; }
 body.inship #roster { display: flex; }
 body.inship #corner, body.inship #tally { display: none; }
-@media (min-width: 761px) { #shipbar { left: calc(50% - 180px); } }
+.legend button { margin-left: 16px; font-size: .78rem; padding: 5px 12px; }
 #rosterTabs { display: flex; gap: 6px; }
 #rosterTabs button { flex: 1; font-size: .85rem; padding: 6px; background: rgba(13, 25, 37, 0.9); color: var(--dim); border-color: var(--edge); box-shadow: none; }
 #rosterTabs button.on { background: linear-gradient(#f0c96a, #d59c34); color: #1d1409; }
@@ -151,5 +166,9 @@ body.inship #corner, body.inship #tally { display: none; }
 #rosterBody .row b { color: var(--gold); letter-spacing: 1px; }
 .hbar { display: inline-block; width: 60px; height: 6px; background: rgba(255,255,255,.12); border-radius: 3px; overflow: hidden; vertical-align: middle; margin-right: 6px; }
 .hbar i { display: block; height: 100%; }
-@media (max-width: 760px) { #roster { top: auto; height: 45vh; left: 14px; width: auto; bottom: 150px; } }
+@media (max-width: 760px) {
+  #roster { top: auto; height: 42vh; left: 0; width: auto; bottom: 0; border-width: 1px 0 0 0; }
+  #shipTop { right: 0; } #shipTop .when { display: none; }
+  #shipbar { left: 50%; bottom: calc(42vh + 10px); }
+}
 #labels .label.station.empty { background: rgba(226, 103, 79, 0.95); color: #fff; }

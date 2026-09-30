@@ -55,14 +55,17 @@
     <div id="rosterFx"></div>
     <div id="rosterBody"></div>
   </div>
-  <div class="panel" id="shipbar">
-    <div class="deckrow"><button id="prevDeck" class="lesser">‹</button><span id="deckTabs"></span><button id="nextDeck" class="lesser">›</button></div>
-    <div class="legend"><i style="background:#2b3550"></i>Larboard watch <i style="background:#7a3b2a"></i>Starboard watch <i style="background:#6b5a3a"></i>Idlers <i style="background:#161616"></i>Officers</div>
-    <div class="note" id="watchLine"></div>
-    <div class="note">Time stands still while you look over the ship, unless you let it run.</div>
-    <button id="runTime" class="lesser">Let time run</button>
-    <button id="closeShip">Back to the sea</button>
+  <div id="shipTop">
+    <div class="who"><div class="title">The Mastiff</div><div id="deckName"></div></div>
+    <div class="when"><div id="shipDate"></div><div id="watchLine"></div></div>
+    <div class="how"><span id="shipMood"></span><button id="closeShip">Back to the sea</button></div>
   </div>
+  <div id="shipbar">
+    <div class="deckrow"><button id="prevDeck" class="lesser">‹</button><span id="deckTabs"></span><button id="nextDeck" class="lesser">›</button></div>
+    <div class="legend"><i style="background:#2b3550"></i>Larboard watch <i style="background:#7a3b2a"></i>Starboard watch <i style="background:#6b5a3a"></i>Idlers <i style="background:#161616"></i>Officers
+      <button id="runTime" class="lesser">Let time run</button></div>
+  </div>
+  <div id="fade"></div>
 
   <div id="modal" hidden>
     <div class="panel">
