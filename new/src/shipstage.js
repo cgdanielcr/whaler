@@ -5,7 +5,7 @@
 import * as THREE from 'three';
 
 const DIR = new THREE.Vector3(0, 0.66, 1).normalize();   // from the deck toward the camera: above and to starboard
-const FIT_W = 17.5, FIT_H = 8.4;                          // the deck in hand must fit this much of the world
+const FIT_W = 16, FIT_H = 8.4;                         // the deck in hand must fit this much of the world
 const RISE = 4.8, BACK = 6, SHRINK = 0.4;                 // how the other decks stand off from the one in hand
 
 function backdrop() {
@@ -34,17 +34,16 @@ export function makeStage(renderer) {
   scene.add(key, rim);
 
   const camera = new THREE.PerspectiveCamera(28, 1, 0.1, 200);
-  let panel = 0;                                           // pixels of screen taken by the roster on the right
-
-  function resize(rightPx) {
-    panel = innerWidth > 760 ? rightPx : 0;
-    const w = innerWidth, h = innerHeight, free = (w - panel) / h;
+  // right, left: pixels of screen taken by the roster on the right and the crew bar on the left.
+  function resize(rightPx, leftPx = 0) {
+    const wide = innerWidth > 760, right = wide ? rightPx : 0, left = wide ? leftPx : 0;
+    const w = innerWidth, h = innerHeight, free = (w - right - left) / h;
     camera.aspect = w / h;
     const tanV = Math.tan(THREE.MathUtils.degToRad(camera.fov / 2));
     const dist = Math.max(FIT_H / 2 / tanV, FIT_W / 2 / (tanV * free));   // near enough to fill, far enough to fit
     camera.position.copy(DIR).multiplyScalar(dist).add(new THREE.Vector3(0, 0.4, 0));
     camera.lookAt(0, 0.4, 0);
-    camera.setViewOffset(w, h, panel / 2, 0, w, h);        // centre her in the space left of the roster
+    camera.setViewOffset(w, h, (right - left) / 2, 0, w, h);   // centre her in the space between the panels
     camera.updateProjectionMatrix();
   }
 

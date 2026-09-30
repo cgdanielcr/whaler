@@ -111,7 +111,7 @@ button.small { font-size: .8rem; padding: 5px 12px; margin-top: 10px; width: 100
    deck carousel below, and the roster down the right take their place. */
 body.inship #ship, body.inship #objective, body.inship #dock, body.inship #back { display: none; }
 #fade { position: fixed; inset: 0; background: #05080b; opacity: 0; pointer-events: none; z-index: 50; }
-#shipTop { display: none; position: fixed; top: 0; left: 0; right: 380px; padding: 14px 22px 26px; align-items: flex-start;
+#shipTop { display: none; position: fixed; top: 0; left: 180px; right: 380px; padding: 14px 22px 26px; align-items: flex-start;
   justify-content: space-between; gap: 16px; background: linear-gradient(rgba(5, 10, 15, 0.85), rgba(5, 10, 15, 0)); pointer-events: none; }
 body.inship #shipTop { display: flex; }
 #shipTop > * { pointer-events: auto; }
@@ -122,7 +122,7 @@ body.inship #shipTop { display: flex; }
 #shipTop .when { text-align: center; font-size: .9rem; }
 #shipTop .how { display: flex; gap: 14px; align-items: center; color: var(--dim); font-size: .85rem; font-style: italic; }
 #watchLine { color: var(--dim); font-size: .8rem; font-style: italic; margin-top: 3px; max-width: 460px; }
-#shipbar { display: none; position: fixed; bottom: 16px; left: calc((100vw - 380px) / 2); transform: translateX(-50%); text-align: center; }
+#shipbar { display: none; position: fixed; bottom: 16px; left: calc(180px + (100vw - 560px) / 2); transform: translateX(-50%); text-align: center; }
 body.inship #shipbar { display: block; }
 .deckrow { display: flex; gap: 10px; align-items: center; justify-content: center; }
 #deckTabs { display: flex; gap: 8px; }
@@ -179,3 +179,44 @@ img.face.big { display: block; width: 120px; height: 140px; margin: 2px auto 8px
   #shipbar { left: 50%; bottom: calc(42vh + 10px); }
 }
 #labels .label.station.empty { background: rgba(226, 103, 79, 0.95); color: #fff; }
+
+/* The crew bar down the left of the ship screen. */
+#crewbar { display: none; left: 0; top: 0; bottom: 0; width: 180px; padding: 12px 8px; overflow-y: auto; border-radius: 0; border-width: 0 1px 0 0; }
+body.inship #crewbar { display: block; }
+#crewbar, #labels, #roster { user-select: none; -webkit-user-select: none; }
+.cgrp { color: var(--gold); font-size: .72rem; letter-spacing: .05em; margin: 10px 4px 4px; }
+.cgrp:first-child { margin-top: 0; }
+.hand { display: flex; gap: 7px; align-items: center; padding: 3px 5px; border-radius: 6px; cursor: grab; border: 1px solid transparent; touch-action: none; }
+.hand:hover { background: rgba(255, 255, 255, 0.05); border-color: var(--edge); }
+.hand.on { background: rgba(224, 178, 82, 0.16); border-color: var(--gold); }
+.hand img { width: 30px; height: 35px; flex: none; }
+.cn { min-width: 0; flex: 1; }
+.cn b { display: block; font-weight: normal; font-size: .74rem; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.cb { display: block; height: 3px; margin-top: 3px; background: rgba(255, 255, 255, 0.1); border-radius: 2px; overflow: hidden; }
+.cb i { display: block; height: 100%; }
+
+/* Station badges on the deck: an icon, the name and the men on hover, a word while a man is held over it. */
+#labels .badge { position: fixed; transform: translate(-50%, -50%); width: 30px; height: 30px; border-radius: 50%;
+  background: radial-gradient(#f3d17e, #c9953a); color: #1d1409; box-shadow: 0 2px 8px rgba(0, 0, 0, 0.5); padding: 5px; cursor: default; }
+#labels .badge svg { width: 100%; height: 100%; display: block; }
+#labels .badge.empty { background: radial-gradient(#f08b73, #b84a33); color: #fff; }
+#labels .badge .tip { display: none; position: absolute; bottom: 36px; left: 50%; transform: translateX(-50%); white-space: nowrap;
+  background: rgba(13, 25, 37, 0.95); color: var(--text); border: 1px solid var(--edge); border-radius: 6px; padding: 5px 9px; font-size: .75rem; line-height: 1.4; text-align: center; }
+#labels .badge .tip b { color: var(--gold); font-weight: normal; }
+#labels .badge:hover .tip { display: block; }
+#labels .badge:hover, #labels .badge.over { transform: translate(-50%, -50%) scale(1.25); }
+#labels .label { font-size: .68rem; opacity: 0.8; }
+#nameplate { position: fixed; transform: translate(-50%, -100%); background: rgba(224, 178, 82, 0.95); color: #1d1409; font-size: .78rem;
+  padding: 2px 9px; border-radius: 5px; pointer-events: none; white-space: nowrap; }
+
+/* Carrying a man: his face follows the pointer, and whatever he is over says how he would do there. */
+#ghost { position: fixed; z-index: 60; pointer-events: none; transform: translate(-50%, -60%); filter: drop-shadow(0 4px 10px rgba(0,0,0,.6)); }
+#ghost img { width: 48px; height: 56px; }
+body.dragging, body.dragging * { cursor: grabbing !important; }
+body.dragging #labels .badge { pointer-events: auto; }
+.over { outline: 2px solid var(--gold); position: relative; }
+[data-say].over::after { content: attr(data-say); position: absolute; left: 50%; bottom: calc(100% + 8px); transform: translateX(-50%);
+  white-space: nowrap; background: var(--gold); color: #1d1409; font-size: .75rem; padding: 3px 9px; border-radius: 5px; z-index: 70; font-style: normal; }
+#labels .badge.over::after { transform: translateX(-50%) scale(0.8); }
+#labels .badge.over .tip { display: none; }
+@media (max-width: 760px) { #crewbar { display: none !important; } #shipTop { left: 0; } }

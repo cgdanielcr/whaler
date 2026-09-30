@@ -52,7 +52,10 @@ scene.add(marker);
 
 // A click (not a drag) on the sea sets her course.
 let down = null;
-view.canvas.addEventListener('pointerdown', (e) => { down = { x: e.clientX, y: e.clientY }; });
+view.canvas.addEventListener('pointerdown', (e) => {
+  if (shipView.open && shipView.press(e)) { down = null; return; }    // a man on deck is picked up
+  down = { x: e.clientX, y: e.clientY };
+});
 view.canvas.addEventListener('pointerup', (e) => {
   if (!down || Math.hypot(e.clientX - down.x, e.clientY - down.y) > 8) return;
   down = null;

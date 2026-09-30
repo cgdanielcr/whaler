@@ -1,45 +1,43 @@
 // The ship view: a screen of its own. The sea fades out and the ship stands
 // alone on a dark stage, her three decks lifted apart. The deck in hand is
 // large and near; the others stand off above and below it, and a carousel
-// brings any of them forward. The roster beside it names every man; click a
-// man or a station plate. Let time run, slowly, to watch the watches change.
+// brings any of them forward. The crew bar runs down the left, the roster down
+// the right; carry a man from either, or off the deck, to where he should work.
+// Let time run, slowly, to watch the watches change.
 import * as THREE from 'three';
 import { makeDecks } from './decks.js';
 import { makeStage } from './shipstage.js';
-import { DECKS, STATIONS, SLOTS, LABELS, slotStation } from './stations.js';
+import { DECKS } from './stations.js';
 import { placeAll, LADDERS } from './watches.js';
 import { makeRoster } from './roster.js';
 import { makeCrewFigures } from './crewfig.js';
+import { makeCrewBar } from './crewbar.js';
+import { makeDeckMarks } from './deckmarks.js';
+import { makeDrag } from './drag.js';
+import { makePlacing } from './placing.js';
 import { mood, spiritsOf } from './morale.js';
 
 const FADE = 0.3;                        // seconds to fade to black, and back
 const WALK = 2.2;                        // how fast the men walk about the decks
 const SLOW = 8;                          // with time let run, it goes this many times slower than at sea
-const ROSTER_PX = 380;                   // the roster's width, on the right
+const ROSTER_PX = 380, BAR_PX = 180;     // the roster's width on the right, the crew bar's on the left
 const MONTHS = 'January February March April May June July August September October November December'.split(' ');
 
 export function makeShipView({ view, voyage, company, crews }) {
   const stage = makeStage(view.renderer), d = makeDecks();
   stage.scene.add(d.root);
   d.layers.forEach((l) => l.fade(1));
-
-  // The men, each dressed from his own look.
   const figs = makeCrewFigures(stage.scene, company.men.length);
+  const marks = makeDeckMarks({ company, stage, layers: d.layers, onStation: (id) => roster.showStation(id) });
+
   let chosen = null;
+  const refresh = () => { voyage.refresh(); marks.relabel(); roster.render(); bar.render(); };
+  function choose(id) { chosen = id; bar.choose(id); if (id != null) roster.showMan(id); }
+  const roster = makeRoster({ company, crews, voyage, onChange: () => { marks.relabel(); bar.render(); }, onSelect: (id) => { chosen = id; bar.choose(id); } });
+  const placing = makePlacing({ company, crews, done: refresh });
+  const drag = makeDrag({ company, preview: placing.preview, drop: placing.drop, choose });
+  const bar = makeCrewBar({ company, drag });
 
-  // Names on the deck in hand; station plates carry who works them.
-  const box = document.getElementById('labels');
-  const labels = [...STATIONS.map((s) => ({ deck: s.deck, text: s.name, at: [s.at[0], s.at[1] + 1.1, s.at[2]], station: s.id })), ...LABELS]
-    .map((l) => { const el = document.createElement('div'); el.className = l.station ? 'label station' : 'label'; box.append(el); return { ...l, el, deck: DECKS.findIndex((x) => x.id === l.deck) }; });
-  function relabel() {
-    for (const l of labels) {
-      const who = l.station && SLOTS.filter((k) => slotStation(k).id === l.station).map((k) => { const m = company.man(k); return m ? `${m.name[0]}. ${m.name.split(' ').pop()}` : '—'; });
-      l.el.textContent = who ? `${l.text}: ${who.join(' / ')}` : l.text;
-      l.el.classList.toggle('empty', !!who && who.includes('—'));      // a station with no one at it shows red
-    }
-  }
-
-  const roster = makeRoster({ company, crews, voyage, onChange: relabel, onSelect: (id) => { chosen = id; } });
   let want = false, showing = false, black = 0, running = false, sel = 0, at = 0, lastWatch = null, said = 0;
   const where = new Map();                 // each man: { deck, p, key, route }
   const v3 = new THREE.Vector3();
@@ -57,7 +55,7 @@ export function makeShipView({ view, voyage, company, crews }) {
   }
   const show = () => { want = true; };
   const hide = () => { want = false; chosen = null; setRun(false); };
-  addEventListener('resize', () => stage.resize(ROSTER_PX));
+  addEventListener('resize', () => stage.resize(ROSTER_PX, BAR_PX));
   document.getElementById('openShip').onclick = show;
   document.getElementById('closeShip').onclick = hide;
   document.getElementById('prevDeck').onclick = () => select(sel - 1);
@@ -69,15 +67,23 @@ export function makeShipView({ view, voyage, company, crews }) {
     if (e.key === 'ArrowRight' || e.key === 'ArrowDown') select(sel + 1);
   });
 
-  // A click on a man shows his card; a click on a station's plate shows the station.
+  // A press on a man on deck picks him up (or, if he is not moved, chooses him);
+  // a click on a station's plate shows the station.
   const ray = new THREE.Raycaster(), ndc = new THREE.Vector2();
-  function click(cx, cy) {
+  function hit(cx, cy) {
     ndc.set((cx / innerWidth) * 2 - 1, -(cy / innerHeight) * 2 + 1);
     ray.setFromCamera(ndc, stage.camera);
-    const hit = ray.intersectObjects([...figs.pickables(), ...d.platesOn(sel)], false)[0];
-    if (!hit) return;
-    if (hit.object.userData.station) roster.showStation(hit.object.userData.station);
-    else roster.showMan(company.men[hit.instanceId].id);
+    return ray.intersectObjects([...figs.pickables(), ...d.platesOn(sel)], false)[0];
+  }
+  function press(e) {
+    const h = hit(e.clientX, e.clientY);
+    if (!h || h.object.userData.station) return false;
+    drag.begin(company.men[h.instanceId].id, e);
+    return true;
+  }
+  function click(cx, cy) {
+    const h = hit(cx, cy);
+    if (h && h.object.userData.station) roster.showStation(h.object.userData.station);
   }
 
   // Each man makes his way to where he should be: across his deck, or to the
@@ -105,7 +111,7 @@ export function makeShipView({ view, voyage, company, crews }) {
   function tellWatch(w, dt) {
     if (lastWatch !== null && w.index !== lastWatch && showing) {
       said = 3; watchLine.textContent = `Eight bells! The ${w.onDeck} watch comes on deck, and the other goes below.`;
-      roster.render();
+      roster.render(); bar.render();
     }
     lastWatch = w.index;
     const v = voyage.v, s = spiritsOf(company);
@@ -122,7 +128,7 @@ export function makeShipView({ view, voyage, company, crews }) {
     if (black >= 1 && want !== showing) {
       showing = want;
       document.body.classList.toggle('inship', showing);
-      if (showing) { stage.resize(ROSTER_PX); d.setHold(voyage.v); figs.dress(company.men); relabel(); select(sel); }
+      if (showing) { stage.resize(ROSTER_PX, BAR_PX); d.setHold(voyage.v); figs.dress(company.men); marks.relabel(); bar.render(); select(sel); }
     }
     fade.style.opacity = black;
     fade.style.pointerEvents = black > 0.05 ? 'auto' : 'none';
@@ -135,24 +141,18 @@ export function makeShipView({ view, voyage, company, crews }) {
     const w = voyage.watch;
     tellWatch(w, dt);
     const places = placeAll(company, w);
+    let mine = null;
     company.men.forEach((m, i) => {
       const p = walk(m.id, places.get(m.id), dt), g = p && d.layers[p.deck].group;
       figs.place(i, m, p ? v3.set(...p.p).applyMatrix4(g.matrixWorld) : null, p ? g.scale.x : 0, m.id === chosen);
+      if (p && m.id === chosen) mine = { name: m.name, deck: p.deck, p: p.p };
     });
     figs.done();
-
-    for (const l of labels) {
-      const on = l.deck === sel && Math.abs(at - sel) < 0.05;
-      l.el.hidden = !on;
-      if (!on) continue;
-      v3.set(...l.at).applyMatrix4(d.layers[l.deck].group.matrixWorld).project(stage.camera);
-      l.el.style.left = `${((v3.x + 1) / 2) * innerWidth}px`;
-      l.el.style.top = `${((1 - v3.y) / 2) * innerHeight}px`;
-    }
+    marks.update(sel, Math.abs(at - sel) < 0.05, mine);
   }
 
   return {
-    update, show, hide, click, stage,
+    update, show, hide, click, press, stage,
     render: () => stage.render(),
     get showing() { return showing; },                     // the ship screen is up: draw it, not the sea
     get busy() { return want || showing; },                // the world stands still while she is open
