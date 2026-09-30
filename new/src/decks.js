@@ -170,5 +170,6 @@ export function makeDecks() {
     casks.instanceColor.needsUpdate = true;
   }
 
-  return { root, layers, setHold };
+  const platesOn = (i) => { const out = []; layers[i].group.traverse((o) => { if (o.userData.station) out.push(o); }); return out; };
+  return { root, layers, setHold, platesOn };
 }

@@ -46,11 +46,12 @@ export function makeTrying(scene, { v, whales, helm }) {
     castOff,
 
     // Work her while the weather allows: strip, boil, and stow.
-    tick(dt, working) {
+    // fx: what the tryworks gang and the cooper make of it.
+    tick(dt, working, fx) {
       if (w && working) {
         if (room(v) < 1) return castOff('No room below for another barrel. The rest of her is cast adrift.');
-        const boiled = Math.min(BBL_PER_SECOND * dt, w.left);
-        acc += boiled; w.left -= boiled;
+        const boiled = Math.min(BBL_PER_SECOND * fx.trying * dt, w.left);
+        acc += boiled * fx.stow; w.left -= boiled;          // a poor cooper loses some in the stowing
         const whole = Math.min(Math.floor(acc), room(v));
         v[w.sp.oil] += whole; w.tried += whole; acc -= whole;
         w.group.scale.setScalar(w.size * (0.6 + 0.4 * (w.left / w.barrels)));

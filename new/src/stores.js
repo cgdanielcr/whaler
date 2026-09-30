@@ -5,7 +5,7 @@ import { PRICE } from './species.js';
 
 export const HOLD = 500;              // barrels of space below
 export const PER_DAY = 6;             // the space one day's provisions takes up
-export const CREW = 28, BOATS = 4;
+export const CREW = 29, BOATS = 4;
 export const SHIPKEEPERS = 8;         // men who must stay aboard to work the ship
 export const PER_BOAT = 6;            // a boat's crew
 const MILES_A_DAY = 45;               // a fair day's run, in the chart's measure

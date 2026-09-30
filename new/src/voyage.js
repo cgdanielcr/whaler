@@ -1,8 +1,9 @@
 // The voyage: fitting out, the clock, the lookout, the ice, the return home,
 // the loss of the ship, and the owners' reckoning.
 import { BERTH, wrap } from './world.js';
-import { describe } from './species.js';
-import { HOLD, CREW, BOATS, FITS, PER_DAY, REPAIR, NEW_SHIP, worth, daysHome, verdict, money } from './stores.js';
+import { effects } from './effects.js';
+import { makeLookout } from './lookout.js';
+import { HOLD, BOATS, FITS, PER_DAY, REPAIR, NEW_SHIP, worth, daysHome, verdict, money } from './stores.js';
 import { makeSeason, dayOfYear, LAST_FIT } from './season.js';
 import { makeChase } from './chase.js';
 import { makeTrying } from './trying.js';
@@ -11,33 +12,23 @@ import { hud } from './hud.js';
 
 const HOURS_PER_SECOND = 4;     // a day passes in six seconds
 const DAY = 24 / HOURS_PER_SECOND;
-const SIGHT = 95;               // how far the masthead can see a spout
-const MAKE_OUT = 50;            // how near before the kind of whale can be told
 const WAYPOINT = { x: BERTH.x - 26, z: BERTH.z + 5 };   // stand in from here, clear of the wharf's head
 const MONTHS = 'January February March April May June July August September October November December'.split(' ');
 
-export function makeVoyage({ scene, helm, whales, boats, ship, start }) {
+export function makeVoyage({ scene, helm, whales, boats, ship, start, company }) {
   const v = {
     phase: 'port', fitted: false, paused: false, date: new Date(start), days: 0, hours: 0,
-    stores: 0, whale: 0, sperm: 0, crew: CREW, boats: BOATS, hull: 100, taken: 0, lost: 0, boatsLost: 0,
+    stores: 0, eat: 0, whale: 0, sperm: 0, crew: company.count, boats: BOATS, hull: 100, taken: 0, lost: 0, boatsLost: 0,
     voyages: 0, landed: 0, leg: 0, told: {},
   };
   const season = makeSeason();
-  const chase = makeChase({ v, whales, boats, helm });
+  const chase = makeChase({ v, whales, boats, helm, company });
+  const lookout = makeLookout({ helm, whales });
+  let fx = effects(company);             // what the men at their stations do for her
   const trying = makeTrying(scene, { v, whales, helm });
   const far = (p, q) => Math.hypot(p.x - q.x, p.z - q.z);
   const tell = (key, text) => { if (!v.told[key]) { v.told[key] = true; hud.toast(text); } };
   const dateText = (d) => `${d.getDate()} ${MONTHS[d.getMonth()]} ${d.getFullYear()}`;
-
-  function bearing(p) {
-    const rel = wrap(Math.atan2(p.z - helm.pos.z, p.x - helm.pos.x) - helm.heading), a = Math.abs(rel);
-    const side = rel > 0 ? 'starboard' : 'larboard';
-    if (a < 0.3) return 'Dead ahead';
-    if (a < 1.2) return `Off the ${side} bow`;
-    if (a < 1.95) return `On the ${side} beam`;
-    if (a < 2.85) return `Off the ${side} quarter`;
-    return 'Right astern';
-  }
 
   function fitOut(first) {
     let intro = '';
@@ -49,7 +40,8 @@ export function makeVoyage({ scene, helm, whales, boats, ship, start }) {
     intro += `It is ${dateText(v.date)}. ${season.advice(v.date)}`;
     season.calm();
     hud.fitOut(FITS.map((f) => ({ ...f, room: HOLD - f.days * PER_DAY })), (f) => {
-      Object.assign(v, { stores: f.days, crew: CREW, boats: BOATS, hull: 100, fitted: true });
+      company.refit(); fx = effects(company);
+      Object.assign(v, { stores: f.days, eat: 0, crew: company.count, boats: BOATS, hull: 100, fitted: true });
       hud.toast(`${f.days} days' provisions stowed. The hands are aboard.`);
     }, intro);
   }
@@ -108,8 +100,17 @@ export function makeVoyage({ scene, helm, whales, boats, ship, start }) {
     v.date.setDate(v.date.getDate() + 1);
     season.newDay(v.date);
     trying.newDay(season.gale);
-    if (v.stores > 0) v.stores--;
-    else if (v.crew > 0) { v.crew--; v.lost++; hud.toast('Scurvy. Another man is sewn into his hammock.'); }
+    fx = effects(company);
+    v.eat += fx.eat;                                           // a good cook makes the provisions go further
+    if (v.stores > 0 && Math.random() < fx.spoil) { v.eat += 1; hud.toast('A cask of beef is broached and found spoiled. A better cooper would have caught it.'); }
+    while (v.eat >= 1 && v.stores > 0) { v.eat -= 1; v.stores--; }
+    if (!season.gale && helm.slow === 1) v.hull = Math.min(100, v.hull + fx.repair);
+    const sick = company.newDay({ trying: v.phase === 'trying', heal: v.stores > 0 ? fx.care : 0,
+      sicken: (v.stores === 0 ? 12 * fx.scurvy : 0) + (helm.slow === 0 ? 3 : 0) });
+    if (sick.said.length > 2) hud.toast(`${sick.said.length} men have grown handier at their stations.`);
+    else sick.said.forEach((s) => hud.toast(s));
+    for (const name of sick.died) { v.lost++; hud.toast(`${name} is dead of ${v.stores === 0 ? 'scurvy' : 'the cold'}, and sewn into his hammock.`); }
+    v.crew = company.count;
     if (v.stores === 0) tell('out', 'The provisions are out. The men will sicken.');
     const home = daysHome(helm.pos);
     if (v.phase !== 'docking' && v.stores > 0 && v.stores <= home + 3) {
@@ -126,6 +127,7 @@ export function makeVoyage({ scene, helm, whales, boats, ship, start }) {
     if (helm.bump > 0) tell('struck', 'She strikes the ice! Every blow opens her seams a little more.');
     let harm = helm.bump;
     if (inside > 0) harm += (dt / DAY) * (2 + inside * 0.3);
+    harm *= fx.iceHarm;                                        // a good helmsman takes the ice more kindly
     if (season.wind === 'whole gale') harm += (dt / DAY) * 3;
     helm.bump = 0;
     v.hull = Math.max(0, v.hull - harm);
@@ -138,22 +140,13 @@ export function makeVoyage({ scene, helm, whales, boats, ship, start }) {
     if (v.phase === 'port' || v.phase === 'ended' || v.phase === 'lost') return offer(ctx);
     v.hours += dt * HOURS_PER_SECOND;
     while (v.hours >= 24) { v.hours -= 24; newDay(); }
-    helm.hands = Math.min(1, Math.max(0.35, v.crew / 18));
-    for (const w of whales.within(helm.pos, SIGHT)) {
-      if (!w.sighted && w.surfaced) {
-        w.sighted = true;
-        if (v.phase === 'sea') hud.toast(`There she blows! ${bearing(w.group.position)}.`);
-      }
-      if (w.sighted && !w.known && far(w.group.position, helm.pos) < MAKE_OUT) {
-        w.known = true;
-        if (v.phase === 'sea') hud.toast(`A ${describe(w)}. ${w.sp.note}`);
-      }
-    }
+    helm.hands = Math.min(1, Math.max(0.35, v.crew / 18)) * fx.speed;
+    lookout.tick(fx.sight, v.phase === 'sea');
     if (v.phase === 'hunt') {
       chase.tick(dt);
       if (chase.over && boats.aboard) { chase.clear(); v.phase = trying.whale ? 'trying' : 'sea'; }
     }
-    trying.tick(dt, v.phase === 'trying' && !season.gale);
+    trying.tick(dt, v.phase === 'trying' && !season.gale, fx);
     if (v.phase === 'trying' && !trying.whale) { v.phase = 'sea'; helm.set = true; }
     if (v.phase === 'docking') {
       if (v.leg === 0 && far(helm.pos, WAYPOINT) < 5) { v.leg = 1; helm.steer(BERTH.x, BERTH.z); }
@@ -185,6 +178,8 @@ export function makeVoyage({ scene, helm, whales, boats, ship, start }) {
   fitOut(true);
   return {
     v, season, click, draw: () => draw(ctx),
+    get fx() { return fx; },
+    refresh() { fx = effects(company); },      // after the owner moves men about
     tick(dt) { tick(dt); settle(dt); },
     get quarry() { return chase.whale || trying.whale; },
   };

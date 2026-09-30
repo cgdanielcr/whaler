@@ -9,7 +9,7 @@ const GIVE_UP = 15;       // seconds of pulling before the boats give up on a wh
 const rand = Math.random;
 const between = (a, b) => a + Math.floor(rand() * (b - a + 1));
 
-export function makeChase({ v, whales, boats, helm }) {
+export function makeChase({ v, whales, boats, helm, company }) {
   let c = null;
 
   function start(w, n) {
@@ -29,8 +29,9 @@ export function makeChase({ v, whales, boats, helm }) {
   function stove() {
     const side = boats.stove(), alone = boats.out === 0;
     const drowned = alone ? between(1, 4) : between(0, 2);   // the other boat picks up who it can
-    v.crew -= drowned; v.lost += drowned; v.boats -= 1; v.boatsLost += 1;
-    const men = drowned === 0 ? 'All hands picked up.' : drowned === 1 ? 'One man drowned.' : `${drowned} men drowned.`;
+    const names = company.lose(drowned);
+    v.crew = company.count; v.lost += drowned; v.boats -= 1; v.boatsLost += 1;
+    const men = drowned === 0 ? 'All hands picked up.' : `${names.join(' and ')} ${drowned === 1 ? 'is' : 'are'} drowned.`;
     if (alone) escape(`She stoves the ${side} boat! ${men} She is away.`);
     else { c.n = boats.out; hud.toast(`She stoves the ${side} boat! ${men}`); }
   }

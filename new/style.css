@@ -111,3 +111,35 @@ body.inship #objective, body.inship #dock, body.inship #toast { display: none; }
   background: rgba(13, 25, 37, 0.72); padding: 2px 7px; border-radius: 5px; pointer-events: none; white-space: nowrap; }
 #labels .label.station { color: #1d1409; background: rgba(224, 178, 82, 0.92); font-style: normal; }
 @media (max-width: 760px) { #deckTabs button { padding: 6px 8px; font-size: .75rem; } .legend { display: none; } }
+
+/* The roster beside the exploded ship. */
+#roster { display: none; right: 14px; top: 14px; bottom: 14px; width: 360px; flex-direction: column; gap: 8px; padding: 12px 14px; }
+body.inship #roster { display: flex; }
+body.inship #corner, body.inship #tally { display: none; }
+@media (min-width: 761px) { #shipbar { left: calc(50% - 180px); } }
+#rosterTabs { display: flex; gap: 6px; }
+#rosterTabs button { flex: 1; font-size: .85rem; padding: 6px; background: rgba(13, 25, 37, 0.9); color: var(--dim); border-color: var(--edge); box-shadow: none; }
+#rosterTabs button.on { background: linear-gradient(#f0c96a, #d59c34); color: #1d1409; }
+#rosterFx { font-size: .72rem; border-bottom: 1px solid var(--edge); padding-bottom: 6px; }
+#rosterFx .row { margin-top: 1px; font-size: .72rem; }
+#rosterBody { overflow-y: auto; flex: 1; font-size: .8rem; }
+#rosterBody .st { margin-bottom: 8px; border-radius: 6px; }
+#rosterBody .st.flash { outline: 1px solid var(--gold); }
+#rosterBody .stname { color: var(--gold); margin: 4px 0; }
+#rosterBody .stname small, #rosterBody small { color: var(--dim); font-style: italic; }
+#rosterBody button.slot, #rosterBody button.man { display: flex; justify-content: space-between; align-items: center; gap: 8px; width: 100%;
+  text-align: left; font-size: .78rem; padding: 5px 8px; margin: 2px 0; background: rgba(255, 255, 255, 0.04); color: var(--text);
+  border: 1px solid transparent; box-shadow: none; border-radius: 5px; }
+#rosterBody button.slot:hover, #rosterBody button.man:hover { border-color: var(--edge); filter: none; }
+#rosterBody button.slot span { color: var(--dim); min-width: 62px; }
+#rosterBody b { font-weight: normal; }
+#rosterBody b.empty { color: #e2674f; font-style: italic; }
+#rosterBody em { color: var(--gold); font-style: normal; white-space: nowrap; }
+#rosterBody .grp { color: var(--gold); margin: 10px 0 3px; font-size: .78rem; letter-spacing: .05em; }
+#rosterBody .quiet { color: var(--dim); font-style: italic; }
+#rosterBody button.back { font-size: .75rem; padding: 3px 10px; margin-bottom: 6px; background: none; color: var(--dim); border-color: var(--edge); box-shadow: none; }
+#rosterBody .row b { color: var(--gold); letter-spacing: 1px; }
+.hbar { display: inline-block; width: 60px; height: 6px; background: rgba(255,255,255,.12); border-radius: 3px; overflow: hidden; vertical-align: middle; margin-right: 6px; }
+.hbar i { display: block; height: 100%; }
+@media (max-width: 760px) { #roster { top: auto; height: 45vh; left: 14px; width: auto; bottom: 150px; } }
+#labels .label.station.empty { background: rgba(226, 103, 79, 0.95); color: #fff; }

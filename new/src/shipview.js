@@ -1,51 +1,52 @@
 // The ship view: the camera swoops in, the world stands still, and the ship
 // comes apart into her three decks, lifted clear of the sea. The carousel
 // brings one deck to the fore; the decks above it fade so you can look in.
+// The roster beside it names every man; click a man or a station plate.
 import * as THREE from 'three';
 import { makeDecks } from './decks.js';
-import { DECKS, STATIONS, LABELS, BERTHS, station } from './stations.js';
+import { DECKS, STATIONS, SLOTS, LABELS, slotStation } from './stations.js';
+import { placeAll } from './watches.js';
+import { makeRoster } from './roster.js';
 
 const BASE = 3, GAP = 7;                 // heights of the hold, 'tween deck and upper deck when apart
 const SHUT = [0.9, -0.1, -1.1];          // their heights when she is whole
 const TIME = 1.1;                        // seconds to come apart or go back together
 const SHOW = Math.PI / 4;                // bow to the right of the screen, as a ship's plan is drawn
 const ZOOM = 21;                         // how much of the world shows when looking at a deck
-const WATCH = { larboard: 0x2b3550, starboard: 0x7a3b2a, idler: 0x6b5a3a, officer: 0x161616 };
+const ROSTER_PX = 360;                   // the roster's width: the ship is drawn to the left of it
+const RIGHT = new THREE.Vector3(1, 0, 1).normalize();     // the screen's right, on the sea
+const COLOR = { larboard: new THREE.Color(0x2b3550), starboard: new THREE.Color(0x7a3b2a),
+  idler: new THREE.Color(0x6b5a3a), officer: new THREE.Color(0x161616), chosen: new THREE.Color(0xf0c96a) };
 
-// Until the company is named (the next step), men stand where their sort would be.
-function placeholders() {
-  const men = [], at = (deck, p, kind) => men.push({ deck: DECKS.findIndex((d) => d.id === deck), p, kind });
-  for (const id of ['wheel', 'foreMast', 'mainMast']) at('upper', station(id).at, 'larboard');
-  for (const p of [[1.0, 0, -1.0], [-0.8, 0, 0.9], [4.4, 0, 0.7], [-2.9, 0, 0.5], [5.4, 0, -0.4]]) at('upper', p, 'larboard');
-  for (const p of BERTHS.forecastle) at('tween', p, 'starboard');
-  for (const p of BERTHS.steerage.slice(0, 4)) at('tween', p, 'starboard');
-  at('upper', station('galley').at, 'idler'); at('upper', station('bench').at, 'idler');
-  at('upper', [1.9, 0, 1.0], 'idler'); at('tween', station('pantry').at, 'idler'); at('hold', station('cooper').at, 'idler');
-  at('upper', [-3.2, 0, -0.6], 'officer');
-  for (const p of BERTHS.cabin.slice(0, 3)) at('tween', p, 'officer');
-  return men;
-}
-
-export function makeShipView({ scene, view, ship, helm, voyage }) {
+export function makeShipView({ scene, view, ship, helm, voyage, company }) {
   const d = makeDecks();
   d.root.visible = false;
   scene.add(d.root);
 
-  // The men, drawn all at once: bodies and heads.
-  const men = placeholders();
+  // The men, drawn all at once: bodies and heads, one of each per man.
+  const N = company.men.length;
   const bodies = new THREE.InstancedMesh(new THREE.CylinderGeometry(0.13, 0.18, 0.75, 6),
-    new THREE.MeshStandardMaterial({ flatShading: true, roughness: 0.8 }), men.length);
+    new THREE.MeshStandardMaterial({ flatShading: true, roughness: 0.8 }), N);
   const heads = new THREE.InstancedMesh(new THREE.SphereGeometry(0.13, 6, 4),
-    new THREE.MeshStandardMaterial({ color: 0xd4a27b, flatShading: true }), men.length);
-  men.forEach((m, i) => bodies.setColorAt(i, new THREE.Color(WATCH[m.kind])));
+    new THREE.MeshStandardMaterial({ color: 0xd4a27b, flatShading: true }), N);
   bodies.castShadow = heads.castShadow = true;
   d.root.add(bodies, heads);
+  let chosen = null;
+  const colorOf = (m) => (m.id === chosen ? COLOR.chosen : m.officer ? COLOR.officer : m.watch ? COLOR[m.watch] : COLOR.idler);
 
-  // Names on the deck in view.
+  // Names on the deck in view; station plates carry who works them.
   const box = document.getElementById('labels');
-  const labels = [...STATIONS.map((s) => ({ deck: s.deck, text: s.name, at: [s.at[0], s.at[1] + 1.1, s.at[2]], station: true })), ...LABELS]
-    .map((l) => { const el = document.createElement('div'); el.className = l.station ? 'label station' : 'label'; el.textContent = l.text; box.append(el); return { ...l, el, deck: DECKS.findIndex((x) => x.id === l.deck) }; });
+  const labels = [...STATIONS.map((s) => ({ deck: s.deck, text: s.name, at: [s.at[0], s.at[1] + 1.1, s.at[2]], station: s.id })), ...LABELS]
+    .map((l) => { const el = document.createElement('div'); el.className = l.station ? 'label station' : 'label'; box.append(el); return { ...l, el, deck: DECKS.findIndex((x) => x.id === l.deck) }; });
+  function relabel() {
+    for (const l of labels) {
+      const who = l.station && SLOTS.filter((k) => slotStation(k).id === l.station).map((k) => { const m = company.man(k); return m ? `${m.name[0]}. ${m.name.split(' ').pop()}` : '—'; });
+      l.el.textContent = who ? `${l.text}: ${who.join(' / ')}` : l.text;
+      l.el.classList.toggle('empty', !!who && who.includes('—'));      // a station with no one at it shows red
+    }
+  }
 
+  const roster = makeRoster({ company, voyage, onChange: relabel, onSelect: (id) => { chosen = id; } });
   let open = false, k = 0, sel = 0, from = 0, wasH = null;
   const heights = [0, 0, 0], m4 = new THREE.Matrix4(), v3 = new THREE.Vector3(), focus = new THREE.Vector3();
   const tabs = document.getElementById('deckTabs');
@@ -54,17 +55,18 @@ export function makeShipView({ scene, view, ship, helm, voyage }) {
   function select(i) {
     sel = (i + DECKS.length) % DECKS.length;
     [...tabs.children].forEach((b, j) => b.classList.toggle('on', j === sel));
+    roster.setDeck(DECKS[sel].id);
   }
   function show() {
     if (open) return;
     open = true; from = helm.heading; wasH = view.height(ZOOM);
-    d.setHold(voyage.v);
+    d.setHold(voyage.v); relabel();
     document.body.classList.add('inship');
     select(0);
   }
   function hide() {
     if (!open) return;
-    open = false; view.height(wasH);
+    open = false; view.height(wasH); chosen = null;
     document.body.classList.remove('inship');
   }
   document.getElementById('openShip').onclick = show;
@@ -74,9 +76,20 @@ export function makeShipView({ scene, view, ship, helm, voyage }) {
   addEventListener('keydown', (e) => {
     if (!open) return;
     if (e.key === 'Escape') hide();
-    if (e.key === 'ArrowLeft' || e.key === 'ArrowUp') select(sel - 1);
-    if (e.key === 'ArrowRight' || e.key === 'ArrowDown') select(sel + 1);
+    if (e.key === 'ArrowLeft') select(sel - 1);
+    if (e.key === 'ArrowRight') select(sel + 1);
   });
+
+  // A click on a man shows his card; a click on a station's plate shows the station.
+  const ray = new THREE.Raycaster(), ndc = new THREE.Vector2();
+  function click(cx, cy) {
+    ndc.set((cx / innerWidth) * 2 - 1, -(cy / innerHeight) * 2 + 1);
+    ray.setFromCamera(ndc, view.camera);
+    const hit = ray.intersectObjects([bodies, heads, ...d.platesOn(sel)], false)[0];
+    if (!hit) return;
+    if (hit.object.userData.station) roster.showStation(hit.object.userData.station);
+    else roster.showMan(company.men[hit.instanceId].id);
+  }
 
   function update(dt) {
     k = Math.min(1, Math.max(0, k + (open ? dt : -dt) / TIME));
@@ -94,38 +107,38 @@ export function makeShipView({ scene, view, ship, helm, voyage }) {
       l.group.position.y = heights[i];
       l.fade(i < sel ? 1 - 0.88 * e : 1);                  // decks above the one in view fade away
     });
-    men.forEach((m, i) => {
-      const hidden = m.deck < sel && e > 0.3;
-      const s = hidden ? 0.0001 : 1;
-      m4.makeScale(s, s, s).setPosition(m.p[0], heights[m.deck] + m.p[1] + 0.375, m.p[2]);
-      bodies.setMatrixAt(i, m4);
-      m4.makeScale(s, s, s).setPosition(m.p[0], heights[m.deck] + m.p[1] + 0.86, m.p[2]);
-      heads.setMatrixAt(i, m4);
+    const at = placeAll(company);
+    company.men.forEach((m, i) => {
+      const p = at.get(m.id), hidden = !p || (p.deck < sel && e > 0.3);
+      const s = hidden ? 0.0001 : 1, y = p ? heights[p.deck] + p.p[1] : 0, [x, , z] = p ? p.p : [0, 0, 0];
+      bodies.setMatrixAt(i, m4.makeScale(s, s, s).setPosition(x, y + 0.375, z));
+      heads.setMatrixAt(i, m4.makeScale(s, s, s).setPosition(x, y + 0.86, z));
+      bodies.setColorAt(i, colorOf(m));
     });
-    bodies.instanceMatrix.needsUpdate = heads.instanceMatrix.needsUpdate = true;
+    bodies.instanceMatrix.needsUpdate = heads.instanceMatrix.needsUpdate = bodies.instanceColor.needsUpdate = true;
+    bodies.computeBoundingSphere(); heads.computeBoundingSphere();     // they have moved: for clicking, and so they are not culled
 
     d.root.updateMatrixWorld(true);
-    const cam = view.camera;
     for (const l of labels) {
       const on = open && e > 0.95 && l.deck === sel;
       l.el.hidden = !on;
       if (!on) continue;
       v3.set(l.at[0], heights[l.deck] + l.at[1], l.at[2]);
-      d.root.localToWorld(v3).project(cam);
+      d.root.localToWorld(v3).project(view.camera);
       l.el.style.left = `${((v3.x + 1) / 2) * innerWidth}px`;
       l.el.style.top = `${((1 - v3.y) / 2) * innerHeight}px`;
     }
   }
 
-  // Where the camera should look: the ship at sea, or the deck in view.
+  // Where the camera should look: the ship at sea, or the deck in view (set off to the left of the roster).
   function look(sea) {
-    const e = k * k * (3 - 2 * k);
-    focus.set(helm.pos.x, heights[sel] || 0, helm.pos.z);
+    const e = k * k * (3 - 2 * k), shift = innerWidth > 760 ? ((ROSTER_PX / 2) * ZOOM) / innerHeight : 0;
+    focus.set(helm.pos.x, heights[sel] || 0, helm.pos.z).addScaledVector(RIGHT, shift);
     return focus.lerp(sea, 1 - e);
   }
 
   return {
-    update, look, show, hide,
+    update, look, show, hide, click,
     get busy() { return k > 0; },     // the world stands still while she is open or opening
     get open() { return open; },
   };
