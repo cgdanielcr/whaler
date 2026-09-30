@@ -33,8 +33,9 @@ const ARMS = {
   stir: [[0.95, 0.2], [0.75, 0.2]],         // over the try-pots, the galley fire, the blubber
   spade: [[2.35, 0.12], [2.15, 0.12]],      // the cutting spade raised to strike
   hammer: [[0.9, 0.1], [2.75, 0.12]],       // the carpenter's or the cooper's hammer lifted
+  sit: [[0.65, 0.1], [0.65, 0.1]],          // hands on his knees, on his sea chest
 };
-const SHOULDER_Y = 0.74, SHOULDER_Z = 0.17;
+const SHOULDER_Y = 0.74, SHOULDER_Z = 0.17, HIP = 0.36, SIT_DROP = 0.2;
 const HATS = {
   beaver: both(cyl(0.12, 0.12, 0.24, HEAD_Y + 0.2), cyl(0.2, 0.2, 0.02, HEAD_Y + 0.09)),
   cap: both(cyl(0.145, 0.14, 0.07, HEAD_Y + 0.1), new THREE.BoxGeometry(0.12, 0.015, 0.1).translate(0.12, HEAD_Y + 0.07, 0)),
@@ -59,6 +60,7 @@ export function makeCrewFigures(scene, N) {
   const all = [...Object.values(parts), ...Object.values(hats)];
   const M = new THREE.Matrix4(), NONE = new THREE.Matrix4().makeScale(0, 0, 0), q = new THREE.Quaternion(), s = new THREE.Vector3(), c = new THREE.Color();
   const A = new THREE.Matrix4(), T = new THREE.Matrix4(), R = new THREE.Matrix4(), X = new THREE.Matrix4(), up = new THREE.Vector3(0, 1, 0), qf = new THREE.Quaternion();
+  const Bm = new THREE.Matrix4(), Lg = new THREE.Matrix4();
 
   // Dress each man from his look. Needed again whenever the company changes.
   function dress(men) {
@@ -84,15 +86,18 @@ export function makeCrewFigures(scene, N) {
     k *= SIZE;
     q.setFromAxisAngle(up, face); if (turn) q.premultiply(turn);
     M.compose(p, q, s.set(L.girth * k, L.height * k, L.girth * k));
+    // Seated on his chest: the body drops, the thighs come forward from the hip.
+    const sit = pose === 'sit', B = sit ? Bm.copy(M).multiply(T.makeTranslation(0, -SIT_DROP, 0)) : M;
+    const legs = sit ? Lg.copy(M).multiply(T.makeTranslation(0, HIP - SIT_DROP, 0)).multiply(R.makeRotationZ(1.35)).multiply(X.makeTranslation(0, -HIP, 0)) : M;
     const arms = ARMS[pose] || ARMS.idle;
     [[parts.armL, parts.handL, -1, arms[0]], [parts.armR, parts.handR, 1, arms[1]]].forEach(([arm, hand, side, [fwd, out]]) => {
-      A.copy(M).multiply(T.makeTranslation(0, SHOULDER_Y, side * SHOULDER_Z)).multiply(R.makeRotationZ(fwd)).multiply(X.makeRotationX(-side * out));
+      A.copy(B).multiply(T.makeTranslation(0, SHOULDER_Y, side * SHOULDER_Z)).multiply(R.makeRotationZ(fwd)).multiply(X.makeRotationX(-side * out));
       arm.setMatrixAt(i, A); hand.setMatrixAt(i, A);
     });
-    parts.legs.setMatrixAt(i, M); parts.torso.setMatrixAt(i, M); parts.head.setMatrixAt(i, M);
-    parts.hair.setMatrixAt(i, L.hat === 'bare' && !L.bald ? M : NONE);
-    parts.beard.setMatrixAt(i, L.beard === 'full' || L.beard === 'curtain' ? M : NONE);
-    for (const [kind, hat] of Object.entries(hats)) hat.setMatrixAt(i, kind === L.hat ? M : NONE);
+    parts.legs.setMatrixAt(i, legs); parts.torso.setMatrixAt(i, B); parts.head.setMatrixAt(i, B);
+    parts.hair.setMatrixAt(i, L.hat === 'bare' && !L.bald ? B : NONE);
+    parts.beard.setMatrixAt(i, L.beard === 'full' || L.beard === 'curtain' ? B : NONE);
+    for (const [kind, hat] of Object.entries(hats)) hat.setMatrixAt(i, kind === L.hat ? B : NONE);
     parts.ring.setMatrixAt(i, M.compose(p, qf.identity(), s.setScalar(k * (chosen ? 1.35 : 1))));
     parts.ring.setColorAt(i, chosen ? WATCH.chosen : WATCH[m.watch || 'none']);
   }

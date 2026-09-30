@@ -9,6 +9,7 @@ import { bake } from './bake.js';
 import { STATIONS, TWEEN } from './stations.js';
 import { HOLD, PER_DAY } from './stores.js';
 import { detailUpperDeck } from './deckdetail.js';
+import { detailTween, detailHold, caskGeometry, hoopGeometry } from './belowdetail.js';
 
 const mat = (color, o = {}) => new THREE.MeshStandardMaterial({ color, flatShading: true, roughness: 0.85, ...o });
 const DECK = mat(0xa07a52), PLANK = mat(0x7d5b3d), HULL = mat(0x2e2620), RAIL = mat(0x4a3526);
@@ -94,24 +95,24 @@ function tween() {
 
 function hold() {
   const g = new THREE.Group(), s = 0.86;
-  g.add(floor(0.9, PLANK), ring(0.9, s, 1.2, 0, HULL));
+  g.add(floor(0.9, PLANK), ring(0.9, s, 0.7, 0, HULL));       // kept low, so the lower tier shows
   for (const x of MAST_X) cyl(g, 0.17, 0.4, SPAR, x, 0.2, 0);
-  // Casks in tiers, the outer ones stowed first.
+  // Casks on their sides in tiers, bilge and cantline (the upper tier bedded in
+  // the grooves of the lower), the outer ones stowed first.
   const spots = [];
-  for (let x = -5.3; x <= 5.7; x += 0.6) {
-    const hb = halfBeam(x, s) - 0.32;
-    for (let z = -hb; z <= hb + 0.01; z += 0.6) {
-      if (Math.abs(x - 1.2) < 0.55 && Math.abs(z) < 0.6) continue;            // room for the cooper
-      spots.push([x, 0.28, z]);
-      if (Math.abs(x) < 4) spots.push([x, 0.84, z]);
-    }
+  const clear = (x, z) => (Math.abs(x - 1.2) < 0.95 && Math.abs(z) < 0.75) || (Math.abs(x - 0.3) < 0.4 && z > 0.15 && z < 0.85);
+  for (let x = -5.3; x <= 5.8; x += 0.62) {
+    const hb = halfBeam(x, s) - 0.24;
+    for (let z = -hb; z <= hb + 0.01; z += 0.38) { if (!clear(x, z)) spots.push([x, 0.22, z]); }
+    if (Math.abs(x) < 4.2) for (let z = -hb + 0.19; z <= hb - 0.18; z += 0.38) { if (!clear(x, z)) spots.push([x, 0.55, z]); }
   }
   spots.sort((a, b) => (Math.abs(b[2]) + Math.abs(b[0]) * 0.3 + b[1]) - (Math.abs(a[2]) + Math.abs(a[0]) * 0.3 + a[1]));
-  const casks = new THREE.InstancedMesh(new THREE.CylinderGeometry(0.26, 0.26, 0.55, 8), mat(0xffffff), spots.length);
+  const casks = new THREE.InstancedMesh(caskGeometry(), mat(0xffffff), spots.length);
+  const hoops = new THREE.InstancedMesh(hoopGeometry(), mat(0x33312d), spots.length);
   const m = new THREE.Matrix4();
-  spots.forEach((p, i) => { m.makeTranslation(...p); casks.setMatrixAt(i, m); casks.setColorAt(i, new THREE.Color(0x4b3a2a)); });
-  casks.castShadow = true;
-  g.add(casks);
+  spots.forEach((p, i) => { m.makeTranslation(...p); casks.setMatrixAt(i, m); hoops.setMatrixAt(i, m); casks.setColorAt(i, new THREE.Color(0x4b3a2a)); });
+  casks.castShadow = hoops.castShadow = true;
+  g.add(casks, hoops);
   g.userData.casks = casks;
   return g;
 }
@@ -139,19 +140,9 @@ function own(g) {
 
 const CASK = { stores: new THREE.Color(0x7fb069), whale: new THREE.Color(0xd9a441), sperm: new THREE.Color(0xf1e2b8), empty: new THREE.Color(0x4b3a2a) };
 
-// The upper deck twice over, plain and in full, so the two can be set side by side.
-function upperBoth() {
-  const g = new THREE.Group(), plain = upper(), rich = detailUpperDeck(upper());
-  bake(plain); bake(rich);
-  plain.visible = false; plain.userData.keep = rich.userData.keep = true;
-  g.add(plain, rich);
-  g.userData.variants = { plain, rich };
-  return g;
-}
-
 export function makeDecks() {
   const root = new THREE.Group();
-  const layers = [['upper', upperBoth()], ['tween', tween()], ['hold', hold()]].map(([deck, g]) => {
+  const layers = [['upper', detailUpperDeck(upper())], ['tween', detailTween(tween())], ['hold', detailHold(hold())]].map(([deck, g]) => {
     plates(g, deck);
     const keep = []; g.traverse((o) => { if (o.userData.station || o.userData.keep || o.isInstancedMesh) keep.push(o); });
     bake(g, keep);
@@ -182,7 +173,5 @@ export function makeDecks() {
   }
 
   const platesOn = (i) => { const out = []; layers[i].group.traverse((o) => { if (o.userData.station) out.push(o); }); return out; };
-  // Show the upper deck plain, or in full.
-  function setDetail(full) { const v = layers[0].group.userData.variants; v.rich.visible = full; v.plain.visible = !full; }
-  return { root, layers, setHold, platesOn, setDetail };
+  return { root, layers, setHold, platesOn };
 }

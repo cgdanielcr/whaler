@@ -46,7 +46,8 @@ export function placeAll(company, watch) {
     if (m.watch === watch.onDeck) { put(m, 0, WAIST[used.waist++ % WAIST.length]); continue; }
     if (m.title === (watch.onDeck === 'larboard' ? 'First mate' : 'Second mate')) { put(m, 0, QUARTERDECK); continue; }
     const beds = BERTHS[m.berth], i = used[m.berth]++, p = beds[i % beds.length];
-    put(m, 1, i < beds.length ? p : [p[0] + 0.35, p[1], p[2] * 0.8]);   // doubled up if there are more men than berths
+    // Below, a man sits on his sea chest (doubled up if there are more men than berths), facing the room.
+    put(m, 1, i < beds.length ? p : [p[0] + 0.35, p[1], p[2] * 0.8], 'sit', p[2] > 0 ? Math.PI / 2 : -Math.PI / 2);
   }
   return out;
 }

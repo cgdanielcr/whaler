@@ -46,10 +46,6 @@ export function makeShipView({ view, voyage, company, crews, ship, helm }) {
   const runBtn = document.getElementById('runTime'), watchLine = document.getElementById('watchLine');
   function setRun(on) { running = on; runBtn.textContent = on ? 'Hold time' : 'Let time run'; }
   runBtn.onclick = () => setRun(!running);
-  // For comparing: the upper deck plain, as she was, or in full detail.
-  let full = true;
-  const detailBtn = document.getElementById('detailBtn');
-  detailBtn.onclick = () => { full = !full; d.setDetail(full); detailBtn.textContent = full ? 'Show plain deck' : 'Show detailed deck'; };
 
   function select(i) {
     sel = (i + DECKS.length) % DECKS.length;
