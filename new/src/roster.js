@@ -6,6 +6,7 @@ import { LEVEL_NAMES } from './company.js';
 import { describeEffects } from './effects.js';
 import { SIGHT } from './lookout.js';
 import { BOATS, SEATS } from './boatcrews.js';
+import { layOf } from './lay.js';
 
 const $ = (id) => document.getElementById(id);
 const pips = (n) => '●'.repeat(Math.round(n)) + '○'.repeat(Math.max(0, 5 - Math.round(n)));
@@ -75,6 +76,8 @@ export function makeRoster({ company, crews, voyage, onChange, onSelect }) {
     return `<button class="back" data-back>‹ Back</button><div class="title">${m.name}</div>` +
       `<div class="sub">${m.title}, aged ${m.age}, of ${m.home}${m.watch ? ` · ${m.watch} watch` : ''}</div>` +
       `<div class="row"><span>Health</span>${bar(m.health)}</div>` +
+      `<div class="row"><span>Lay</span><b>1/${layOf(m)}</b></div>` +
+      (m.lastPay != null ? `<div class="row"><span>Last voyage</span><b>${m.lastPay < 0 ? `owed $${(-m.lastPay).toFixed(2)}` : `paid $${m.lastPay.toFixed(2)}`}</b></div>` : '') +
       Object.entries(m.stats).map(([k, n]) => `<div class="row"><span>${STAT_NAMES[k]}</span><b>${pips(n)}</b></div>`).join('') + trades +
       `<div class="grp">Station</div><p class="quiet">${place(m) || 'None: he works where he is told.'}</p>` +
       `<div class="grp">Boat</div><p class="quiet">${seatName(m) || (m.officer ? 'None' : 'None: he stays aboard as a shipkeeper.')}</p>` +

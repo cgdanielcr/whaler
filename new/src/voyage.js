@@ -4,6 +4,7 @@ import { BERTH, wrap } from './world.js';
 import { effects } from './effects.js';
 import { makeLookout } from './lookout.js';
 import { watchAt } from './watches.js';
+import { reckon, payList } from './lay.js';
 import { HOLD, FITS, PER_DAY, REPAIR, NEW_SHIP, worth, daysHome, verdict, money } from './stores.js';
 import { makeSeason, dayOfYear, LAST_FIT } from './season.js';
 import { makeChase } from './chase.js';
@@ -74,14 +75,17 @@ export function makeVoyage({ scene, helm, whales, boats, ship, start, company, c
 
   function arrive() {
     v.phase = 'ended'; helm.set = false; helm.target = null;
-    const repairs = Math.round(100 - v.hull) * REPAIR, net = worth(v) - repairs;
+    // The reckoning: the oil sold, the charges, every man's lay, and what the owners keep.
+    const r = reckon(company, v), repairs = Math.round(100 - v.hull) * REPAIR, net = r.owners - repairs;
+    for (const s of r.shares) s.m.lastPay = s.dead ? null : s.due;
     const lines = [
       `Made fast at the wharf after <b>${v.days}</b> days at sea, with <b>${v.taken}</b> whales taken.`,
-      `Whale oil: <b>${v.whale}</b> barrels. Sperm oil: <b>${v.sperm}</b> barrels. Together they fetch <b>${money(worth(v))}</b>.`,
+      `Whale oil: <b>${v.whale}</b> barrels. Sperm oil: <b>${v.sperm}</b> barrels. The oil fetches <b>${money(r.gross)}</b>, less <b>${money(r.charges)}</b> in charges.`,
+      `The men's lays come to <b>${money(r.crew)}</b>. The owners keep <b>${money(r.owners)}</b>${repairs > 0 ? `, less <b>${money(repairs)}</b> for repairs to her hull: <b>${money(net)}</b>` : ''}.`,
     ];
-    if (repairs > 0) lines.push(`Repairs to her hull: <b>${money(repairs)}</b>, leaving <b>${money(net)}</b>.`);
+    if (r.inDebt) lines.push(`${r.inDebt} ${r.inDebt === 1 ? 'man comes' : 'men come'} home owing the ship for slops.`);
     if (v.lost || v.boatsLost) lines.push(`Lost: <b>${v.lost}</b> men and <b>${v.boatsLost}</b> boats.`);
-    lines.push(verdict(net));
+    lines.push(verdict(net), payList(r));
     hud.ended('The voyage is made', lines, () => { v.landed += net; v.voyages++; reset(); fitOut(false); });
   }
 

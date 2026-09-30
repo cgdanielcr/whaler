@@ -96,6 +96,6 @@ export const hud = {
   decide(text, options) { modal('A decision', `<p>${text}</p>`, options); },
 
   ended(title, lines, again) {
-    modal(title, lines.map((l) => `<p>${l}</p>`).join(''), [['Fit out for another voyage', again]]);
+    modal(title, lines.map((l) => (l.startsWith('<div') ? l : `<p>${l}</p>`)).join(''), [['Fit out for another voyage', again]]);
   },
 };

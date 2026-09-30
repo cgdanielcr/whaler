@@ -64,6 +64,14 @@ button:hover { filter: brightness(1.08); }
 #modal .panel { position: static; width: min(380px, calc(100vw - 32px)); text-align: center; padding: 22px; }
 #summary p { color: var(--dim); line-height: 1.5; }
 #summary b { color: var(--gold); font-weight: normal; }
+#modal .panel:has(.pay) { width: min(520px, calc(100vw - 32px)); }
+.pay { max-height: 32vh; overflow-y: auto; margin: 6px 0 12px; border-top: 1px solid var(--edge); border-bottom: 1px solid var(--edge); }
+.pay table { width: 100%; border-collapse: collapse; font-size: .74rem; text-align: left; }
+.pay td { padding: 3px 6px; color: var(--text); white-space: nowrap; }
+.pay td:nth-child(2) { color: var(--dim); font-style: italic; }
+.pay td:nth-child(3) { color: var(--gold); }
+.pay tr.owes td:last-child { color: #e2674f; }
+.pay tr.dead td { opacity: 0.55; font-style: italic; }
 
 #back { position: fixed; right: 14px; bottom: 10px; color: var(--dim); font-size: .8rem; text-decoration: none; }
 #back:hover { color: var(--gold); }

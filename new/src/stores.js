@@ -22,10 +22,11 @@ export const worth = (v) => v.whale * PRICE.whale + v.sperm * PRICE.sperm;
 export const daysHome = (pos) => Math.ceil(Math.hypot(pos.x - BERTH.x, pos.z - BERTH.z) / MILES_A_DAY);
 
 
+// On what the owners keep, after the charges and the men's lays.
 export function verdict(dollars) {
-  if (dollars < 1500) return 'A broken voyage. The owners will not soon forget it.';
-  if (dollars < 4000) return 'A middling voyage. The owners say little.';
-  if (dollars < 8000) return 'A good voyage. The owners are pleased.';
+  if (dollars < 800) return 'A broken voyage. The owners will not soon forget it.';
+  if (dollars < 2000) return 'A middling voyage. The owners say little.';
+  if (dollars < 4000) return 'A good voyage. The owners are pleased.';
   return 'A greasy voyage! The owners are delighted.';
 }
 
