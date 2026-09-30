@@ -2,6 +2,7 @@
 // the one thing to do next, the chase, the lookout's cries, the choices put
 // to the owner, and the voyage's end.
 import { HOLD, CREW, BOATS, worth, money } from './stores.js';
+import { mood } from './morale.js';
 
 const $ = (id) => document.getElementById(id);
 const MONTHS = 'January February March April May June July August September October November December'.split(' ');
@@ -24,7 +25,10 @@ function modal(title, html, buttons) {
 }
 
 export const hud = {
-  ship(v, { room, home, atSea }) {
+  ship(v, { room, home, atSea, spirits }) {
+    $('spiritsN').textContent = `${mood(spirits)}`;
+    $('spiritsB').style.width = pct(spirits / 100);
+    $('spiritsB').style.background = spirits >= 55 ? '#7fb069' : spirits >= 40 ? '#d9a441' : '#e2674f';
     $('holdN').textContent = `room for ${room} bbl`;
     $('hProv').style.width = pct((v.stores * 6) / HOLD);
     $('hWhale').style.width = pct(v.whale / HOLD);

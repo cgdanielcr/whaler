@@ -4,6 +4,7 @@
 // (MORGAN.md, section 2). Hawaii is "the Sandwich Islands", as it was in 1841.
 import { SLOTS, slotStation } from './stations.js';
 import { hud } from './hud.js';
+import { START, spiritFactor } from './morale.js';
 
 const rand = Math.random;
 const pick = (a) => a[Math.floor(rand() * a.length)];
@@ -52,7 +53,7 @@ function man(rank, title, watch) {
   return {
     id: nextId++, name: `${pick(firsts)} ${pick(lasts)}`, home, age: roll(...r.age), rank, title: title || r.title,
     watch: watch || null, berth: r.berth, officer: !!r.officer,
-    stats: { strength: s, eye: e, nerve: n, seamanship: sea }, trades, health: 100, xp: {}, alive: true,
+    stats: { strength: s, eye: e, nerve: n, seamanship: sea }, trades, health: 100, spirits: START, xp: {}, alive: true,
   };
 }
 function weighted() {
@@ -69,7 +70,7 @@ export function makeCompany() {
   const level = (m, stationId) => LEVELS.filter((d) => (m.xp[stationId] || 0) >= d).length - 1;
   const base = (m, uses) => m.stats[uses] ?? m.trades[uses];
   // How well a man works a station: his stat, what he has learned there, and how sick he is.
-  const score = (m, st) => (base(m, st.uses) + level(m, st.id) * 0.75) * (0.5 + m.health / 200);
+  const score = (m, st) => (base(m, st.uses) + level(m, st.id) * 0.75) * (0.5 + m.health / 200) * spiritFactor(m);
   const stationOf = (id) => SLOTS.find((k) => slots[k] === id) || null;
   const fits = (m, key) => {
     if (!m.alive) return false;
@@ -148,7 +149,7 @@ export function makeCompany() {
 
     // At the wharf: the sick are made well, the dead are replaced by green hands.
     refit() {
-      for (const m of men) m.health = 100;
+      for (const m of men) { m.health = 100; m.spirits = START; }     // a run ashore puts them right
       men.forEach((m, i) => {                 // a lost seaman is replaced by a green hand; others in kind
         if (!m.alive) men[i] = man(m.rank === 'able' ? 'green' : m.rank, m.officer ? m.title : null, m.watch);
       });

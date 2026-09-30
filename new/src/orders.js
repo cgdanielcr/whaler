@@ -4,6 +4,7 @@ import { BERTH } from './world.js';
 import { describe } from './species.js';
 import { room, oil, daysHome, SHIPKEEPERS, PER_BOAT } from './stores.js';
 import { hud } from './hud.js';
+import { spiritsOf } from './morale.js';
 
 const REACH = 28;         // how near a whale must be to lower for her
 const ALONGSIDE = 16;     // how near a floating carcass must be to take her alongside
@@ -11,7 +12,8 @@ const far = (p, q) => Math.hypot(p.x - q.x, p.z - q.z);
 
 // Which boats go down: the best-manned of those marked to lower, no more than
 // two (one while trying out), and never so many the ship is left without keepers.
-function boatsToLower({ v, crews, company }) {
+function boatsToLower({ v, crews, company, kind }) {
+  if (kind.sunday) return [];                        // Sunday is kept: no whaling today
   const most = Math.min(v.phase === 'trying' ? 1 : 2, Math.floor((company.count - SHIPKEEPERS) / PER_BOAT));
   return crews.ready().slice(0, Math.max(0, most));
 }
@@ -44,6 +46,7 @@ function hint(g) {
   if (room(v) < 10) return 'The hold is full. Make for home: the wharf is the orange mark on the chart.';
   if (v.stores <= daysHome(helm.pos)) return 'There are not provisions enough for the passage home. Turn for home now.';
   if (season.gale) return 'No boat can be lowered in a gale.';
+  if (g.kind.sunday) return 'Sunday is kept: no whaling today.';
   if (!boatsToLower(g).length) return 'No boat is manned and marked to lower. Look to the boats in the ship view, or make for home.';
   return 'Bowheads keep along the edge of the ice, sperm whales to the south, right whales and humpbacks between. Click the sea to set a course.';
 }
@@ -51,7 +54,8 @@ function hint(g) {
 export function draw(g) {
   const { v, helm, trying, season, chase } = g;
   const full = room(v) < 10;
-  hud.ship(v, { room: room(v), home: daysHome(helm.pos), atSea: v.phase !== 'port' && v.phase !== 'ended' });
+  hud.ship(v, { room: room(v), home: daysHome(helm.pos), atSea: v.phase !== 'port' && v.phase !== 'ended', spirits: spiritsOf(g.company) });
+  g.kind.show();                                     // duff and a Sunday, when the calendar allows
   hud.where(v.phase === 'port' || v.phase === 'ended' ? 'At the wharf'
     : helm.slow === 0 ? 'Beset in the ice' : helm.slow < 1 ? 'In the pack ice' : helm.pos.x < -60 ? 'On the whaling grounds' : 'At sea',
     season.wind, season.gale);

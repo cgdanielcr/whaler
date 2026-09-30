@@ -6,6 +6,7 @@
 import { describe } from './species.js';
 import { BOATS, SEATS } from './boatcrews.js';
 import { hud } from './hud.js';
+import { cheer } from './morale.js';
 
 const CHASE = 9;          // seconds two ordinary boats must hang on to kill her
 const GIVE_UP = 15;       // seconds of pulling before the boats give up on a whale they cannot reach
@@ -55,6 +56,7 @@ export function makeChase({ v, whales, boats, helm, company, crews }) {
     for (const m of crew) if (m.alive) m.health = Math.max(5, m.health - 25);                       // the rest are hurt
     crews.lose(b);
     v.crew = company.count; v.lost += n; v.boatsLost += 1; v.boats = crews.afloat;
+    cheer(company, -2 - 5 * n); cheer(company, -4, crew);             // shaken, and the boat's own crew most of all
     const men = n === 0 ? 'All hands picked up.' : `${names.join(' and ')} ${n === 1 ? 'is' : 'are'} drowned.`;
     if (alone) escape(`She stoves the ${boatName(b)}! ${men} She is away.`);
     else hud.toast(`She stoves the ${boatName(b)}! ${men}`);
@@ -77,8 +79,9 @@ export function makeChase({ v, whales, boats, helm, company, crews }) {
   function finish() {
     const w = c.w, sinks = rand() < w.sp.sink;
     whales.kill(w, sinks);
-    if (sinks) return end('She is dead, and she sinks! All her oil goes to the bottom.');
+    if (sinks) { cheer(company, -2); return end('She is dead, and she sinks! All her oil goes to the bottom.'); }
     v.taken += 1;
+    cheer(company, 4);                                                // greasy luck: every man's lay is the fatter
     w.left = w.barrels;
     end(`She rolls fin out, about ${w.barrels} barrels in her. Bring her alongside before the sharks have her.`);
   }

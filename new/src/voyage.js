@@ -5,6 +5,7 @@ import { effects } from './effects.js';
 import { makeLookout } from './lookout.js';
 import { watchAt } from './watches.js';
 import { reckon, payList } from './lay.js';
+import { dailySpirits, cheer, willLower, leavers, makeKindness } from './morale.js';
 import { HOLD, FITS, PER_DAY, REPAIR, NEW_SHIP, worth, daysHome, verdict, money } from './stores.js';
 import { makeSeason, dayOfYear, LAST_FIT } from './season.js';
 import { makeChase } from './chase.js';
@@ -29,6 +30,7 @@ export function makeVoyage({ scene, helm, whales, boats, ship, start, company, c
   let watch = watchAt(0, 0);             // the watch now on deck
   let fx = effects(company, watch.onDeck);   // what the men at their stations do for her
   const trying = makeTrying(scene, { v, whales, helm });
+  const kind = makeKindness({ v, company, atSea: () => v.phase === 'sea' || v.phase === 'trying' });
   const far = (p, q) => Math.hypot(p.x - q.x, p.z - q.z);
   const tell = (key, text) => { if (!v.told[key]) { v.told[key] = true; hud.toast(text); } };
   const dateText = (d) => `${d.getDate()} ${MONTHS[d.getMonth()]} ${d.getFullYear()}`;
@@ -62,7 +64,10 @@ export function makeVoyage({ scene, helm, whales, boats, ship, start, company, c
       helm.steer(BERTH.x - 40, BERTH.z + 10);
       hud.toast('Cast off! She stands out from the wharf.');
     },
-    lower(w, ids) { v.phase = 'hunt'; helm.target = null; chase.start(w, ids); },
+    lower(w, ids) {
+      if (!willLower(company)) return hud.toast('The men will not lower! They hang back by the davits, muttering about short rations and a hard ship.');
+      v.phase = 'hunt'; helm.target = null; chase.start(w, ids);
+    },
     alongside(c) { v.phase = 'trying'; trying.alongside(c); },
     castOff() { trying.castOff('The carcass is cast adrift.'); v.phase = 'sea'; helm.set = true; },
     dock() {
@@ -85,15 +90,17 @@ export function makeVoyage({ scene, helm, whales, boats, ship, start, company, c
     ];
     if (r.inDebt) lines.push(`${r.inDebt} ${r.inDebt === 1 ? 'man comes' : 'men come'} home owing the ship for slops.`);
     if (v.lost || v.boatsLost) lines.push(`Lost: <b>${v.lost}</b> men and <b>${v.boatsLost}</b> boats.`);
+    const going = leavers(company);                           // the unhappy, and those who owe, will not ship again
+    if (going.length) lines.push(`<b>${going.length}</b> will not ship with you again: ${going.map((m) => `${m.name} (${m.title.toLowerCase()})`).join(', ')}.`);
     lines.push(verdict(net), payList(r));
-    hud.ended('The voyage is made', lines, () => { v.landed += net; v.voyages++; reset(); fitOut(false); });
+    hud.ended('The voyage is made', lines, () => { company.lose(going.length, going); v.landed += net; v.voyages++; reset(); fitOut(false); });
   }
 
   function lose(how) {
     v.phase = 'lost';
     const lines = [
       `${how} The Mastiff goes down with <b>${v.whale + v.sperm}</b> barrels of oil in her.`,
-      'The crew take to the boats and are picked up and brought home.',
+      'Those still alive take to the boats, and are picked up and brought home.',
       `The owners must buy another ship: <b>${money(NEW_SHIP)}</b>.`,
     ];
     hud.ended('The ship is lost', lines, () => {
@@ -117,6 +124,8 @@ export function makeVoyage({ scene, helm, whales, boats, ship, start, company, c
     if (sick.said.length > 2) hud.toast(`${sick.said.length} men have grown handier at their stations.`);
     else sick.said.forEach((s) => hud.toast(s));
     for (const name of sick.died) { v.lost++; hud.toast(`${name} is dead of ${v.stores === 0 ? 'scurvy' : 'the cold'}, and sewn into his hammock.`); }
+    dailySpirits(company, { cook: fx.scores.cook, starving: v.stores === 0, days: v.days });
+    if (sick.died.length) cheer(company, -5 * sick.died.length);  // a burial at sea weighs on every man
     v.crew = company.count;
     if (v.stores === 0) tell('out', 'The provisions are out. The men will sicken.');
     const home = daysHome(helm.pos);
@@ -140,6 +149,7 @@ export function makeVoyage({ scene, helm, whales, boats, ship, start, company, c
     v.hull = Math.max(0, v.hull - harm);
     if (v.hull < 30) tell('hull', 'She is leaking badly. The pumps are going day and night.');
     if (v.hull <= 0) lose(inside > 0 ? 'The ice crushes her like an egg.' : 'Her seams open and she fills.');
+    else if (company.count < 6 && v.phase !== 'lost') lose('Too few hands are left alive to work her, and she drives ashore.');
   }
 
   function tick(dt) {
@@ -182,7 +192,7 @@ export function makeVoyage({ scene, helm, whales, boats, ship, start, company, c
     helm.steer(x, z);
   }
 
-  const ctx = { v, helm, whales, boats, trying, season, chase, acts, company, crews };
+  const ctx = { v, helm, whales, boats, trying, season, chase, acts, company, crews, kind };
   hud.toast('The Mastiff lies at the wharf, to be fitted out for a whaling voyage.');
   fitOut(true);
   return {
