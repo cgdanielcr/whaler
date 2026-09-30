@@ -15,8 +15,13 @@ const MASTS = [{ x: 3.9, h: 12.5, k: 1 }, { x: 0.3, h: 13.5, k: 1.08 }, { x: -3.
 const YARDS = [{ f: 0.36, w: 6.4 }, { f: 0.62, w: 5.0 }, { f: 0.84, w: 3.6 }];
 const DECK_Y = 0.9;
 
+// Her boats on the davits, as [x along her, side]: three on the larboard side and one on
+// the starboard quarter, leaving the starboard waist clear for cutting in. The first two
+// listed are the first lowered. (The Morgan carried five; we play with four.)
+export const DAVITS = [[0.9, -1], [-4.3, 1], [3.4, -1], [-1.9, -1]];
+
 // The outline of the hull seen from above, at scale s.
-function trace(p, s) {
+export function trace(p, s) {
   p.moveTo(-7 * s, 0); p.lineTo(-7 * s, 1.45 * s); p.quadraticCurveTo(-6.7 * s, 1.9 * s, -5 * s, 1.95 * s);
   p.lineTo(2 * s, 1.95 * s); p.quadraticCurveTo(5.6 * s, 1.85 * s, 7.4 * s, 0);
   p.quadraticCurveTo(5.6 * s, -1.85 * s, 2 * s, -1.95 * s); p.lineTo(-5 * s, -1.95 * s);
@@ -25,7 +30,7 @@ function trace(p, s) {
 }
 
 // Stand an outline up into a solid: its bottom face at y, its top at y + depth.
-function lift(shape, depth, y, steps = 1) {
+export function lift(shape, depth, y, steps = 1) {
   const g = new THREE.ExtrudeGeometry(shape, { depth, steps, bevelEnabled: false, curveSegments: 8 });
   g.rotateX(-Math.PI / 2);
   g.translate(0, y, 0);
@@ -44,7 +49,7 @@ function hullMesh() {
   return new THREE.Mesh(g, [DECK, HULL]);    // top face is the deck
 }
 
-function ring(outer, inner, depth, y, m) {
+export function ring(outer, inner, depth, y, m) {
   const s = trace(new THREE.Shape(), outer);
   s.holes.push(trace(new THREE.Path(), inner));
   return new THREE.Mesh(lift(s, depth, y), m);
@@ -126,16 +131,20 @@ export function makeShip() {
   flag.position.set(-0.4, DECK_Y + 13.8, 0);
   g.add(flag);
 
-  // Boats on the davits, two each side. The after pair go down first.
-  const davits = [];
-  for (const x of [-1.8, 4.6]) {
-    for (const side of [-1, 1]) {
-      const boat = boatMesh(false);
-      boat.scale.setScalar(0.8);
-      boat.position.set(x, 1.9, side * 2.4);
-      g.add(boat);
-      davits.push(boat);
-    }
+  // Boats on the davits, and two spares bottom-up on the skids over the after house.
+  const davits = DAVITS.map(([x, side]) => {
+    const boat = boatMesh(false);
+    boat.scale.setScalar(0.8);
+    boat.position.set(x, 1.9, side * 2.4);
+    g.add(boat);
+    return boat;
+  });
+  for (const z of [-0.55, 0.55]) {
+    const spare = boatMesh(false);
+    spare.scale.setScalar(0.75);
+    spare.rotation.x = Math.PI;
+    spare.position.set(-5.2, 2.2, z);
+    g.add(spare);
   }
 
   g.traverse((o) => { if (o.isMesh) { o.castShadow = true; o.receiveShadow = true; } });

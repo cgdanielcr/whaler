@@ -19,6 +19,7 @@
     <div class="row"><span>Crew</span><b id="crewN"></b></div>
     <div class="bar"><i id="crewB" class="crew"></i></div>
     <div class="row"><span>Boats</span><b id="boatsN"></b></div>
+    <button id="openShip" class="lesser small">The ship ›</button>
   </div>
 
   <div class="panel" id="tally"></div>
@@ -44,6 +45,14 @@
   </div>
 
   <div id="toast"></div>
+
+  <div id="labels"></div>
+  <div class="panel" id="shipbar">
+    <div class="deckrow"><button id="prevDeck" class="lesser">‹</button><span id="deckTabs"></span><button id="nextDeck" class="lesser">›</button></div>
+    <div class="legend"><i style="background:#2b3550"></i>Larboard watch <i style="background:#7a3b2a"></i>Starboard watch <i style="background:#6b5a3a"></i>Idlers <i style="background:#161616"></i>Officers</div>
+    <div class="note">Time stands still while you look over the ship.</div>
+    <button id="closeShip">Back to the sea</button>
+  </div>
 
   <div id="modal" hidden>
     <div class="panel">

@@ -21,7 +21,7 @@ export function makeView() {
 
   const camera = new THREE.OrthographicCamera(-1, 1, 1, -1, 1, 1400);
   const focus = new THREE.Vector3();
-  let viewH = 52, first = true;
+  let viewH = 52, wantH = 52, first = true;       // how many units of the world show top to bottom
 
   scene.add(new THREE.HemisphereLight(0xd8ecff, 0x16384a, 1.25));
   const sun = new THREE.DirectionalLight(0xfff1dc, 2.6);
@@ -34,10 +34,14 @@ export function makeView() {
 
   const post = TILT_SHIFT ? makePost(renderer) : null;
 
-  function resize() {
-    const w = innerWidth, h = innerHeight, a = w / h;
+  function project() {
+    const a = innerWidth / innerHeight;
     Object.assign(camera, { left: -viewH * a / 2, right: viewH * a / 2, top: viewH / 2, bottom: -viewH / 2 });
     camera.updateProjectionMatrix();
+  }
+  function resize() {
+    const w = innerWidth, h = innerHeight;
+    project();
     renderer.setSize(w, h);
     if (post) post.setSize(w, h);
   }
@@ -46,16 +50,16 @@ export function makeView() {
   function follow(p, dt) {
     if (first) { focus.copy(p); first = false; }
     focus.lerp(p, 1 - Math.exp(-dt * 2.5));
+    if (Math.abs(wantH - viewH) > 0.01) { viewH += (wantH - viewH) * (1 - Math.exp(-dt * 4)); project(); }
     camera.position.copy(focus).addScaledVector(LOOK, 500);
     camera.lookAt(focus);
     sun.position.copy(focus).add(SUN);
     sun.target.position.copy(focus);
   }
 
-  function zoom(delta) {
-    viewH = THREE.MathUtils.clamp(viewH * (1 + delta * 0.001), 28, 150);
-    resize();
-  }
+  function zoom(delta) { wantH = THREE.MathUtils.clamp(wantH * (1 + delta * 0.001), 28, 150); }
+  // For the ship view: glide to a given height of view, or back to where it was.
+  const height = (h) => { const was = wantH; if (h) wantH = h; return was; };
 
   // Where on the sea the pointer is.
   const ray = new THREE.Raycaster(), ndc = new THREE.Vector2(), hit = new THREE.Vector3();
@@ -66,5 +70,5 @@ export function makeView() {
     return ray.ray.intersectPlane(plane, hit);
   }
 
-  return { renderer, scene, camera, canvas: renderer.domElement, resize, follow, zoom, pick, render: () => (post ? post.render(scene, camera) : renderer.render(scene, camera)) };
+  return { renderer, scene, camera, canvas: renderer.domElement, resize, follow, zoom, height, pick, render: () => (post ? post.render(scene, camera) : renderer.render(scene, camera)) };
 }

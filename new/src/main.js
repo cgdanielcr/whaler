@@ -17,6 +17,7 @@ import { makeVoyage } from './voyage.js';
 import { BERTH } from './world.js';
 import { makePack } from './pack.js';
 import { iceEdge } from './season.js';
+import { makeShipView } from './shipview.js';
 
 const START = new Date(1841, 4, 1);
 
@@ -37,6 +38,7 @@ const wake = makeWake(scene);
 const gulls = makeGulls(scene);
 const minimap = makeMinimap(document.getElementById('minimap'));
 const voyage = makeVoyage({ scene, helm, whales, boats, ship, start: START });
+const shipView = makeShipView({ scene, view, ship, helm, voyage });
 
 // A ring on the water where she has been sent.
 const marker = new THREE.Mesh(new THREE.RingGeometry(1.2, 1.7, 24).rotateX(-Math.PI / 2),
@@ -50,8 +52,11 @@ view.canvas.addEventListener('pointerdown', (e) => { down = { x: e.clientX, y: e
 view.canvas.addEventListener('pointerup', (e) => {
   if (!down || Math.hypot(e.clientX - down.x, e.clientY - down.y) > 8) return;
   down = null;
+  if (shipView.busy) return;
   const p = view.pick(e.clientX, e.clientY);
-  if (p) voyage.click(p.x, p.z);
+  if (!p) return;
+  if (Math.hypot(p.x - helm.pos.x, p.z - helm.pos.z) < 5) shipView.show();   // a click on the ship opens her up
+  else voyage.click(p.x, p.z);
 });
 addEventListener('wheel', (e) => view.zoom(e.deltaY), { passive: true });
 addEventListener('resize', view.resize);
@@ -64,7 +69,7 @@ view.renderer.setAnimationLoop((ms) => {
 });
 
 function frame(real) {
-  const dt = voyage.v.paused ? 0 : real;     // the world holds still while a decision is waiting
+  const dt = voyage.v.paused || shipView.busy ? 0 : real;   // the world holds still for a decision, or while you look over the ship
   t += dt;
 
   helm.update(dt, t);
@@ -86,11 +91,12 @@ function frame(real) {
   // Keep the ship in the middle; during a chase, look between her and the whale.
   focus.set(helm.pos.x, 0, helm.pos.z);
   if (voyage.quarry) focus.lerp(voyage.quarry.group.position, 0.4).setY(0);
-  view.follow(focus, real);
+  view.follow(shipView.look(focus), real);
+  shipView.update(real);
 
   if ((slow += real) > 0.15) { slow = 0; voyage.draw(); minimap.draw(helm, whales, voyage.season.edge); }
   view.render();
 }
 
 // For testing from the browser console: whaler.frame(0.05) steps the world.
-window.whaler = { frame, voyage, helm, whales, view, scene };
+window.whaler = { frame, voyage, helm, whales, view, scene, shipView };
