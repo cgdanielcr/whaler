@@ -152,6 +152,13 @@ body.inship #corner, body.inship #tally { display: none; }
 #rosterBody .st.flash { outline: 1px solid var(--gold); }
 #rosterBody .stname { color: var(--gold); margin: 4px 0; }
 #rosterBody .stname small, #rosterBody small { color: var(--dim); font-style: italic; }
+/* Portraits: small in the lists, large on a man's card. */
+img.face { width: 34px; height: 40px; flex: none; border-radius: 50%; }
+img.face.big { display: block; width: 120px; height: 140px; margin: 2px auto 8px; border-radius: 0; }
+#rosterBody button.man .nm { flex: 1; display: flex; flex-direction: column; line-height: 1.25; min-width: 0; }
+#rosterBody button.man .nm small { font-size: .7rem; }
+#rosterBody button.man > span:last-child { display: flex; flex-direction: column; align-items: flex-end; gap: 2px; max-width: 42%; text-align: right; }
+#rosterBody button.man > span:last-child small { font-size: .68rem; }
 #rosterBody button.slot, #rosterBody button.man { display: flex; justify-content: space-between; align-items: center; gap: 8px; width: 100%;
   text-align: left; font-size: .78rem; padding: 5px 8px; margin: 2px 0; background: rgba(255, 255, 255, 0.04); color: var(--text);
   border: 1px solid transparent; box-shadow: none; border-radius: 5px; }

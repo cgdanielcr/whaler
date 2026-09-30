@@ -9,6 +9,7 @@ import { makeStage } from './shipstage.js';
 import { DECKS, STATIONS, SLOTS, LABELS, slotStation } from './stations.js';
 import { placeAll, LADDERS } from './watches.js';
 import { makeRoster } from './roster.js';
+import { makeCrewFigures } from './crewfig.js';
 import { mood, spiritsOf } from './morale.js';
 
 const FADE = 0.3;                        // seconds to fade to black, and back
@@ -16,25 +17,15 @@ const WALK = 2.2;                        // how fast the men walk about the deck
 const SLOW = 8;                          // with time let run, it goes this many times slower than at sea
 const ROSTER_PX = 380;                   // the roster's width, on the right
 const MONTHS = 'January February March April May June July August September October November December'.split(' ');
-const COLOR = { larboard: new THREE.Color(0x2b3550), starboard: new THREE.Color(0x7a3b2a),
-  idler: new THREE.Color(0x6b5a3a), officer: new THREE.Color(0x161616), chosen: new THREE.Color(0xf0c96a) };
 
 export function makeShipView({ view, voyage, company, crews }) {
   const stage = makeStage(view.renderer), d = makeDecks();
   stage.scene.add(d.root);
   d.layers.forEach((l) => l.fade(1));
 
-  // The men, drawn all at once: bodies and heads, one of each per man.
-  const N = company.men.length;
-  const bodies = new THREE.InstancedMesh(new THREE.CylinderGeometry(0.13, 0.18, 0.75, 6),
-    new THREE.MeshStandardMaterial({ flatShading: true, roughness: 0.8 }), N);
-  const heads = new THREE.InstancedMesh(new THREE.SphereGeometry(0.13, 6, 4),
-    new THREE.MeshStandardMaterial({ color: 0xd4a27b, flatShading: true }), N);
-  bodies.castShadow = heads.castShadow = true;
-  bodies.frustumCulled = heads.frustumCulled = false;
-  stage.scene.add(bodies, heads);
+  // The men, each dressed from his own look.
+  const figs = makeCrewFigures(stage.scene, company.men.length);
   let chosen = null;
-  const colorOf = (m) => (m.id === chosen ? COLOR.chosen : m.officer ? COLOR.officer : m.watch ? COLOR[m.watch] : COLOR.idler);
 
   // Names on the deck in hand; station plates carry who works them.
   const box = document.getElementById('labels');
@@ -51,7 +42,7 @@ export function makeShipView({ view, voyage, company, crews }) {
   const roster = makeRoster({ company, crews, voyage, onChange: relabel, onSelect: (id) => { chosen = id; } });
   let want = false, showing = false, black = 0, running = false, sel = 0, at = 0, lastWatch = null, said = 0;
   const where = new Map();                 // each man: { deck, p, key, route }
-  const m4 = new THREE.Matrix4(), v3 = new THREE.Vector3(), q = new THREE.Quaternion(), sc = new THREE.Vector3();
+  const v3 = new THREE.Vector3();
   const tabs = document.getElementById('deckTabs'), fade = document.getElementById('fade');
   DECKS.forEach((deck, i) => { const b = document.createElement('button'); b.textContent = deck.name; b.onclick = () => select(i); tabs.append(b); });
   const runBtn = document.getElementById('runTime'), watchLine = document.getElementById('watchLine');
@@ -83,8 +74,7 @@ export function makeShipView({ view, voyage, company, crews }) {
   function click(cx, cy) {
     ndc.set((cx / innerWidth) * 2 - 1, -(cy / innerHeight) * 2 + 1);
     ray.setFromCamera(ndc, stage.camera);
-    bodies.computeBoundingSphere(); heads.computeBoundingSphere();
-    const hit = ray.intersectObjects([bodies, heads, ...d.platesOn(sel)], false)[0];
+    const hit = ray.intersectObjects([...figs.pickables(), ...d.platesOn(sel)], false)[0];
     if (!hit) return;
     if (hit.object.userData.station) roster.showStation(hit.object.userData.station);
     else roster.showMan(company.men[hit.instanceId].id);
@@ -132,7 +122,7 @@ export function makeShipView({ view, voyage, company, crews }) {
     if (black >= 1 && want !== showing) {
       showing = want;
       document.body.classList.toggle('inship', showing);
-      if (showing) { stage.resize(ROSTER_PX); d.setHold(voyage.v); relabel(); select(sel); }
+      if (showing) { stage.resize(ROSTER_PX); d.setHold(voyage.v); figs.dress(company.men); relabel(); select(sel); }
     }
     fade.style.opacity = black;
     fade.style.pointerEvents = black > 0.05 ? 'auto' : 'none';
@@ -147,14 +137,9 @@ export function makeShipView({ view, voyage, company, crews }) {
     const places = placeAll(company, w);
     company.men.forEach((m, i) => {
       const p = walk(m.id, places.get(m.id), dt), g = p && d.layers[p.deck].group;
-      const s = p ? g.scale.x : 0.0001;
-      if (p) v3.set(...p.p).applyMatrix4(g.matrixWorld); else v3.set(0, -99, 0);
-      sc.setScalar(s);
-      bodies.setMatrixAt(i, m4.compose(v3.clone().add({ x: 0, y: 0.375 * s, z: 0 }), q, sc));
-      heads.setMatrixAt(i, m4.compose(v3.clone().add({ x: 0, y: 0.86 * s, z: 0 }), q, sc));
-      bodies.setColorAt(i, colorOf(m));
+      figs.place(i, m, p ? v3.set(...p.p).applyMatrix4(g.matrixWorld) : null, p ? g.scale.x : 0, m.id === chosen);
     });
-    bodies.instanceMatrix.needsUpdate = heads.instanceMatrix.needsUpdate = bodies.instanceColor.needsUpdate = true;
+    figs.done();
 
     for (const l of labels) {
       const on = l.deck === sel && Math.abs(at - sel) < 0.05;

@@ -8,6 +8,9 @@ import { SIGHT } from './lookout.js';
 import { BOATS, SEATS } from './boatcrews.js';
 import { layOf } from './lay.js';
 import { mood, spiritsOf } from './morale.js';
+import { portrait } from './portrait.js';
+
+const face = (m, cls = '') => `<img class="face ${cls}" src="${portrait(m)}" alt="">`;
 
 const $ = (id) => document.getElementById(id);
 const pips = (n) => '●'.repeat(Math.round(n)) + '○'.repeat(Math.max(0, 5 - Math.round(n)));
@@ -39,7 +42,7 @@ export function makeRoster({ company, crews, voyage, onChange, onSelect }) {
     return `<button class="back" data-back>‹ Back</button><div class="stname">${SEATS[s].name} of the ${BOATS[b].name.toLowerCase()} <small>calls for ${STAT_NAMES[SEATS[s].uses]}</small></div>` +
       crews.candidates(b, s).map((m) => {
         const now = seatName(m), made = s === 0 && !m.officer ? ' · would be made mate' : s === 1 && (m.rank === 'able' || m.rank === 'green') ? ' · would be made boatsteerer' : '';
-        return `<button class="man" data-sit="${m.id}"><span><b>${m.name}</b> <small>${m.title}${now ? ` · now ${now}` : ''}${made}</small></span><span><em>${crews.score(m, s).toFixed(1)}</em></span></button>`;
+        return `<button class="man" data-sit="${m.id}">${face(m)}<span class="nm"><b>${m.name}</b> <small>${m.title}${now ? ` · now ${now}` : ''}${made}</small></span><span><em>${crews.score(m, s).toFixed(1)}</em></span></button>`;
       }).join('') + '<button class="man quiet" data-sit="">Leave it empty</button>';
   }
 
@@ -57,7 +60,7 @@ export function makeRoster({ company, crews, voyage, onChange, onSelect }) {
       ['Larboard watch', (m) => m.watch === 'larboard' && m.rank !== 'boatsteerer'], ['Starboard watch', (m) => m.watch === 'starboard' && m.rank !== 'boatsteerer'],
       ['Idlers', (m) => !m.officer && !m.watch]];
     return groups.map(([t, f]) => `<div class="grp">${t}</div>` + alive.filter(f).map((m) =>
-      `<button class="man" data-man="${m.id}"><span><b>${m.name}</b> <small>${m.title}, ${m.age}</small></span><span>${bar(m.health)}<small>${place(m)}</small></span></button>`).join('')).join('');
+      `<button class="man" data-man="${m.id}">${face(m)}<span class="nm"><b>${m.name}</b> <small>${m.title}, ${m.age}</small></span><span>${bar(m.health)}<small>${place(m)}</small></span></button>`).join('')).join('');
   }
 
   function choose(key) {
@@ -65,7 +68,7 @@ export function makeRoster({ company, crews, voyage, onChange, onSelect }) {
     return `<button class="back" data-back>‹ Back</button><div class="stname">${slotName(key)} <small>calls for ${STAT_NAMES[st.uses]}</small></div>` +
       company.candidates(key).map((m) => {
         const now = place(m);
-        return `<button class="man" data-assign="${m.id}"><span><b>${m.name}</b> <small>${m.title}${now ? ` · now ${now}` : ''}</small></span>` +
+        return `<button class="man" data-assign="${m.id}">${face(m)}<span class="nm"><b>${m.name}</b> <small>${m.title}${now ? ` · now ${now}` : ''}</small></span>` +
           `<span><em>${stars(company.level(m, st.id))} ${company.score(m, st).toFixed(1)}</em></span></button>`;
       }).join('') + '<button class="man quiet" data-assign="">Leave it empty</button>';
   }
@@ -74,7 +77,7 @@ export function makeRoster({ company, crews, voyage, onChange, onSelect }) {
     const m = company.byId(id);
     const trades = Object.entries(m.trades).filter(([, n]) => n > 1).map(([t, n]) => `<div class="row"><span>${STAT_NAMES[t]}</span><b>${pips(n)}</b></div>`).join('');
     const served = Object.entries(m.xp).map(([sid, d]) => `<div class="row"><span>${STATIONS.find((s) => s.id === sid).name}</span><b>${LEVEL_NAMES[company.level(m, sid)]}, ${d} days</b></div>`).join('');
-    return `<button class="back" data-back>‹ Back</button><div class="title">${m.name}</div>` +
+    return `<button class="back" data-back>‹ Back</button>${face(m, 'big')}<div class="title">${m.name}</div>` +
       `<div class="sub">${m.title}, aged ${m.age}, of ${m.home}${m.watch ? ` · ${m.watch} watch` : ''}</div>` +
       `<div class="row"><span>Health</span>${bar(m.health)}</div>` +
       `<div class="row"><span>Spirits</span><span>${bar(m.spirits)}<small>${mood(m.spirits).toLowerCase()}</small></span></div>` +

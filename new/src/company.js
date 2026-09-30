@@ -5,6 +5,7 @@
 import { SLOTS, slotStation } from './stations.js';
 import { hud } from './hud.js';
 import { START, spiritFactor } from './morale.js';
+import { makeLook } from './looks.js';
 
 const rand = Math.random;
 const pick = (a) => a[Math.floor(rand() * a.length)];
@@ -46,15 +47,19 @@ export const LEVEL_NAMES = ['green', 'able', 'expert'];
 
 let nextId = 1;
 function man(rank, title, watch) {
-  const r = RANKS[rank], [, home, firsts, lasts] = weighted();
+  // Masters of New England whaleships in 1841 were nearly all Yankees, and most mates were too.
+  const yankee = rank === 'master' || (rank === 'mate' && rand() < 0.85);
+  const r = RANKS[rank], [, home, firsts, lasts] = yankee ? HOMES[Math.floor(rand() * 3)] : weighted();
   const [s, e, n, sea] = r.base.map((b) => clamp(b + roll(-1, 1)));
   const trades = Object.fromEntries(TRADES.map((t) => [t, rand() < 0.12 ? roll(2, 3) : 1]));
   if (r.trade) trades[r.trade] = roll(3, 5);
-  return {
+  const m = {
     id: nextId++, name: `${pick(firsts)} ${pick(lasts)}`, home, age: roll(...r.age), rank, title: title || r.title,
     watch: watch || null, berth: r.berth, officer: !!r.officer,
     stats: { strength: s, eye: e, nerve: n, seamanship: sea }, trades, health: 100, spirits: START, xp: {}, alive: true,
   };
+  m.look = makeLook(m);                     // his face, his build, his hat and clothes
+  return m;
 }
 function weighted() {
   let r = rand() * HOMES.reduce((a, h) => a + h[0], 0);
