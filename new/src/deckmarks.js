@@ -47,7 +47,7 @@ export function makeDeckMarks({ company, stage, layers, onStation }) {
     }
     const show = settled && chosen && chosen.deck === sel;
     plate.hidden = !show;
-    if (show) { plate.textContent = chosen.name; put(plate, chosen.p, chosen.deck, 1.2); }
+    if (show) { plate.textContent = chosen.name; put(plate, chosen.p, chosen.deck, 1.05); }
   }
 
   return { relabel, update };
