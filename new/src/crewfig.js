@@ -11,6 +11,9 @@ const dome = (r, y, sy = 1) => new THREE.SphereGeometry(r, 8, 4, 0, Math.PI * 2,
 const both = (...gs) => mergeGeometries(gs.map((x) => x.index ? x.toNonIndexed() : x));
 
 const HEAD_Y = 0.9;
+// How big the men are drawn against the ship. True scale would be about 0.75;
+// a little over that keeps faces and hats readable without crowding her decks.
+const SIZE = 0.85;
 const PARTS = {
   legs: cyl(0.11, 0.1, 0.36, 0.18),
   torso: cyl(0.15, 0.13, 0.44, 0.58),
@@ -61,6 +64,7 @@ export function makeCrewFigures(scene, N) {
   function place(i, m, p, k, chosen) {
     if (!p) { for (const part of all) part.setMatrixAt(i, NONE); return; }
     const L = m.look;
+    k *= SIZE;
     M.compose(p, q, s.set(L.girth * k, L.height * k, L.girth * k));
     parts.legs.setMatrixAt(i, M); parts.torso.setMatrixAt(i, M); parts.head.setMatrixAt(i, M);
     parts.hair.setMatrixAt(i, L.hat === 'bare' && !L.bald ? M : NONE);
