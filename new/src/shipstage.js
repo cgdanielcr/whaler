@@ -22,7 +22,7 @@ export function makeStage({ view, helm, ship }) {
   function fit(rightPx, leftPx) {
     const wide = innerWidth > 760, r = wide ? rightPx : 0, l = wide ? leftPx : 0;
     const h = (FIT_W * innerHeight) / Math.max(240, innerWidth - r - l);
-    sideways = (((r - l) / 2) * h) / innerHeight;
+    sideways = (((r - l) / 2) * h) / Math.max(1, innerHeight);
     return h;
   }
 

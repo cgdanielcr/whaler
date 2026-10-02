@@ -6,7 +6,7 @@ import { SLOTS, slotStation, station } from './stations.js';
 import { BOATS, SEATS } from './boatcrews.js';
 import { hud } from './hud.js';
 
-export function makePlacing({ company, crews, done }) {
+export function makePlacing({ company, crews, crisis, done }) {
   const keysOf = (id) => SLOTS.filter((k) => slotStation(k).id === id);
 
   function why(m, st) {
@@ -26,6 +26,7 @@ export function makePlacing({ company, crews, done }) {
 
   // What to say over a target while a man is held above it.
   function preview(id, t) {
+    if (t.trouble) return crisis.preview(id, t.trouble);
     const m = company.byId(id);
     if (t.seat) {
       const [b, s] = t.seat;
@@ -40,6 +41,7 @@ export function makePlacing({ company, crews, done }) {
   }
 
   function drop(id, t) {
+    if (t.trouble) { hud.toast(crisis.assign(id, t.trouble)); return done(); }
     const m = company.byId(id);
     if (t.seat) {
       const [b, s] = t.seat;

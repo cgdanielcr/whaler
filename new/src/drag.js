@@ -4,7 +4,7 @@
 // that does not move is a click, and chooses him instead.
 import { portrait } from './portrait.js';
 
-const TARGETS = '[data-station],[data-slot],[data-seat]';
+const TARGETS = '[data-station],[data-slot],[data-seat],[data-trouble]';
 
 export function makeDrag({ company, preview, drop, choose }) {
   const ghost = document.getElementById('ghost');
@@ -37,6 +37,7 @@ export function makeDrag({ company, preview, drop, choose }) {
 
   // What a drop target stands for: a station, one place at a station, or a seat in a boat.
   function target(el) {
+    if (el.dataset.trouble) return { trouble: el.dataset.trouble };
     if (el.dataset.station) return { station: el.dataset.station };
     if (el.dataset.slot) return { slot: el.dataset.slot };
     const [b, s] = el.dataset.seat.split(':').map(Number);

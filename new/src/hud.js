@@ -99,6 +99,9 @@ export const hud = {
   // A choice put to the owner mid-chase. The world waits for the answer.
   decide(text, options) { modal('A decision', `<p>${text}</p>`, options); },
 
+  // What came of a crisis, once it is over.
+  account(title, lines, done) { modal(title, lines.map((l) => `<p>${l}</p>`).join(''), [['Carry on', done]]); },
+
   ended(title, lines, again) {
     modal(title, lines.map((l) => (l.startsWith('<div') ? l : `<p>${l}</p>`)).join(''), [['Fit out for another voyage', again]]);
   },

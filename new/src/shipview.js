@@ -16,6 +16,7 @@ import { makeDeckMarks } from './deckmarks.js';
 import { makeDrag } from './drag.js';
 import { makePlacing } from './placing.js';
 import { mood, spiritsOf } from './morale.js';
+import { makeCrisisMarks } from './crisismarks.js';
 
 const RISE_TIME = 1.1;                   // seconds for her decks to rise out of the sea, or sink back
 const WALK = 2.2;                        // how fast the men walk about the decks
@@ -23,7 +24,7 @@ const SLOW = 8;                          // with time let run, it goes this many
 const ROSTER_PX = 380, BAR_PX = 180;     // the roster's width on the right, the crew bar's on the left
 const MONTHS = 'January February March April May June July August September October November December'.split(' ');
 
-export function makeShipView({ view, voyage, company, crews, ship, helm }) {
+export function makeShipView({ view, voyage, company, crews, ship, helm, crisis }) {
   const stage = makeStage({ view, helm, ship }), d = makeDecks();
   view.scene.add(d.root);
   d.root.visible = false;
@@ -34,11 +35,12 @@ export function makeShipView({ view, voyage, company, crews, ship, helm }) {
   const refresh = () => { voyage.refresh(); marks.relabel(); roster.render(); bar.render(); };
   function choose(id) { chosen = id; bar.choose(id); if (id != null) roster.showMan(id); }
   const roster = makeRoster({ company, crews, voyage, onChange: () => { marks.relabel(); bar.render(); }, onSelect: (id) => { chosen = id; bar.choose(id); } });
-  const placing = makePlacing({ company, crews, done: refresh });
+  const placing = makePlacing({ company, crews, crisis, done: refresh });
+  const trouble = makeCrisisMarks({ crisis, stage, layers: d.layers });
   const drag = makeDrag({ company, preview: placing.preview, drop: placing.drop, choose });
   const bar = makeCrewBar({ company, drag });
 
-  let want = false, k = 0, running = false, sel = 0, at = 0, lastWatch = null, said = 0;
+  let inCrisis = false, want = false, k = 0, running = false, sel = 0, at = 0, lastWatch = null, said = 0;
   const where = new Map();                 // each man: { deck, p, key, route }
   const v3 = new THREE.Vector3();
   const tabs = document.getElementById('deckTabs');
@@ -60,7 +62,7 @@ export function makeShipView({ view, voyage, company, crews, ship, helm }) {
     stage.open(ROSTER_PX, BAR_PX); d.setHold(voyage.v); figs.dress(company.men); marks.relabel(); bar.render(); select(sel);
   }
   function hide() {
-    if (!want) return;
+    if (!want || crisis.now) return;               // no leaving her while there is trouble aboard
     want = false; chosen = null; setRun(false);
     document.body.classList.remove('inship');
     stage.close();
@@ -133,11 +135,14 @@ export function makeShipView({ view, voyage, company, crews, ship, helm }) {
   }
 
   function update(dt) {
+    if (crisis.now && !want) show();                // trouble opens her up; when it is over, back to the sea
+    if (inCrisis && !crisis.now) hide();
+    inCrisis = !!crisis.now;
     // She comes apart out of the sea, or goes back together into it.
     k = Math.min(1, Math.max(0, k + (want ? dt : -dt) / RISE_TIME));
     const e = k * k * (3 - 2 * k);
     d.root.visible = k > 0.001;
-    if (!d.root.visible) { stage.place(d.root, d.layers, 0, at); for (let i = 0; i < company.men.length; i++) figs.place(i, null, null, 0, false); figs.done(); marks.update(-1, false, null); return; }
+    if (!d.root.visible) { stage.place(d.root, d.layers, 0, at); for (let i = 0; i < company.men.length; i++) figs.place(i, null, null, 0, false); figs.done(); marks.update(-1, false, null); trouble.update(-1, false); return; }
 
     at += (sel - at) * Math.min(1, dt * 6);                // the carousel turns
     stage.place(d.root, d.layers, e, at);
@@ -146,14 +151,18 @@ export function makeShipView({ view, voyage, company, crews, ship, helm }) {
     const w = voyage.watch;
     tellWatch(w, dt);
     const places = placeAll(company, w);
+    crisis.place(places);
     let mine = null;
     company.men.forEach((m, i) => {
       const p = walk(m.id, places.get(m.id), dt), g = p && d.layers[p.deck].group;
+      crisis.arrive(m.id, !!p && !p.route.length);
       figs.place(i, m, p ? v3.set(...p.p).applyMatrix4(g.matrixWorld) : null, p ? g.scale.x : 0, m.id === chosen, p && p.face, p && p.pose, d.root.quaternion);
       if (p && m.id === chosen) mine = { name: m.name, deck: p.deck, p: p.p };
     });
     figs.done();
-    marks.update(sel, want && k >= 1 && Math.abs(at - sel) < 0.05, mine);
+    const settled = want && k >= 1 && Math.abs(at - sel) < 0.05;
+    marks.update(sel, settled, mine);
+    trouble.update(sel, settled);
   }
 
   return {

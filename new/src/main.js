@@ -20,6 +20,7 @@ import { iceEdge } from './season.js';
 import { makeShipView } from './shipview.js';
 import { makeCompany } from './company.js';
 import { makeBoatCrews } from './boatcrews.js';
+import { makeCrisis } from './crisis.js';
 
 const START = new Date(1841, 4, 1);
 
@@ -42,7 +43,16 @@ const minimap = makeMinimap(document.getElementById('minimap'));
 const company = makeCompany();
 const crews = makeBoatCrews(company);
 const voyage = makeVoyage({ scene, helm, whales, boats, ship, start: START, company, crews });
-const shipView = makeShipView({ view, voyage, company, crews, ship, helm });
+const crisis = makeCrisis({ voyage, company });
+const shipView = makeShipView({ view, voyage, company, crews, ship, helm, crisis });
+
+// For testing: ?crisis=gale in the address fits her out, casts off and brings the gale on at once.
+if (new URLSearchParams(location.search).get('crisis') === 'gale') {
+  document.querySelector('#choices button')?.click();
+  voyage.click(BERTH.x - 40, BERTH.z + 10);
+  Object.assign(voyage.season, { gale: true, galeDays: 2, wind: 'strong gale' });
+  crisis.start('gale');
+}
 
 // A ring on the water where she has been sent.
 const marker = new THREE.Mesh(new THREE.RingGeometry(1.2, 1.7, 24).rotateX(-Math.PI / 2),
@@ -85,6 +95,8 @@ function frame(real) {
   pack.update(voyage.season.edge);
   boats.update(dt, t, voyage.quarry, helm.pos);
   voyage.tick(dt);
+  crisis.tick(real);
+  helm.hands *= crisis.speed;                       // with canvas blown away she goes slower
   swell += ((voyage.season.gale ? 2.4 : 1) - swell) * Math.min(1, dt * 0.3);
   waves += real;                                    // the sea keeps running, even while the world stands still
   water.update(waves, swell);
@@ -108,4 +120,4 @@ function frame(real) {
 }
 
 // For testing from the browser console: whaler.frame(0.05) steps the world.
-window.whaler = { frame, voyage, helm, whales, view, scene, shipView, company, crews };
+window.whaler = { frame, voyage, helm, whales, view, scene, shipView, company, crews, crisis };
