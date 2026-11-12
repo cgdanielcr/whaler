@@ -3,6 +3,7 @@
 import * as THREE from 'three';
 import { makePost } from './post.js';
 import { makePaint } from './paint.js';
+import { makeStudy, isStudy } from './studies.js';
 
 const LOOK = new THREE.Vector3(-1, 1.3, 1).normalize();   // east shows upper right
 const SUN = new THREE.Vector3(-25, 110, -60);             // light from the upper left; the weather may move it
@@ -10,6 +11,7 @@ const SUN = new THREE.Vector3(-25, 110, -60);             // light from the uppe
 // the cheapest), or 'fine' (sharp, with the model-on-a-table blur, the costliest). Chosen on the title page.
 let picture = 'painted';
 try { picture = localStorage.getItem('whaler-picture') || 'painted'; } catch { /* no storage */ }
+picture = new URLSearchParams(location.search).get('look') || picture;      // ?look= in the address shows a finish for this visit only
 const fine = picture === 'fine';
 
 export function makeView() {
@@ -38,7 +40,7 @@ export function makeView() {
   sun.shadow.normalBias = 0.06;
   scene.add(sun, sun.target);
 
-  const post = fine ? makePost(renderer) : picture === 'painted' ? makePaint(renderer) : null;
+  const post = fine ? makePost(renderer) : picture === 'painted' ? makePaint(renderer) : isStudy(picture) ? makeStudy(renderer, picture) : null;
 
   function project() {
     const a = innerWidth / innerHeight;

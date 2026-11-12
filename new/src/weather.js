@@ -14,10 +14,13 @@ const MOODS = {
   mist: { sun: 0xf0ece0, sunK: 1.3, at: [-40, 100, -60], sky: 0xdfe6e8, ground: 0x2a4c5a, skyK: 1.6, back: 0x2a5566, shine: 0.05, mist: 1, shade: 0.08 },
   late: { sun: 0xffdcae, sunK: 2.3, at: [-70, 70, -55], sky: 0xd9e2ec, ground: 0x1c4152, skyK: 1.15, back: 0x12435a, shine: 0.7, mist: 0.1, shade: 0.2 },
   fresh: { sun: 0xf2ead8, sunK: 2.1, at: [-25, 110, -60], sky: 0xc9d8e4, ground: 0x173d4e, skyK: 1.2, back: 0x0f4057, shine: 0.4, mist: 0, shade: 0.3 },
+  // A study, seen with ?sky=dusk in the address: the sun almost down, violet shadow, the lamps telling.
+  dusk: { sun: 0xff8442, sunK: 3.0, at: [-130, 30, -25], sky: 0x8672b8, ground: 0x1b2444, skyK: 0.85, back: 0x1c2848, shine: 1, mist: 0.2, shade: 0.1 },
   gale: { sun: 0xb8c6d0, sunK: 1.3, at: [-25, 110, -60], sky: 0x9db0be, ground: 0x14303f, skyK: 1.25, back: 0x0b2a3a, shine: 0, mist: 0.35, shade: 0.34 },
 };
 // What the sky may be on a quiet day, early in the season and late.
 const EARLY = ['fair', 'fair', 'fair', 'golden', 'golden', 'overcast', 'mist'], LATE = ['late', 'late', 'golden', 'overcast', 'overcast', 'mist', 'mist'];
+const FORCED = new URLSearchParams(location.search).get('sky');
 const CLOUDS = 9, STREAKS = 70, SPAN = 150;
 
 function softDisc() {
@@ -62,6 +65,7 @@ export function makeWeather(view, voyage) {
       const s = voyage.season, v = voyage.v, late = dayOfYear(v.date) > 235;
       if (v.days !== today && (today = v.days) % 3 === 0) { const list = late ? LATE : EARLY; skyNow = list[Math.floor(Math.random() * list.length)]; }   // the sky changes every few days
       if (!voyage.atSea()) skyNow = 'fair';
+      if (FORCED) skyNow = FORCED;
       const mood = MOODS[s.gale ? 'gale' : s.wind === 'strong breeze' ? 'fresh' : skyNow], k = Math.min(1, real * 0.35);
       sunFrom.lerp(sunTo.set(...mood.at), k);
       shine += (mood.shine - shine) * k; mist += (mood.mist - mist) * k;
