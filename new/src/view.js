@@ -4,7 +4,7 @@ import * as THREE from 'three';
 import { makePost } from './post.js';
 
 const LOOK = new THREE.Vector3(-1, 1.3, 1).normalize();   // east shows upper right
-const SUN = new THREE.Vector3(-25, 110, -60);             // light from the upper left
+const SUN = new THREE.Vector3(-25, 110, -60);             // light from the upper left; the weather may move it
 // The model-on-a-table blur and a sharper picture cost a good deal; the owner turns them on from the title page.
 let fine = false;
 try { fine = localStorage.getItem('whaler-fine') === 'on'; } catch { /* no storage */ }
@@ -76,5 +76,5 @@ export function makeView() {
     return ray.ray.intersectPlane(plane, hit);
   }
 
-  return { renderer, scene, camera, sun, sky, canvas: renderer.domElement, resize, follow, zoom, height, pick, render: () => (post ? post.render(scene, camera) : renderer.render(scene, camera)) };
+  return { renderer, scene, camera, sun, sky, sunFrom: SUN, canvas: renderer.domElement, resize, follow, zoom, height, pick, render: () => (post ? post.render(scene, camera) : renderer.render(scene, camera)) };
 }

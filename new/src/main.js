@@ -29,6 +29,11 @@ import { showTitle } from './title.js';
 import { makePointer } from './pointer.js';
 import { sound } from './sound.js';
 import { juice } from './juice.js';
+import { makeSmoke } from './smoke.js';
+import { makeCreatures } from './creatures.js';
+import { makeLighthouse } from './lighthouse.js';
+import { CHIMNEYS } from './port.js';
+import { STOVEPIPE } from './shipdress.js';
 import { hud } from './hud.js';
 
 const START = new Date(1841, 4, 1);
@@ -48,6 +53,8 @@ const pack = makePack(scene);
 const boats = makeBoats(scene);
 const wake = makeWake(scene);
 const gulls = makeGulls(scene);
+const smoke = makeSmoke(scene), creatures = makeCreatures(scene, ice), lighthouse = makeLighthouse(scene);
+const pipe = new THREE.Vector3(), sources = [{ x: 0, y: 0, z: 0, big: 0.8 }, ...CHIMNEYS];
 const minimap = makeMinimap(document.getElementById('minimap'));
 const company = makeCompany();
 const crews = makeBoatCrews(company);
@@ -140,6 +147,11 @@ function frame(real) {
   weather.update(real, waves, wind.from, blow, focus);
   wake.update(dt, helm.pos, helm.heading, helm.speed);
   gulls.update(dt, t, helm.pos);
+  helm.object.localToWorld(pipe.set(...STOVEPIPE));                   // the galley fire is always in
+  Object.assign(sources[0], { x: pipe.x, y: pipe.y, z: pipe.z });
+  smoke.update(real, shipView.busy ? CHIMNEYS : sources, wind.from, blow);
+  creatures.update(dt, waves, helm, whales, voyage.v.phase === 'sea');
+  lighthouse.update(waves, weather.dim);
   sound.weather(blow, helm.speed, shipView.busy);
 
   marker.visible = !!helm.target;
@@ -169,4 +181,4 @@ function frame(real) {
 }
 
 // For testing from the browser console: whaler.frame(0.05) steps the world.
-window.whaler = { frame, voyage, helm, whales, view, scene, shipView, company, crews, crisis, career };
+window.whaler = { ice, weather, frame, voyage, helm, whales, view, scene, shipView, company, crews, crisis, career };

@@ -26,7 +26,7 @@ export function makeVoyage({ scene, helm, whales, boats, ship, start, company, c
   const v = {
     phase: 'port', fitted: false, paused: false, held: false, fast: false, date: new Date(start), days: 0, hours: 0,
     stores: 0, eat: 0, whale: 0, sperm: 0, crew: company.count, boats: crews.afloat, hull: 100, taken: 0, lost: 0, boatsLost: 0,
-    leg: 0, told: {}, gear: {}, report: null,
+    leg: 0, told: {}, gear: {}, report: null, pos: helm.pos,
   };
   const season = makeSeason();
   const sail = makeSailing({ helm, ship, season, company });

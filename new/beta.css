@@ -102,3 +102,14 @@ body.inship #pointer { display: none; }
 #runOn { margin-top: 6px; font-size: .74rem !important; }
 #labels .trouble { cursor: pointer; }
 #labels .trouble:hover { filter: brightness(1.25); }
+
+/* Thick weather: a haze that whitens the edges of the picture, and snow. */
+#haze { position: fixed; inset: 0; pointer-events: none; opacity: 0; transition: opacity 1.5s;
+  background: radial-gradient(ellipse at 50% 48%, rgba(226, 236, 238, 0.12) 18%, rgba(226, 236, 238, 0.78) 100%); }
+#snow { position: fixed; inset: -10%; pointer-events: none; opacity: 0; transition: opacity 3s;
+  background-image: radial-gradient(circle, rgba(255, 255, 255, .85) 0 1.3px, transparent 1.8px), radial-gradient(circle, rgba(255, 255, 255, .6) 0 1px, transparent 1.5px),
+    radial-gradient(circle, rgba(255, 255, 255, .75) 0 1.8px, transparent 2.3px);
+  background-size: 130px 130px, 90px 90px, 210px 210px; background-position: 0 0, 40px 60px, 100px 30px; animation: snow 9s linear infinite; }
+#snow.on { opacity: .8; }
+@keyframes snow { to { background-position: -90px 390px, -50px 330px, 10px 450px; } }
+body.pre #haze, body.pre #snow { display: none; }

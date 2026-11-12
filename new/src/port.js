@@ -10,6 +10,8 @@ const PILE = mat(0x3f2d20), BARREL = mat(0x6a4a2e), CRATE = mat(0x8b6a45), SNOW 
 const WALLS = [mat(0x6b4a33), mat(0x7a5536), mat(0x5c4232), mat(0x8a3f2e)];
 const GLOW = mat(0xffc36b, { emissive: 0xffa53a, emissiveIntensity: 1.4 });
 
+export const CHIMNEYS = [];
+
 function box(w, h, d, m, x, y, z) {
   const b = new THREE.Mesh(new THREE.BoxGeometry(w, h, d), m);
   b.position.set(x, y, z);
@@ -52,12 +54,14 @@ export function makePort(scene) {
   g.add(arm);
 
   // The houses.
+  // Where the houses stand; their chimneys smoke (see smoke.js).
   const spots = [[104, -20, 0], [106, 15, 1], [117, -5, 0], [122, 23, 1], [129, -25, 0], [113, 31, 0], [133, 5, 1], [101, -2, 1]];
   for (const [x, z, turn] of spots) {
     const w = 5 + rand() * 3, d = 4 + rand() * 2.5, h = 3 + rand() * 1.5;
     const house = houseMesh(w, d, h, WALLS[Math.floor(rand() * WALLS.length)]);
     house.position.set(x, groundHeight(x, z), z);
     house.rotation.y = turn * Math.PI / 2 + (rand() - 0.5) * 0.2;
+    CHIMNEYS.push({ x, y: groundHeight(x, z) + h * 1.75 + 0.6, z, big: 1.5 });
     g.add(house);
   }
 

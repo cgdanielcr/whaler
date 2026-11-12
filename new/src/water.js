@@ -31,20 +31,27 @@ export function makeWater(scene) {
   mat.onBeforeCompile = (shader) => {
     Object.assign(shader.uniforms, { uTime, uAmp, uDir, uCaps });
     // The swell runs down the wind, with a cross sea over it; the crests catch the light and, when it blows, break white.
-    shader.vertexShader = 'uniform float uTime;\nuniform float uAmp;\nuniform vec2 uDir;\nvarying float vCrest;\n' + shader.vertexShader.replace(
+    shader.vertexShader = 'uniform float uTime;\nuniform float uAmp;\nuniform vec2 uDir;\nvarying float vCrest;\nvarying vec2 vSea;\n' + shader.vertexShader.replace(
       '#include <begin_vertex>',
       `vec3 transformed = vec3(position);
        float along = dot(position.xz, uDir), across = dot(position.xz, vec2(-uDir.y, uDir.x));
        float w = 0.24 * sin(along * 0.33 - uTime * 1.3) + 0.17 * sin(across * 0.27 + along * 0.11 - uTime * 0.9)
                + 0.10 * sin((along + across) * 0.71 - uTime * 2.1);
        transformed.y += uAmp * w;
-       vCrest = w / 0.51;`);
-    shader.fragmentShader = 'uniform float uCaps;\nvarying float vCrest;\n' + shader.fragmentShader.replace(
+       vCrest = w / 0.51;
+       vSea = position.xz;`);
+    shader.fragmentShader = 'uniform float uCaps;\nuniform float uTime;\nuniform vec2 uDir;\nvarying float vCrest;\nvarying vec2 vSea;\n' + shader.fragmentShader.replace(
       '#include <color_fragment>',
       `#include <color_fragment>
        diffuseColor.rgb += vec3(0.07, 0.15, 0.14) * smoothstep(0.0, 0.9, vCrest);
        diffuseColor.rgb = mix(diffuseColor.rgb, vec3(0.93, 0.98, 0.97), uCaps * smoothstep(0.72, 0.98, vCrest));
-       diffuseColor.rgb *= 1.0 - 0.2 * smoothstep(-0.05, -0.9, vCrest);`);
+       diffuseColor.rgb *= 1.0 - 0.2 * smoothstep(-0.05, -0.9, vCrest);
+       // Broad lighter and darker reaches of water, and cat's-paws of wind drifting over it.
+       float reach = sin(vSea.x * 0.021 + sin(vSea.y * 0.017) * 2.0) * sin(vSea.y * 0.019 + sin(vSea.x * 0.013) * 2.0);
+       vec2 d = vSea - uDir * uTime * 3.0;
+       float paw = smoothstep(0.55, 0.95, sin(d.x * 0.09 + sin(d.y * 0.05) * 1.7) * sin(d.y * 0.07 + sin(d.x * 0.04) * 1.9));
+       diffuseColor.rgb *= 1.0 + 0.09 * reach - 0.1 * paw * (0.4 + uCaps);
+       diffuseColor.rgb += vec3(0.0, 0.035, 0.03) * reach;`);
   };
 
   const sea = new THREE.Mesh(geo, mat);

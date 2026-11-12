@@ -4,11 +4,14 @@
 import * as THREE from 'three';
 import { boatMesh, figure } from './boats.js';
 import { bake } from './bake.js';
+import { sailcloth, dress } from './shipdress.js';
 
 const mat = (color, o = {}) => new THREE.MeshStandardMaterial({ color, flatShading: true, roughness: 0.85, ...o });
 const HULL = mat(0x2e2620), DECK = mat(0xa07a52), RAIL = mat(0x4a3526), BAND = mat(0xd9ceb4);
 const SPAR = mat(0x4e3a29), BRICK = mat(0x8c4b34);
-const CANVAS = mat(0xf4ecd9, { side: THREE.DoubleSide, roughness: 0.95, emissive: 0x8a7f66, emissiveIntensity: 0.55 });   // canvas glows a little with the light through it
+const cloth = sailcloth();
+const CANVAS = mat(0xffffff, { map: cloth, emissiveMap: cloth, side: THREE.DoubleSide, roughness: 0.95, emissive: 0x9a8f78, emissiveIntensity: 0.6 });   // canvas glows a little with the light through it
+const STAYSAIL = mat(0xf1e7d0, { side: THREE.DoubleSide, roughness: 0.95, emissive: 0x8a7f66, emissiveIntensity: 0.5 });
 const FLAG = mat(0xa8322a, { side: THREE.DoubleSide });
 
 const MASTS = [{ x: 3.9, h: 12.5, k: 1 }, { x: 0.3, h: 13.5, k: 1.08 }, { x: -3.7, h: 10.5, k: 0.8, mizzen: true }];
@@ -65,7 +68,7 @@ function spar(a, b, r) {
 
 // A square sail hanging from its yard: wider at the foot, bellied forward.
 function sailGeo(wTop, wBot, h) {
-  const g = new THREE.PlaneGeometry(1, 1, 4, 3), p = g.attributes.position;
+  const g = new THREE.PlaneGeometry(1, 1, 6, 4), p = g.attributes.position;
   for (let i = 0; i < p.count; i++) {
     const u = p.getX(i), v = 0.5 - p.getY(i), w = wTop + (wBot - wTop) * v;
     p.setXYZ(i, Math.sin(v * Math.PI) * (1 - 4 * u * u) * 0.6 + 0.15 * v, -v * h, u * w);
@@ -113,10 +116,10 @@ export function makeShip() {
     [-3.7, DECK_Y + 10.2, 0], [0.3, DECK_Y + 7.5, 0], [-3.7, DECK_Y + 10.2, 0], [-7, 1.4, 0]);
 
   // Jibs forward, spanker aft: set with the rest, gone when she is furled.
-  jibs.add(new THREE.Mesh(tri([3.95, DECK_Y + 6.9, 0], [10.3, 2.6, 0], [5.4, 2.1, 0.5]), CANVAS));
-  jibs.add(new THREE.Mesh(tri([3.95, DECK_Y + 10, 0], [11, 2.85, 0], [6.8, 3.6, 0.6]), CANVAS));
+  jibs.add(new THREE.Mesh(tri([3.95, DECK_Y + 6.9, 0], [10.3, 2.6, 0], [5.4, 2.1, 0.5]), STAYSAIL));
+  jibs.add(new THREE.Mesh(tri([3.95, DECK_Y + 10, 0], [11, 2.85, 0], [6.8, 3.6, 0.6]), STAYSAIL));
   const a = [-3.85, 2.1, 0], b = [-3.85, DECK_Y + 6.7, 0], c = [-7.2, DECK_Y + 5.9, 0.5], d = [-7.5, 2.1, 0.6];
-  spanker.add(new THREE.Mesh(tri(a, b, c, a, c, d), CANVAS));
+  spanker.add(new THREE.Mesh(tri(a, b, c, a, c, d), STAYSAIL));
   g.add(jibs, spanker);
   g.add(spar([-3.7, DECK_Y + 6.9, 0], [-7.3, DECK_Y + 6, 0], 0.07), spar([-3.7, 2, 0], [-7.6, 1.9, 0], 0.07));
 
@@ -129,6 +132,7 @@ export function makeShip() {
   box(1.6, 0.8, 1.8, BRICK, 2.2, 1.3, 0);
   box(0.3, 0.7, 0.3, BRICK, 2.2, 2, 0);
   box(2.2, 0.9, 2.4, RAIL, -5.2, 1.35, 0);
+  dress(g, ring, DECK_Y);
   for (const [x, z] of [[1, 0.8], [-1.3, -0.9], [-2.6, 0.9], [5, -0.5], [-6.2, 0.4], [0.9, -1.2]]) figure(g, x, DECK_Y, z, true);
   const flag = new THREE.Mesh(new THREE.PlaneGeometry(1.5, 0.7).translate(0.75, 0, 0), FLAG);   // it streams from the hoist
   flag.position.set(0.3, DECK_Y + 13.8, 0);
