@@ -5,8 +5,9 @@
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <title>Whaler — new approach</title>
   <link rel="stylesheet" href="style.css">
+  <link rel="stylesheet" href="beta.css">
 </head>
-<body>
+<body class="pre">
   <div class="panel" id="ship">
     <div class="title">The Mastiff</div>
     <div class="sub">Whaleship, three hundred tons</div>
@@ -47,6 +48,27 @@
     <div id="acts"><button id="act" hidden></button><button id="act2" class="lesser" hidden></button></div>
   </div>
 
+  <div class="panel" id="quarter" hidden>
+    <canvas id="dial" width="240" height="240"></canvas>
+    <div id="windSays"></div>
+    <div id="pointSays"></div>
+    <div class="label">Her canvas</div>
+    <div id="canvasBtns"></div>
+    <div id="jobLine" hidden><span id="jobText"></span><div class="bar"><i id="jobB" class="oil"></i></div></div>
+    <div id="lostLine" hidden></div>
+    <div class="qrow"><button id="allHands" class="lesser">Call all hands</button><button id="hold" class="lesser">Hold (Space)</button></div>
+    <div id="wearyLine"></div>
+  </div>
+  <div id="heldMark" hidden>The world is held. Press Space to let her run.</div>
+
+  <div class="panel" id="mate" hidden>
+    <div class="label">The mate</div>
+    <div id="mateText"></div>
+    <button id="mateAye" class="lesser">Aye</button>
+  </div>
+  <div id="rain"></div>
+  <div id="vignette"></div>
+
   <div id="toast"></div>
 
   <div id="labels"></div>
@@ -73,7 +95,7 @@
     <div class="title" id="crisisTitle"></div>
     <div id="crisisLine"></div>
     <div class="bar"><i id="crisisB"></i></div>
-    <div class="crisisRow"><span id="crisisHint"></span><button id="crisisPause"></button><button id="crisisAll" class="lesser">Call all hands</button></div>
+    <div class="crisisRow"><span id="crisisHint"></span><button id="crisisPause"></button><button id="crisisBill" class="lesser" hidden>Hands to their stations</button><button id="crisisAll" class="lesser">Call all hands</button></div>
   </div>
 
   <div id="modal" hidden>
@@ -81,6 +103,24 @@
       <div class="title" id="modalTitle"></div>
       <div id="summary"></div>
       <div id="choices"></div>
+    </div>
+  </div>
+
+  <div id="title">
+    <div class="card">
+      <div class="kicker">The whaleship</div>
+      <h1>Mastiff</h1>
+      <div class="under">Three hundred tons · New England · 1841</div>
+      <p>You are her master. Fit her out, find the whales, fill her hold with oil before the ice comes down, and bring her home with her people alive.</p>
+      <button id="titleOn" hidden></button>
+      <button id="titleGo">Take command</button>
+      <div class="switches"><button id="titleHow" class="lesser">How she is played</button><button id="titleSound" class="lesser"></button><button id="titleFine" class="lesser"></button></div>
+      <div id="howCard" hidden>
+        <p><b>At sea</b> you command and the men sail. Click the water to lay her course. She cannot head into the wind; she beats up to windward of herself. Choose how much canvas she carries: more is faster, and riskier as it freshens.</p>
+        <p><b>Whales</b> are raised from the masthead. Sail near, lower the boats, and judge when to haul up and lance and when to cry "Stern all!"</p>
+        <p><b>Aboard</b> are twenty-nine men in two watches. Click the ship to go aboard and say who stands where. When trouble comes, a gale, a fire, a man overboard, everything holds while you send hands to it.</p>
+        <p><b>Space</b> holds the world still at any time. The mate will tell you the rest as it comes up.</p>
+      </div>
     </div>
   </div>
 

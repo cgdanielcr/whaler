@@ -6,6 +6,7 @@ import { SLOTS, slotStation } from './stations.js';
 import { hud } from './hud.js';
 import { START, spiritFactor } from './morale.js';
 import { makeLook } from './looks.js';
+import { wearyFactor } from './hands.js';
 
 const rand = Math.random;
 const pick = (a) => a[Math.floor(rand() * a.length)];
@@ -75,7 +76,7 @@ export function makeCompany() {
   const level = (m, stationId) => LEVELS.filter((d) => (m.xp[stationId] || 0) >= d).length - 1;
   const base = (m, uses) => m.stats[uses] ?? m.trades[uses];
   // How well a man works a station: his stat, what he has learned there, and how sick he is.
-  const score = (m, st) => (base(m, st.uses) + level(m, st.id) * 0.75) * (0.5 + m.health / 200) * spiritFactor(m);
+  const score = (m, st) => (base(m, st.uses) + level(m, st.id) * 0.75) * (0.5 + m.health / 200) * spiritFactor(m) * wearyFactor(m);
   const stationOf = (id) => SLOTS.find((k) => slots[k] === id) || null;
   const fits = (m, key) => {
     if (!m.alive) return false;
@@ -152,9 +153,25 @@ export function makeCompany() {
       return { said, died };
     },
 
+    // Men taken aboard at sea, in the places of the dead. Returns their names.
+    ship(n) {
+      const names = [];
+      men.forEach((m, i) => { if (!m.alive && names.length < n) { men[i] = man('able', null, m.watch || 'larboard'); names.push(men[i].name); } });
+      fillEmpty();
+      return names;
+    },
+
+    // A company remembered from an earlier visit is put back as it was.
+    restore(saved, places) {
+      men.splice(0, men.length, ...saved);
+      for (const k of SLOTS) slots[k] = places[k] ?? null;
+      nextId = Math.max(...men.map((m) => m.id)) + 1;
+      fillEmpty();
+    },
+
     // At the wharf: the sick are made well, the dead are replaced by green hands.
     refit() {
-      for (const m of men) { m.health = 100; m.spirits = START; }     // a run ashore puts them right
+      for (const m of men) { m.health = 100; m.spirits = START; m.weary = 0; }     // a run ashore puts them right
       men.forEach((m, i) => {                 // a lost seaman is replaced by a green hand; others in kind
         if (!m.alive) men[i] = man(m.rank === 'able' ? 'green' : m.rank, m.officer ? m.title : null, m.watch);
       });

@@ -14,7 +14,7 @@ export function makeMinimap(canvas) {
   land.closePath();
 
   return {
-    draw(helm, whales, edge) {
+    draw(helm, whales, edge, from = Math.PI) {
       ctx.setTransform(1, 0, 0, 1, 0, 0);
       ctx.clearRect(0, 0, S, S);
       ctx.save();
@@ -55,6 +55,11 @@ export function makeMinimap(canvas) {
       ctx.beginPath(); ctx.arc(S / 2, S / 2, S / 2 - 3, 0, 7); ctx.stroke();
       ctx.fillStyle = '#f3ead6'; ctx.font = `${Math.round(S / 14)}px Georgia`; ctx.textAlign = 'center';
       ctx.fillText('N', S / 2 - S * 0.33, S / 2 - S * 0.31);
+      // The wind: an arrow on the rim, blowing in toward the middle.
+      ctx.save(); ctx.translate(S / 2, S / 2); ctx.rotate(from - Math.PI / 4);
+      ctx.fillStyle = '#9fd8ea';
+      ctx.beginPath(); ctx.moveTo(S / 2 - 34, 0); ctx.lineTo(S / 2 - 10, -11); ctx.lineTo(S / 2 - 10, 11); ctx.fill();
+      ctx.restore();
     },
   };
 }

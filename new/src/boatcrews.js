@@ -101,6 +101,7 @@ export function makeBoatCrews(company) {
     },
 
     // At the wharf: new boats for lost ones, spares on the skids, seats filled.
-    refit() { lost.fill(false); spares = SPARES; fitting = 0; fillEmpty(); },
+    refit(n = SPARES) { lost.fill(false); spares = n; fitting = 0; fillEmpty(); },
+    restore(saved) { saved.forEach((row, b) => row.forEach((id, i) => { seats[b][i] = id; })); fillEmpty(); },
   };
 }

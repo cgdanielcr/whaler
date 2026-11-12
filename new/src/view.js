@@ -5,11 +5,14 @@ import { makePost } from './post.js';
 
 const LOOK = new THREE.Vector3(-1, 1.3, 1).normalize();   // east shows upper right
 const SUN = new THREE.Vector3(-25, 110, -60);             // light from the upper left
-const TILT_SHIFT = false;     // the model-on-a-table blur; off for now, it costs too much on this laptop
+// The model-on-a-table blur and a sharper picture cost a good deal; the owner turns them on from the title page.
+let fine = false;
+try { fine = localStorage.getItem('whaler-fine') === 'on'; } catch { /* no storage */ }
+const TILT_SHIFT = fine;
 
 export function makeView() {
   const renderer = new THREE.WebGLRenderer({ antialias: !TILT_SHIFT });
-  renderer.setPixelRatio(Math.min(devicePixelRatio, 1));   // sharper screens cost too much here
+  renderer.setPixelRatio(Math.min(devicePixelRatio, fine ? 2 : 1));   // sharper screens cost too much on a laptop's graphics
   renderer.shadowMap.enabled = true;
   renderer.shadowMap.type = THREE.PCFShadowMap;
   renderer.toneMapping = THREE.NeutralToneMapping;
@@ -23,7 +26,8 @@ export function makeView() {
   const focus = new THREE.Vector3();
   let viewH = 52, wantH = 52, first = true;       // how many units of the world show top to bottom
 
-  scene.add(new THREE.HemisphereLight(0xd8ecff, 0x16384a, 1.25));
+  const sky = new THREE.HemisphereLight(0xd8ecff, 0x16384a, 1.25);
+  scene.add(sky);
   const sun = new THREE.DirectionalLight(0xfff1dc, 2.6);
   sun.castShadow = true;
   sun.shadow.mapSize.set(2048, 2048);
@@ -70,5 +74,5 @@ export function makeView() {
     return ray.ray.intersectPlane(plane, hit);
   }
 
-  return { renderer, scene, camera, canvas: renderer.domElement, resize, follow, zoom, height, pick, render: () => (post ? post.render(scene, camera) : renderer.render(scene, camera)) };
+  return { renderer, scene, camera, sun, sky, canvas: renderer.domElement, resize, follow, zoom, height, pick, render: () => (post ? post.render(scene, camera) : renderer.render(scene, camera)) };
 }

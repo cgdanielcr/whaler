@@ -1,0 +1,76 @@
+/* The panels added for the beta: the quarterdeck, the work in hand, the title page. */
+#quarter { right: 14px; bottom: 34px; width: 232px; padding: 12px 14px; text-align: center; }
+#dial { width: 150px; height: 150px; display: block; margin: 0 auto 6px; }
+#windSays { font-size: .92rem; }
+#windSays.gale, #wind.gale { color: #ff9c84; }
+#pointSays { font-size: .78rem; color: var(--dim); font-style: italic; margin: 2px 0 8px; min-height: 1.1em; }
+#quarter .label { color: var(--gold); font-size: .78rem; text-align: left; margin-bottom: 4px; }
+#canvasBtns { display: grid; gap: 4px; }
+#quarter button { font-size: .8rem; padding: 5px 8px; box-shadow: none; width: 100%; position: relative; }
+#quarter button.on { background: linear-gradient(#f0c96a, #d59c34); color: #1d1409; border-color: #8a6220; }
+#canvasBtns button.over::after { content: ''; position: absolute; right: 8px; top: 50%; width: 8px; height: 8px; margin-top: -4px;
+  border-radius: 50%; background: #e2674f; box-shadow: 0 0 0 2px rgba(13, 25, 37, .6); }
+#jobLine { margin-top: 8px; font-size: .74rem; color: var(--text); font-style: italic; text-align: left; }
+#lostLine { margin-top: 6px; font-size: .72rem; color: #ff9c84; text-align: left; }
+.qrow { display: grid; grid-template-columns: 1fr 1fr; gap: 6px; margin-top: 10px; }
+.qrow button { padding: 5px 2px !important; font-size: .74rem !important; }
+#wearyLine { margin-top: 7px; font-size: .72rem; color: var(--dim); font-style: italic; }
+#heldMark { position: fixed; top: 44%; left: 50%; transform: translate(-50%, -50%); padding: 10px 26px; border-radius: 10px;
+  background: rgba(13, 25, 37, .8); border: 1px solid var(--edge); font-style: italic; pointer-events: none; letter-spacing: .03em; }
+body.inship #quarter, body.inship #heldMark { display: none; }
+#back { right: 262px; }
+@media (max-width: 760px) { #quarter { width: 170px; bottom: 150px; } #dial { width: 96px; height: 96px; } #back { right: 14px; } }
+
+/* The mate's word, rain, and the darkened corners of the picture. */
+#mate { left: 50%; bottom: 110px; transform: translateX(-50%); width: min(520px, calc(100vw - 32px)); padding: 12px 16px; z-index: 5;
+  background: rgba(38, 30, 18, 0.93); border-color: rgba(224, 178, 82, 0.6); }
+#mate .label { color: var(--gold); font-size: .8rem; margin-bottom: 4px; }
+#mateText { font-size: .88rem; line-height: 1.5; font-style: italic; }
+#mate button { float: right; margin-top: 6px; font-size: .8rem; padding: 4px 18px; box-shadow: none; }
+#vignette { position: fixed; inset: 0; pointer-events: none; background: radial-gradient(ellipse at 50% 46%, transparent 52%, rgba(4, 16, 26, 0.5) 100%); }
+#rain { position: fixed; inset: -20%; pointer-events: none; opacity: 0; transition: opacity 2s;
+  background: repeating-linear-gradient(105deg, transparent 0 9px, rgba(215, 232, 240, 0.13) 9px 10px, transparent 10px 23px);
+  background-size: 200px 200px; animation: rain .35s linear infinite; }
+#rain.on { opacity: 1; }
+@keyframes rain { to { background-position: -54px 200px; } }
+#chase.danger { border-color: #e2674f; box-shadow: 0 0 0 2px rgba(226, 103, 79, .5), 0 6px 24px rgba(0, 0, 0, .35); animation: throb .3s infinite alternate; }
+#chase.danger .bar i { background: #e2674f; }
+@keyframes throb { to { background: rgba(70, 22, 16, 0.92); } }
+#labels .trouble.unmanned { animation: want .7s infinite alternate; }
+@keyframes want { to { border-color: #fff; } }
+
+/* The fitting-out card. */
+#modal .panel.wide { width: min(560px, calc(100vw - 32px)); max-height: calc(100vh - 32px); overflow-y: auto; }
+#summary .wharf { font-style: italic; color: var(--text); }
+#summary .fine { font-size: .8rem; }
+.outfit { text-align: left; border-top: 1px solid var(--edge); border-bottom: 1px solid var(--edge); padding: 8px 0 10px; margin: 10px 0; }
+.outfit .label { color: var(--gold); font-size: .85rem; margin-bottom: 6px; }
+.outfit .label b { color: var(--text); font-weight: normal; }
+#outfitList { display: grid; grid-template-columns: 1fr 1fr; gap: 5px; }
+#outfitList .item { display: flex; justify-content: space-between; align-items: center; gap: 8px; text-align: left; font-size: .78rem; padding: 6px 9px; box-shadow: none; }
+#outfitList .item small { display: block; font-size: .66rem; color: var(--dim); font-style: italic; margin-top: 2px; }
+#outfitList .item em { color: var(--gold); font-style: normal; }
+#outfitList .item.on { border-color: var(--gold); background: rgba(224, 178, 82, 0.18); }
+#outfitList .item:disabled { opacity: .45; cursor: default; }
+#choices { display: grid; gap: 8px; }
+
+/* The title page. */
+#title { position: fixed; inset: 0; z-index: 20; display: grid; place-items: center; transition: opacity .7s;
+  background: radial-gradient(ellipse at center, rgba(6, 20, 32, 0.35), rgba(4, 14, 22, 0.86)); }
+#title.gone { opacity: 0; pointer-events: none; }
+#title .card { width: min(470px, calc(100vw - 32px)); text-align: center; max-height: 100vh; overflow-y: auto; padding: 16px; }
+#title .kicker { letter-spacing: .5em; text-transform: uppercase; font-size: .8rem; color: var(--gold); margin-left: .5em; }
+#title h1 { font-weight: normal; font-size: clamp(3rem, 9vw, 5.2rem); letter-spacing: .14em; margin: 2px 0 0 .14em; color: #f6eedb; text-shadow: 0 4px 30px rgba(0, 0, 0, .6); }
+#title .under { font-style: italic; color: var(--dim); margin-bottom: 22px; }
+#title p { color: #d8ceb6; line-height: 1.55; font-size: .95rem; margin: 0 0 20px; }
+#title .card > button { display: block; width: 100%; margin-top: 10px; padding: 12px; }
+#title button small { display: block; font-size: .72rem; font-style: italic; opacity: .8; margin-top: 2px; }
+#title .switches { display: flex; gap: 8px; margin-top: 14px; }
+#title .switches button { flex: 1; font-size: .78rem; padding: 6px 4px; box-shadow: none; }
+#howCard { text-align: left; margin-top: 14px; padding: 12px 16px; border-radius: 10px; background: var(--panel); border: 1px solid var(--edge); }
+#howCard p { font-size: .84rem; margin: 0 0 9px; }
+#howCard b { color: var(--gold); font-weight: normal; }
+
+body.pre .panel:not(#modal .panel), body.pre #corner, body.pre #toast, body.pre #back { visibility: hidden; }
+body.crisis #shipTop .who { visibility: hidden; }
+body.inship #mate { bottom: 96px; }

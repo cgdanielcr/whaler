@@ -21,6 +21,12 @@ import { makeShipView } from './shipview.js';
 import { makeCompany } from './company.js';
 import { makeBoatCrews } from './boatcrews.js';
 import { makeCrisis } from './crisis.js';
+import { makeCareer } from './owners.js';
+import { makeQuarterdeck } from './quarterdeck.js';
+import { makeWeather } from './weather.js';
+import { makeMate } from './mate.js';
+import { showTitle } from './title.js';
+import { sound } from './sound.js';
 
 const START = new Date(1841, 4, 1);
 
@@ -42,16 +48,33 @@ const gulls = makeGulls(scene);
 const minimap = makeMinimap(document.getElementById('minimap'));
 const company = makeCompany();
 const crews = makeBoatCrews(company);
-const voyage = makeVoyage({ scene, helm, whales, boats, ship, start: START, company, crews });
-const crisis = makeCrisis({ voyage, company });
+const career = makeCareer();
+const remember = (date) => career.save({ men: company.men, slots: company.slots, seats: crews.seats, date: date.getTime() });
+const voyage = makeVoyage({ scene, helm, whales, boats, ship, start: START, company, crews, career, remember });
+const crisis = makeCrisis({ voyage, company, career, helm });
 const shipView = makeShipView({ view, voyage, company, crews, ship, helm, crisis });
+const quarter = makeQuarterdeck({ sailing: voyage.sail, onHold: () => voyage.hold() });
+const weather = makeWeather(view, voyage);
+const mate = makeMate({ voyage, career, crisis, helm });
+mate.watch(whales);
 
-// For testing: ?crisis=gale in the address fits her out, casts off and brings the gale on at once.
-if (new URLSearchParams(location.search).get('crisis') === 'gale') {
+let begun = false;
+showTitle(career, (continuing) => {
+  const saved = continuing && career.load();
+  if (saved) { company.restore(saved.men, saved.slots); crews.restore(saved.seats); }
+  else career.forget();
+  begun = true;
+  voyage.begin(saved ? saved.date : null);
+});
+
+// For testing: ?crisis=gale (or squall, fire, overboard, beset) fits her out, casts off and brings it on at once.
+const test = new URLSearchParams(location.search).get('crisis');
+if (test) {
+  document.getElementById('titleGo').click();
   document.querySelector('#choices button')?.click();
-  voyage.click(BERTH.x - 40, BERTH.z + 10);
-  Object.assign(voyage.season, { gale: true, galeDays: 2, wind: 'strong gale' });
-  crisis.start('gale');
+  helm.pos.set(-100, 0, 0); voyage.v.phase = 'sea'; helm.set = true;
+  if (test === 'gale') Object.assign(voyage.season, { gale: true, galeDays: 2, wind: 'strong gale' });
+  crisis.start(test, test === 'overboard' ? company.alive().find((m) => m.watch) : null);
 }
 
 // A ring on the water where she has been sent.
@@ -67,7 +90,7 @@ view.canvas.addEventListener('pointerdown', (e) => {
   down = { x: e.clientX, y: e.clientY };
 });
 view.canvas.addEventListener('pointerup', (e) => {
-  if (!down || Math.hypot(e.clientX - down.x, e.clientY - down.y) > 8) return;
+  if (!begun || !down || Math.hypot(e.clientX - down.x, e.clientY - down.y) > 8) return;
   down = null;
   if (shipView.open) return shipView.click(e.clientX, e.clientY);
   if (shipView.busy) return;
@@ -78,6 +101,10 @@ view.canvas.addEventListener('pointerup', (e) => {
 });
 addEventListener('wheel', (e) => { if (!shipView.busy) view.zoom(e.deltaY); }, { passive: true });
 addEventListener('resize', view.resize);
+addEventListener('keydown', (e) => {
+  if (e.code !== 'Space' || crisis.now || shipView.open || !document.getElementById('modal').hidden) return;
+  e.preventDefault(); voyage.hold();
+});
 
 const focus = new THREE.Vector3();
 let last = null, t = 0, slow = 1, swell = 1, waves = 0;
@@ -87,7 +114,8 @@ view.renderer.setAnimationLoop((ms) => {
 });
 
 function frame(real) {
-  const dt = voyage.v.paused ? 0 : shipView.busy ? real * shipView.slow : real;   // the world holds still for a decision, or while you look over the ship
+  const v = voyage.v;
+  const dt = v.paused || v.held ? 0 : shipView.busy ? real * shipView.slow : real;   // the world holds still for a decision, or while you look over the ship
   t += dt;
 
   helm.update(dt, t);
@@ -96,17 +124,19 @@ function frame(real) {
   boats.update(dt, t, voyage.quarry, helm.pos);
   voyage.tick(dt);
   crisis.tick(real);
-  helm.hands *= crisis.speed;                       // with canvas blown away she goes slower
-  swell += ((voyage.season.gale ? 2.4 : 1) - swell) * Math.min(1, dt * 0.3);
+  const wind = helm.wind, blow = voyage.atSea() ? wind.drive : 0.5;
+  swell += ((voyage.season.gale ? 2.4 : 0.6 + 0.6 * blow) - swell) * Math.min(1, real * 0.3);
   waves += real;                                    // the sea keeps running, even while the world stands still
-  water.update(waves, swell);
+  water.update(waves, swell, wind.from, blow);
+  weather.update(real, waves, wind.from, blow, focus);
   wake.update(dt, helm.pos, helm.heading, helm.speed);
   gulls.update(dt, t, helm.pos);
+  sound.weather(blow, helm.speed, shipView.busy);
 
   marker.visible = !!helm.target;
   if (helm.target) {
     marker.position.set(helm.target.x, 0.6, helm.target.z);
-    marker.scale.setScalar(1 + 0.15 * Math.sin(t * 4));
+    marker.scale.setScalar(1 + 0.15 * Math.sin(waves * 4));
   }
 
   // Keep the ship in the middle; during a chase, look between her and the whale.
@@ -115,9 +145,13 @@ function frame(real) {
   shipView.update(real);
   view.follow(shipView.look(focus), real);        // or close in on her decks, when she is opened up
 
-  if ((slow += real) > 0.15) { slow = 0; voyage.draw(); minimap.draw(helm, whales, voyage.season.edge); }
+  if ((slow += real) > 0.15) {
+    slow = 0; voyage.draw(); minimap.draw(helm, whales, voyage.season.edge, wind.from);
+    quarter.draw(begun && voyage.atSea() && !shipView.busy, v.held);
+    mate.tick();
+  }
   view.render();
 }
 
 // For testing from the browser console: whaler.frame(0.05) steps the world.
-window.whaler = { frame, voyage, helm, whales, view, scene, shipView, company, crews, crisis };
+window.whaler = { frame, voyage, helm, whales, view, scene, shipView, company, crews, crisis, career };

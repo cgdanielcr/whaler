@@ -60,6 +60,7 @@ export function boatMesh(manned) {
 export function makeBoats(scene) {
   const boats = [];
   const active = () => boats.filter((b) => b.userData.mode !== 'stove');
+  let lying = false;
   let reach = () => true;                   // asked when a boat comes up with the whale: does the dart go home?
   return {
     get fast() { const a = active(); return a.length > 0 && a.every((b) => b.userData.mode === 'fast'); },
@@ -69,6 +70,7 @@ export function makeBoats(scene) {
     fastCrews: () => active().filter((b) => b.userData.mode === 'fast').map((b) => b.userData.crew),
     isOut: (crew) => boats.some((b) => b.userData.crew === crew && b.userData.mode !== 'stove'),
     onReach(fn) { reach = fn; },
+    lieOff(on) { lying = on; },               // the fast boats lie off clear of her flukes, or haul up alongside
 
     // crews: [{ crew: boat number, pull: how fast her oarsmen pull, 1 for ordinary }]
     launch(pos, heading, crews) {
@@ -107,7 +109,7 @@ export function makeBoats(scene) {
         if (!whale || whale.state !== 'fast') u.mode = 'home';
         let tx = ship.x, tz = ship.z, speed = 8 * u.pull;
         if (u.mode !== 'home') {                       // make for the whale's flank
-          const h = whale.heading, w = whale.group.position, off = 3.4 * whale.size;
+          const h = whale.heading, w = whale.group.position, off = (lying && u.mode === 'fast' ? 8 : 3.4) * whale.size;
           tx = w.x - Math.cos(h) * 1.5 - Math.sin(h) * u.side * off;
           tz = w.z - Math.sin(h) * 1.5 + Math.cos(h) * u.side * off;
           speed = 7 * u.pull;
@@ -117,7 +119,8 @@ export function makeBoats(scene) {
         if (u.mode === 'out' && d < 1.5) u.mode = reach(u.crew) ? 'fast' : (u.wait = 3, 'missed');
         if (u.mode === 'home' && d < 3.5) { scene.remove(b); boats.splice(boats.indexOf(b), 1); continue; }
         if (u.mode === 'fast') {                        // towed along beside her
-          b.position.x = tx; b.position.z = tz; u.heading = whale.heading;
+          const k = Math.min(1, dt * 3);
+          b.position.x += (tx - b.position.x) * k; b.position.z += (tz - b.position.z) * k; u.heading = whale.heading;
         } else if (u.mode !== 'missed' && d > 0.01) {
           const step = Math.min(d, speed * dt);
           b.position.x += (dx / d) * step; b.position.z += (dz / d) * step;

@@ -4,16 +4,16 @@ import { BERTH } from './world.js';
 import { PRICE } from './species.js';
 
 export const HOLD = 500;              // barrels of space below
-export const PER_DAY = 6;             // the space one day's provisions takes up
+export const PER_DAY = 4;             // the space one day's provisions takes up
 export const CREW = 29, BOATS = 4;
 export const SHIPKEEPERS = 8;         // men who must stay aboard to work the ship
 export const PER_BOAT = 6;            // a boat's crew
-const MILES_A_DAY = 45;               // a fair day's run, in the chart's measure
+const MILES_A_DAY = 40;               // a fair day's run, in the chart's measure
 
 export const FITS = [
-  { name: 'Short', days: 30, note: 'Room for oil from the start, but a short leash.' },
-  { name: 'Standard', days: 45, note: 'The usual reckoning.' },
-  { name: 'Long', days: 60, note: 'Range to reach the far grounds, but a crowded hold.' },
+  { name: 'Short', days: 40, note: 'Room for oil from the start, but a short leash.' },
+  { name: 'Standard', days: 60, note: 'The usual reckoning.' },
+  { name: 'Long', days: 80, note: 'Range to reach the far grounds, but a crowded hold.' },
 ];
 
 export const oil = (v) => v.whale + v.sperm;

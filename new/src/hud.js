@@ -1,7 +1,7 @@
 // The panels laid over the view: the ship's state, the date, the objective,
 // the one thing to do next, the chase, the lookout's cries, the choices put
 // to the owner, and the voyage's end.
-import { HOLD, CREW, BOATS, worth, money } from './stores.js';
+import { HOLD, PER_DAY, CREW, BOATS, worth, money } from './stores.js';
 import { mood } from './morale.js';
 
 const $ = (id) => document.getElementById(id);
@@ -12,6 +12,7 @@ $('act').onclick = () => actFn && actFn();
 $('act2').onclick = () => act2Fn && act2Fn();
 
 function modal(title, html, buttons) {
+  document.querySelector('#modal .panel').classList.remove('wide');
   $('modalTitle').textContent = title;
   $('summary').innerHTML = html;
   $('choices').innerHTML = '';
@@ -25,12 +26,12 @@ function modal(title, html, buttons) {
 }
 
 export const hud = {
-  ship(v, { room, home, atSea, spirits }) {
+  ship(v, { room, home, atSea, spirits, career }) {
     $('spiritsN').textContent = `${mood(spirits)}`;
     $('spiritsB').style.width = pct(spirits / 100);
     $('spiritsB').style.background = spirits >= 55 ? '#7fb069' : spirits >= 40 ? '#d9a441' : '#e2674f';
     $('holdN').textContent = `room for ${room} bbl`;
-    $('hProv').style.width = pct((v.stores * 6) / HOLD);
+    $('hProv').style.width = pct((v.stores * PER_DAY) / HOLD);
     $('hWhale').style.width = pct(v.whale / HOLD);
     $('hSperm').style.width = pct(v.sperm / HOLD);
     $('holdKey').innerHTML = `<i class="stores"></i>provisions <i class="oil"></i>${v.whale} whale oil <i class="sperm"></i>${v.sperm} sperm oil`;
@@ -42,8 +43,8 @@ export const hud = {
     $('crewN').textContent = `${v.crew} hands`;
     $('crewB').style.width = pct(v.crew / CREW);
     $('boatsN').innerHTML = Array.from({ length: BOATS }, (_, i) => `<i class="${i < v.boats ? 'boat' : 'boat gone'}"></i>`).join('');
-    $('tally').innerHTML = `<span>Voyage <b>${v.voyages + 1}</b></span><span>Day <b>${v.days}</b></span>` +
-      `<span>Whales <b>${v.taken}</b></span><span>Aboard <b>${money(worth(v))}</b></span><span>Landed <b>${money(v.landed)}</b></span>`;
+    $('tally').innerHTML = `<span>Voyage <b>${career.voyages + 1}</b></span><span>Day <b>${v.days}</b></span>` +
+      `<span>Whales <b>${v.taken}</b></span><span>Aboard <b>${money(worth(v))}</b></span><span>The owners look for <b>${money(career.expect())}</b></span>`;
     $('date').textContent = `${v.date.getDate()} ${MONTHS[v.date.getMonth()]} ${v.date.getFullYear()}`;
   },
 
@@ -71,7 +72,8 @@ export const hud = {
     $('act2').hidden = !label2;
   },
 
-  chase(label, k) {
+  chase(label, k, danger = false) {
+    $('chase').classList.toggle('danger', danger);
     $('chase').hidden = label == null;
     if (label == null) return;
     $('chaseLabel').textContent = label;
@@ -88,21 +90,14 @@ export const hud = {
     setTimeout(() => el.remove(), 6000);
   },
 
-  // Before each voyage: how much provision to take.
-  fitOut(fits, pick, intro) {
-    modal('Fitting out',
-      `<p>${intro}</p>` + '<p>Provisions and oil share the hold. Every day of provision stowed is room the oil cannot have ' +
-      'until it is eaten. Take too little and the men starve on the way home.</p>',
-      fits.map((f) => [`${f.name}: ${f.days} days`, () => pick(f), `${f.note} Room for ${f.room} bbl of oil at first.`]));
-  },
-
   // A choice put to the owner mid-chase. The world waits for the answer.
-  decide(text, options) { modal('A decision', `<p>${text}</p>`, options); },
+  decide(text, options, title = 'A decision') { modal(title, `<p>${text}</p>`, options); },
 
   // What came of a crisis, once it is over.
   account(title, lines, done) { modal(title, lines.map((l) => `<p>${l}</p>`).join(''), [['Carry on', done]]); },
 
-  ended(title, lines, again) {
-    modal(title, lines.map((l) => (l.startsWith('<div') ? l : `<p>${l}</p>`)).join(''), [['Fit out for another voyage', again]]);
+  ended(title, lines, again, label = 'Fit out for another voyage') {
+    modal(title, lines.map((l) => (l.startsWith('<div') ? l : `<p>${l}</p>`)).join(''), [[label, again]]);
   },
+  modal,
 };

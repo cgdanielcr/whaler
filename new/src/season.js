@@ -30,23 +30,30 @@ export function iceEdge(date, hours = 0) {
 }
 
 export function makeSeason() {
-  const s = { wind: 'moderate breeze', gale: false, galeDays: 0, edge: -9999 };
+  const s = { wind: 'moderate breeze', gale: false, brewing: false, galeDays: 0, edge: -9999 };
 
   s.update = (date, hours) => { s.edge = iceEdge(date, hours); };
 
   // Each morning: the weather, and a word from the old hands as the year turns.
-  s.newDay = (date) => {
+  s.newDay = (date, days = 99) => {
     const doy = dayOfYear(date), late = Math.min(1, Math.max(0, (doy - 200) / 80));
     if (s.gale) {
       if (--s.galeDays <= 0) { s.gale = false; s.wind = 'strong breeze'; hud.toast('The gale blows itself out.'); }
-    } else if (Math.random() < 0.03 + 0.1 * late) {
+    } else if (s.brewing || (days > 5 && Math.random() < 0.012 + 0.03 * late)) {     // it comes with a day's warning, or with none
+      s.brewing = false;
       s.gale = true; s.galeDays = 1 + Math.floor(Math.random() * 2); s.wind = pick(GALES);
       hud.toast(`It comes on to blow: a ${s.wind}. No boat can be lowered in this.`);
-    } else s.wind = pick(CALM);
+    } else {
+      s.wind = pick(CALM);
+      if (days > 4 && Math.random() < 0.035 + 0.08 * late) {
+        s.brewing = true; s.wind = 'strong breeze';
+        hud.toast('The glass is falling, and there is a greasy look to the sky to windward. It will blow before tomorrow.');
+      }
+    }
     if (WARNINGS[doy]) hud.toast(WARNINGS[doy]);
   };
 
-  s.calm = () => { s.gale = false; s.galeDays = 0; s.wind = 'moderate breeze'; };
+  s.calm = () => { s.gale = s.brewing = false; s.galeDays = 0; s.wind = 'moderate breeze'; };
 
   // A line for the fitting-out, on how the ice lies.
   s.advice = (date) => {
@@ -54,6 +61,21 @@ export function makeSeason() {
     if (doy < 190 && edge > -360) return 'The pack ice still lies across the north of the grounds. The bowheads keep along its edge.';
     if (doy < 240) return 'The northern grounds are open. The ice will come down again by the end of September.';
     return 'The ice is on its way south. The bowheads come with it, and so does the risk of being beset.';
+  };
+
+  // The talk on the wharf before she sails: where the whales are said to be
+  // this season. It is right four times in five. `bias` says how thick they lie by latitude.
+  s.report = (date) => {
+    const iceOut = dayOfYear(date) >= 185 && dayOfYear(date) < 250;
+    const said = pick(iceOut ? ['north', 'north', 'middle', 'south'] : ['ice', 'middle', 'south', 'south']);
+    const truth = Math.random() < 0.8 ? said : pick(['middle', 'south', iceOut ? 'north' : 'ice']);
+    const thick = { ice: (z) => (z < s.edge + 150 ? 1 : 0.3), north: (z) => (z < -120 ? 1 : 0.3),
+      middle: (z) => (Math.abs(z) < 130 ? 1 : 0.3), south: (z) => (z > 110 ? 1 : 0.3) };
+    const text = { ice: 'A ship just in says the bowheads are thick along the edge of the ice.',
+      north: 'The talk on the wharf is of bowheads in the open water far to the north.',
+      middle: 'The talk on the wharf is of right whales on the middle ground, due west of the port.',
+      south: 'A ship just in raised sperm whales on the southern ground, day after day.' };
+    return { said, truth, text: text[said], bias: thick[truth] };
   };
 
   return s;

@@ -6,24 +6,24 @@ export const PRICE = { whale: 11, sperm: 30 };
 
 export const SPECIES = {
   right: {
-    name: 'right whale', note: 'Slow and easy to take.', oil: 'whale', bbl: [60, 110], size: [0.95, 1.2], color: 0x1f252c,
-    body: 'baleen', blow: 'v', wander: 1.2, flee: 1.8, stove: 0.08, sound: 0.15, sink: 0,
+    name: 'right whale', note: 'Slow, and slow to anger.', oil: 'whale', bbl: [60, 110], size: [0.95, 1.2], color: 0x1f252c,
+    body: 'baleen', blow: 'v', wander: 1.2, flee: 1.8, stove: 0.1, sound: 0.15, sink: 0, calm: [6, 10], warn: 2.4, wary: 0.05,
   },
   bowhead: {
     name: 'bowhead', note: 'Thick with blubber; keeps near the ice.', oil: 'whale', bbl: [90, 150], size: [1.05, 1.3], color: 0x2a323b, chin: true,
-    body: 'baleen', blow: 'v', wander: 1.1, flee: 1.6, stove: 0.12, sound: 0.3, sink: 0,
+    body: 'baleen', blow: 'v', wander: 1.1, flee: 1.6, stove: 0.14, sound: 0.3, sink: 0, calm: [5, 8], warn: 2.2, wary: 0.1,
   },
   sperm: {
-    name: 'sperm whale', note: 'The best oil of all, and she fights.', oil: 'sperm', bbl: [35, 85], size: [0.85, 1.25], color: 0x4b4b50,
-    body: 'sperm', blow: 'forward', wander: 1.5, flee: 2.2, stove: 0.35, sound: 0.35, sink: 0,
+    name: 'sperm whale', note: 'The best oil of all. She hears oars a mile off, and she fights.', oil: 'sperm', bbl: [35, 85], size: [0.85, 1.25], color: 0x4b4b50,
+    body: 'sperm', blow: 'forward', wander: 1.5, flee: 2.2, stove: 0.3, sound: 0.35, sink: 0, calm: [2.5, 5], warn: 1.5, wary: 0.3,
   },
   humpback: {
     name: 'humpback', note: 'Poor oil, and she may sink when killed.', oil: 'whale', bbl: [25, 50], size: [0.8, 1.0], color: 0x353c44, fins: true,
-    body: 'baleen', blow: 'column', wander: 1.4, flee: 2.2, stove: 0.15, sound: 0.2, sink: 0.5,
+    body: 'baleen', blow: 'column', wander: 1.4, flee: 2.2, stove: 0.16, sound: 0.2, sink: 0.5, calm: [4, 7], warn: 1.9, wary: 0.15,
   },
   finback: {
     name: 'finback', note: 'Too fast for any boat.', oil: 'whale', bbl: [0, 0], size: [1.1, 1.3], color: 0x4a5058, dorsal: true,
-    body: 'fin', blow: 'column', wander: 2.6, flee: 7.5, stove: 0, sound: 0, sink: 0, tooFast: true,
+    body: 'fin', blow: 'column', wander: 2.6, flee: 7.5, stove: 0, sound: 0, sink: 0, tooFast: true, calm: [9, 9], warn: 2, wary: 0,
   },
 };
 

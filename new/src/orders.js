@@ -21,13 +21,14 @@ function boatsToLower({ v, crews, company, kind }) {
 export function offer(g) {
   const { v, helm, whales, trying, season, acts } = g;
   if (v.phase === 'port') return hud.action(v.fitted ? 'Set sail' : null, acts.setSail);
+  if (v.phase === 'hunt') { const o = g.chase.order; return o ? hud.action(...o) : hud.action(null); }
   if (v.phase !== 'sea' && v.phase !== 'trying') return hud.action(null);
 
   const ids = boatsToLower(g), n = ids.length;
   const w = !season.gale && n > 0 && room(v) >= 10 && whales.nearest(helm.pos, REACH);
-  const lower = w ? [`Lower ${n === 1 ? 'a boat' : 'the boats'} for the ${describe(w)}`, () => acts.lower(w, ids)] : [null, null];
+  const lower = w ? [`Lower and pull for the ${describe(w)}`, () => acts.lower(w, ids)] : [null, null];
   if (v.phase === 'trying') return hud.action(...lower, 'Cast her off', acts.castOff);
-  if (w) return hud.action(...lower);
+  if (w) return hud.action(...lower, 'Lower, and paddle up quietly', () => acts.lower(w, ids, true));
   const c = trying.near(helm.pos, ALONGSIDE);
   if (c) return hud.action('Take her alongside', () => acts.alongside(c));
   if (far(helm.pos, BERTH) < 70 && v.days > 0) return hud.action('Make fast at the wharf', acts.dock);
@@ -54,7 +55,7 @@ function hint(g) {
 export function draw(g) {
   const { v, helm, trying, season, chase } = g;
   const full = room(v) < 10;
-  hud.ship(v, { room: room(v), home: daysHome(helm.pos), atSea: v.phase !== 'port' && v.phase !== 'ended', spirits: spiritsOf(g.company) });
+  hud.ship(v, { room: room(v), home: daysHome(helm.pos), atSea: v.phase !== 'port' && v.phase !== 'ended', spirits: spiritsOf(g.company), career: g.career });
   g.kind.show();                                     // duff and a Sunday, when the calendar allows
   hud.where(v.phase === 'port' || v.phase === 'ended' ? 'At the wharf'
     : helm.slow === 0 ? 'Beset in the ice' : helm.slow < 1 ? 'In the pack ice' : helm.pos.x < -60 ? 'On the whaling grounds' : 'At sea',

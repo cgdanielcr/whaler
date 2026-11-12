@@ -50,7 +50,7 @@ export function makeWhales(scene, startEdge) {
     scene.add(m);
     puffs.push({ m, age: 99, v: new THREE.Vector3() });
   }
-  let nextPuff = 0, edge = startEdge;
+  let nextPuff = 0, edge = startEdge, bias = () => 1;
   const hole = new THREE.Vector3();
 
   function spawn(away) {
@@ -59,7 +59,7 @@ export function makeWhales(scene, startEdge) {
     do {
       z = zMin + rand() * (EDGE - 40 - zMin);
       x = GROUNDS.x0 + rand() * (GROUNDS.x1 - GROUNDS.x0);
-    } while ((x > shoreX(z) - 40 || (away && Math.hypot(x - away.x, z - away.z) < 110)) && tries++ < 60);
+    } while ((x > shoreX(z) - 40 || rand() > bias(z) || (away && Math.hypot(x - away.x, z - away.z) < 110)) && tries++ < 60);
     const kind = pickKind(z, rand, edge), sp = SPECIES[kind];
     const size = sp.size[0] + rand() * (sp.size[1] - sp.size[0]), k = (size - sp.size[0]) / (sp.size[1] - sp.size[0]);
     const group = whaleMesh(kind);
@@ -153,6 +153,13 @@ export function makeWhales(scene, startEdge) {
   return {
     list,
     update,
+    // A new season: the whales lie where they lie this year (see the report in season.js).
+    restock(where, iceEdge) {
+      bias = where; edge = iceEdge;
+      for (const w of list) scene.remove(w.group);
+      list.length = 0;
+      for (let i = 0; i < COUNT; i++) spawn(null);
+    },
     within: (pos, r) => list.filter((w) => w.state === 'free' && dist(w, pos) < r),
     nearest(pos, r) {
       let best = null, bd = r;

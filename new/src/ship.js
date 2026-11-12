@@ -8,7 +8,7 @@ import { bake } from './bake.js';
 const mat = (color, o = {}) => new THREE.MeshStandardMaterial({ color, flatShading: true, roughness: 0.85, ...o });
 const HULL = mat(0x2e2620), DECK = mat(0xa07a52), RAIL = mat(0x4a3526), BAND = mat(0xd9ceb4);
 const SPAR = mat(0x4e3a29), BRICK = mat(0x8c4b34);
-const CANVAS = mat(0xf1e8d4, { side: THREE.DoubleSide, roughness: 0.95 });
+const CANVAS = mat(0xf4ecd9, { side: THREE.DoubleSide, roughness: 0.95, emissive: 0x8a7f66, emissiveIntensity: 0.55 });   // canvas glows a little with the light through it
 const FLAG = mat(0xa8322a, { side: THREE.DoubleSide });
 
 const MASTS = [{ x: 3.9, h: 12.5, k: 1 }, { x: 0.3, h: 13.5, k: 1.08 }, { x: -3.7, h: 10.5, k: 0.8, mizzen: true }];
@@ -85,21 +85,24 @@ export function makeShip() {
   const g = new THREE.Group();
   g.add(hullMesh(), ring(1, 0.94, 0.5, DECK_Y, RAIL), ring(1.012, 0.97, 0.28, 0.3, BAND));
 
-  const squares = [], fa = new THREE.Group(), lines = [];
+  // Each mast's yards and square sails hang in a group of their own, so they can be braced round to the wind.
+  const squares = [], braced = [], jibs = new THREE.Group(), spanker = new THREE.Group(), lines = [];
   for (const m of MASTS) {
-    const top = DECK_Y + m.h;
-    g.add(spar([m.x, DECK_Y, 0], [m.x, top, 0], 0.17));
+    const top = DECK_Y + m.h, yards = new THREE.Group();
+    yards.position.x = m.x;
+    g.add(spar([m.x, DECK_Y, 0], [m.x, top, 0], 0.17), yards);
+    braced.push(yards);
     YARDS.forEach((y, i) => {
       const yy = DECK_Y + m.h * y.f, w = y.w * m.k;
-      g.add(spar([m.x + 0.15, yy, -w / 2], [m.x + 0.15, yy, w / 2], 0.07));
+      yards.add(spar([0.15, yy, -w / 2], [0.15, yy, w / 2], 0.07));
       if (m.mizzen && i === 0) return;          // no course on the mizzen: the spanker is there
       const below = i === 0 ? DECK_Y + m.h * 0.13 : DECK_Y + m.h * YARDS[i - 1].f;
       const wb = i === 0 ? w * 1.05 : YARDS[i - 1].w * m.k;
       const sail = new THREE.Group();
-      sail.position.set(m.x + 0.25, yy - 0.05, 0);
+      sail.position.set(0.25, yy - 0.05, 0);
       sail.add(new THREE.Mesh(sailGeo(w * 0.94, wb * 0.94, yy - below - 0.25), CANVAS));
-      g.add(sail);
-      squares.push(sail);
+      yards.add(sail);
+      squares.push({ sail, tier: i, mast: MASTS.indexOf(m) });
     });
     // Shrouds from the masthead down to each side.
     for (const side of [-1, 1]) for (const dx of [-1.3, -0.6, 0.1]) lines.push([m.x, top * 0.92, 0], [m.x + dx, 1.4, side * 1.95]);
@@ -110,11 +113,11 @@ export function makeShip() {
     [-3.7, DECK_Y + 10.2, 0], [0.3, DECK_Y + 7.5, 0], [-3.7, DECK_Y + 10.2, 0], [-7, 1.4, 0]);
 
   // Jibs forward, spanker aft: set with the rest, gone when she is furled.
-  fa.add(new THREE.Mesh(tri([3.95, DECK_Y + 6.9, 0], [10.3, 2.6, 0], [5.4, 2.1, 0.5]), CANVAS));
-  fa.add(new THREE.Mesh(tri([3.95, DECK_Y + 10, 0], [11, 2.85, 0], [6.8, 3.6, 0.6]), CANVAS));
+  jibs.add(new THREE.Mesh(tri([3.95, DECK_Y + 6.9, 0], [10.3, 2.6, 0], [5.4, 2.1, 0.5]), CANVAS));
+  jibs.add(new THREE.Mesh(tri([3.95, DECK_Y + 10, 0], [11, 2.85, 0], [6.8, 3.6, 0.6]), CANVAS));
   const a = [-3.85, 2.1, 0], b = [-3.85, DECK_Y + 6.7, 0], c = [-7.2, DECK_Y + 5.9, 0.5], d = [-7.5, 2.1, 0.6];
-  fa.add(new THREE.Mesh(tri(a, b, c, a, c, d), CANVAS));
-  g.add(fa);
+  spanker.add(new THREE.Mesh(tri(a, b, c, a, c, d), CANVAS));
+  g.add(jibs, spanker);
   g.add(spar([-3.7, DECK_Y + 6.9, 0], [-7.3, DECK_Y + 6, 0], 0.07), spar([-3.7, 2, 0], [-7.6, 1.9, 0], 0.07));
 
   const rig = new THREE.BufferGeometry();
@@ -127,8 +130,8 @@ export function makeShip() {
   box(0.3, 0.7, 0.3, BRICK, 2.2, 2, 0);
   box(2.2, 0.9, 2.4, RAIL, -5.2, 1.35, 0);
   for (const [x, z] of [[1, 0.8], [-1.3, -0.9], [-2.6, 0.9], [5, -0.5], [-6.2, 0.4], [0.9, -1.2]]) figure(g, x, DECK_Y, z, true);
-  const flag = new THREE.Mesh(new THREE.PlaneGeometry(1.3, 0.7), FLAG);
-  flag.position.set(-0.4, DECK_Y + 13.8, 0);
+  const flag = new THREE.Mesh(new THREE.PlaneGeometry(1.5, 0.7).translate(0.75, 0, 0), FLAG);   // it streams from the hoist
+  flag.position.set(0.3, DECK_Y + 13.8, 0);
   g.add(flag);
 
   // Boats on the davits, and two spares bottom-up on the skids over the after house.
@@ -148,14 +151,31 @@ export function makeShip() {
   }
 
   g.traverse((o) => { if (o.isMesh) { o.castShadow = true; o.receiveShadow = true; } });
-  bake(g, [...squares, fa, ...davits]);
+  bake(g, [...braced, jibs, spanker, flag, ...davits]);
 
+  let brace = 0, lost = 0;
+  const clamp01 = (n) => Math.max(0, Math.min(1, n));
   return {
     group: g,
-    setSails(k) {
-      for (const s of squares) s.scale.set(0.35 + 0.65 * k, 0.07 + 0.93 * k, 1);
-      fa.visible = k > 0.4;
+    // set: 0 furled at the wharf to 1 set. plan: her canvas, 0 all plain sail, 1 topsails,
+    // 2 close-reefed topsails, 3 hove to. rel: where the wind is from, off her bow.
+    setSails(set, plan = 0, rel = Math.PI, dt = 0) {
+      const light = clamp01(1 - plan), reef = plan <= 1 ? 1 : 0.45, hove = clamp01(plan - 2);
+      for (const { sail, tier, mast } of squares) {
+        let k = set * (tier === 1 ? reef : light);
+        if (tier === 1 && mast < lost) k = 0;                       // a topsail blown out of its bolt-ropes
+        if (tier === 1 && mast === 2) k *= 1 - hove;                // hove to under fore and main topsails
+        sail.scale.set(0.35 + 0.65 * k, 0.07 + 0.93 * k, 1);
+      }
+      jibs.visible = set > 0.4 && plan < 2.5;
+      spanker.visible = set > 0.4 && plan < 1.5;
+      // Yards square before the wind, braced sharp up when she is close-hauled; the weather yardarm goes forward.
+      const want = Math.sign(Math.sin(rel)) * Math.min(0.95, (Math.PI - Math.abs(rel)) * 0.62) * set;
+      brace += (want - brace) * Math.min(1, dt * 1.2);
+      braced.forEach((y, i) => { y.rotation.y = i === 1 && hove > 0.5 ? -brace : brace; });   // main topsail aback when hove to
+      flag.rotation.y = -(rel + Math.PI);
     },
+    setLost(n) { lost = n; },
     // Show each boat on her davits, or not (lost, or away after a whale). In DAVITS order.
     showBoats(flags) { davits.forEach((b, i) => { b.visible = flags[i]; }); },
   };

@@ -11,6 +11,7 @@ export function makeCrisisMarks({ crisis, stage, layers }) {
   const box = $('labels'), tabs = $('deckTabs'), els = new Map(), v = new THREE.Vector3();
   $('crisisPause').onclick = () => crisis.toggle();
   $('crisisAll').onclick = () => crisis.callAll();
+  $('crisisBill').onclick = () => crisis.callBill();
 
   function mark(t) {
     let e = els.get(t.id);
@@ -44,6 +45,7 @@ export function makeCrisisMarks({ crisis, stage, layers }) {
       e.querySelector('i').style.width = `${(task ? t.p : t.m) * 100}%`;
       e.classList.toggle('task', task);
       e.classList.toggle('bad', task ? t.s > 0.65 : t.m > 0.6);
+      e.classList.toggle('unmanned', !t.men.length);
       e.querySelector('small').textContent = crisis.status(t);
       v.set(t.at[0], t.at[1] + 1.25, t.at[2]).applyMatrix4(layers[deck].group.matrixWorld).project(stage.camera);
       e.style.left = `${((v.x + 1) / 2) * innerWidth}px`;
@@ -53,10 +55,11 @@ export function makeCrisisMarks({ crisis, stage, layers }) {
 
     $('crisisTitle').textContent = c.def.title(crisis.wind);
     $('crisisLine').textContent = c.line;
-    $('crisisB').style.width = `${Math.max(0, 1 - c.t / c.lasts) * 100}%`;
+    $('crisisB').style.width = c.lasts ? `${Math.max(0, 1 - c.t / c.lasts) * 100}%` : '100%';
     $('crisisHint').textContent = c.paused ? 'Held. Drag men onto the troubles, then press Space to let it run.' : 'Press Space to hold.';
     $('crisisPause').textContent = c.paused ? 'Let it run' : 'Hold';
     $('crisisAll').hidden = c.allHands;
+    $('crisisBill').hidden = !crisis.hasBill;
   }
 
   return { update };
