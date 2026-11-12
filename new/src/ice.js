@@ -32,7 +32,7 @@ export function makeIce(scene) {
     mesh.position.set(x, berg ? 0.4 : 0.05, z);
     mesh.rotation.y = rand() * 6.3;
     all.add(mesh);
-    floes.push({ x, z, r });
+    floes.push({ x, z, r, berg });
   }
   // Under each floe, the pale green of the ice below the water, and a rim of slush about it.
   const under = new THREE.Group(), glow = new THREE.MeshBasicMaterial({ color: 0x8fe6dc, transparent: true, opacity: 0.38, depthWrite: false });

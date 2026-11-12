@@ -9,21 +9,22 @@ const mat = (color) => new THREE.MeshStandardMaterial({ color, flatShading: true
 
 export function makeCreatures(scene, ice) {
   const rand = seeded(23), g = new THREE.Group();
-  const SEAL = [mat(0x4a4f55), mat(0x6b6259)], BEAR = mat(0xf2ecd9), NOSE = mat(0x26221f);
+  const SEAL = [mat(0x4a4f55), mat(0x6b6259)], BEAR = mat(0xe9dfc2), NOSE = mat(0x26221f);
   const blob = (r, m, x, y, z, sx, sy, sz, ry = 0) => { const o = new THREE.Mesh(new THREE.IcosahedronGeometry(r, 0), m); o.position.set(x, y, z); o.scale.set(sx, sy, sz); o.rotation.y = ry; g.add(o); };
   // Seals: on the flatter floes, in twos and threes.
-  for (const f of ice.floes.filter((x) => x.r > 2.6 && x.r < 6).slice(0, 26)) {
+  for (const f of ice.floes.filter((x) => !x.berg && x.r > 2.6).slice(0, 30)) {
     if (rand() < 0.45) continue;
     for (let i = 0, n = 1 + Math.floor(rand() * 3); i < n; i++) {
       const a = rand() * 6.3, d = rand() * f.r * 0.45, x = f.x + Math.cos(a) * d, z = f.z + Math.sin(a) * d, turn = rand() * 6.3, m = SEAL[i % 2];
-      blob(0.42, m, x, 0.75, z, 1.9, 0.75, 0.85, turn);
-      blob(0.2, m, x + Math.cos(turn) * 0.75, 0.95, z - Math.sin(turn) * 0.75, 1, 1, 1);
+      const y = 0.05 + 0.2 * f.r;
+      blob(0.42, m, x, y + 0.25, z, 1.9, 0.75, 0.85, turn);
+      blob(0.2, m, x + Math.cos(turn) * 0.75, y + 0.45, z - Math.sin(turn) * 0.75, 1, 1, 1);
     }
   }
-  // One white bear, on the largest berg, looking out to sea.
-  const berg = [...ice.floes].sort((a, b) => b.r - a.r)[2];
+  // One white bear, on the broadest floe, looking out to sea.
+  const berg = ice.floes.filter((x) => !x.berg).sort((a, b) => b.r - a.r)[0];
   if (berg) {
-    const [x, y, z] = [berg.x, berg.r * 0.86, berg.z];
+    const [x, y, z] = [berg.x, 0.05 + 0.2 * berg.r, berg.z];
     blob(0.7, BEAR, x, y + 0.75, z, 1.7, 1, 0.9); blob(0.36, BEAR, x + 1.25, y + 1.05, z, 1.2, 0.9, 0.85); blob(0.09, NOSE, x + 1.68, y + 1.05, z, 1, 1, 1);
     for (const [dx, dz] of [[0.7, 0.35], [0.7, -0.35], [-0.7, 0.35], [-0.7, -0.35]]) blob(0.22, BEAR, x + dx, y + 0.25, z + dz, 1, 1.5, 1);
   }

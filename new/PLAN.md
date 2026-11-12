@@ -107,6 +107,28 @@ and wait. This pass went at the moments that repeat.
 
 Still click-and-wait: the passage itself. Sailing is ordered, not handled.
 
+## The third pass: the look (12 November 2026)
+
+Asked for after the second: more detail, more personality, more atmosphere.
+
+- **The ship** is dressed: sailcloth sewn in cloths with reef bands and points, copper at
+  her waterline, lit stern windows and a taffrail lantern, hatches, wheel, windlass,
+  anchors, casks, and smoke from the galley stovepipe trailing down the wind.
+- **The sea** has broad lighter and darker reaches, cat's-paws drifting over it, and
+  glints where the sun strikes. A whale lying at the surface has white water about her.
+- **The sky changes** every few days: fair, golden with long shadows, overcast, or mist
+  with banks of it drifting and the edges of the picture whitened. Snow near the ice
+  and late in the year.
+- **Other lives**: seals on the floes, a white bear on the broadest, porpoises that come
+  alongside when she is making good way.
+- **The harbour** has a lighthouse on the point with a turning beam, brighter in thick
+  weather, and smoke from the chimneys of the town.
+- **The panels** are dressed as brass and varnish for the instruments and logbook paper
+  for everything that is said or decided.
+
+The finer picture (the model-on-a-table blur, and sharper on good screens) is still a
+switch on the title page, off unless turned on, because of what it costs a laptop.
+
 ## The milestones
 
 Each ends live and playable, with one test to perform in a browser. None is started
