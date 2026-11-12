@@ -2,16 +2,18 @@
 // tilt-shift blur (switchable) that makes the world look like a model on a table.
 import * as THREE from 'three';
 import { makePost } from './post.js';
+import { makePaint } from './paint.js';
 
 const LOOK = new THREE.Vector3(-1, 1.3, 1).normalize();   // east shows upper right
 const SUN = new THREE.Vector3(-25, 110, -60);             // light from the upper left; the weather may move it
-// The model-on-a-table blur and a sharper picture cost a good deal; the owner turns them on from the title page.
-let fine = false;
-try { fine = localStorage.getItem('whaler-fine') === 'on'; } catch { /* no storage */ }
-const TILT_SHIFT = fine;
+// How the picture is finished: 'painted' (as an oil painting, the usual way), 'plain' (as drawn,
+// the cheapest), or 'fine' (sharp, with the model-on-a-table blur, the costliest). Chosen on the title page.
+let picture = 'painted';
+try { picture = localStorage.getItem('whaler-picture') || 'painted'; } catch { /* no storage */ }
+const fine = picture === 'fine';
 
 export function makeView() {
-  const renderer = new THREE.WebGLRenderer({ antialias: !TILT_SHIFT });
+  const renderer = new THREE.WebGLRenderer({ antialias: picture === 'plain' });
   renderer.setPixelRatio(Math.min(devicePixelRatio, fine ? 2 : 1));   // sharper screens cost too much on a laptop's graphics
   renderer.shadowMap.enabled = true;
   renderer.shadowMap.type = THREE.PCFShadowMap;
@@ -36,7 +38,7 @@ export function makeView() {
   sun.shadow.normalBias = 0.06;
   scene.add(sun, sun.target);
 
-  const post = TILT_SHIFT ? makePost(renderer) : null;
+  const post = fine ? makePost(renderer) : picture === 'painted' ? makePaint(renderer) : null;
 
   function project() {
     const a = innerWidth / innerHeight;

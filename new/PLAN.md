@@ -126,8 +126,12 @@ Asked for after the second: more detail, more personality, more atmosphere.
 - **The panels** are dressed as brass and varnish for the instruments and logbook paper
   for everything that is said or decided.
 
-The finer picture (the model-on-a-table blur, and sharper on good screens) is still a
-switch on the title page, off unless turned on, because of what it costs a laptop.
+**Painted in oils (asked for next, the same day).** The whole picture is now finished
+as an oil painting: laid down in flat dabs, with brush streaks, the weave of the canvas,
+ridges of paint that catch the light, a richer and warmer palette, and varnish darkening
+the corners. The panels stay crisp over it. `src/paint.js`. The switch on the title page
+now turns between three finishes: painted (the usual), plain, and fine (the
+model-on-a-table blur). How it runs on the owner's laptop has not been measured.
 
 ## The milestones
 
