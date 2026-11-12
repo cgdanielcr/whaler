@@ -8,7 +8,7 @@ const MOODS = {
   fair: { sun: 0xfff0d8, sunK: 2.7, sky: 0xdcefff, ground: 0x1a4a5c, skyK: 1.3, back: 0x0f4a63 },
   late: { sun: 0xffdcae, sunK: 2.3, sky: 0xd9e2ec, ground: 0x1c4152, skyK: 1.15, back: 0x12435a },
   fresh: { sun: 0xf2ead8, sunK: 2.1, sky: 0xc9d8e4, ground: 0x173d4e, skyK: 1.2, back: 0x0f4057 },
-  gale: { sun: 0xaebcc6, sunK: 0.9, sky: 0x8fa3b2, ground: 0x0f222e, skyK: 1.0, back: 0x0b2a3a },
+  gale: { sun: 0xb8c6d0, sunK: 1.3, sky: 0x9db0be, ground: 0x14303f, skyK: 1.25, back: 0x0b2a3a },
 };
 const CLOUDS = 9, STREAKS = 70, SPAN = 150;
 

@@ -100,7 +100,7 @@ export const CRISES = {
         spots: [[-3.6, 0, -1.4], [-4.4, 0, -1.4], [-5.2, 0, -1.3], [-2.8, 0, -1.4]], pose: 'spade', face: H,
         full: (a, t) => { t.m = 0.5; a.v.hull = Math.max(1, a.v.hull - 9); a.say('A floe rafts up against her quarter, and her timbers cry out!'); } },
     ],
-    finish: (a) => { a.helm.pos.z = a.season.edge + 5; a.helm.slow = 1; a.cheer(2); },
+    finish: (a) => { a.helm.pos.z = a.season.edge + 16; a.helm.slow = 1; a.cheer(2); },
   },
 };
 
