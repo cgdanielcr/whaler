@@ -9,7 +9,7 @@ import { sound } from './sound.js';
 export const SIGHT = 95;        // how far an ordinary lookout can see a spout
 export const MAKE_OUT = 50;     // how near before he can tell the kind of whale
 
-export function makeLookout({ helm, whales }) {
+export function makeLookout({ helm, whales, onCry = () => {} }) {
   const far = (p, q) => Math.hypot(p.x - q.x, p.z - q.z);
 
   // Where she lies from the ship, as a seaman says it.
@@ -28,7 +28,7 @@ export function makeLookout({ helm, whales }) {
     for (const w of whales.within(helm.pos, SIGHT * eyes)) {
       if (!w.sighted && w.surfaced) {
         w.sighted = true;
-        if (cry) { hud.toast(`There she blows! ${bearing(w.group.position)}.`); sound.bells(1); }
+        if (cry) { hud.toast(`There she blows! ${bearing(w.group.position)}.`); sound.bells(1); onCry(); }
       }
       if (w.sighted && !w.known && far(w.group.position, helm.pos) < MAKE_OUT * eyes) {
         w.known = true;

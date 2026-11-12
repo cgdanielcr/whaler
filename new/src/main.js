@@ -28,6 +28,8 @@ import { makeMate } from './mate.js';
 import { showTitle } from './title.js';
 import { makePointer } from './pointer.js';
 import { sound } from './sound.js';
+import { juice } from './juice.js';
+import { hud } from './hud.js';
 
 const START = new Date(1841, 4, 1);
 
@@ -54,7 +56,7 @@ const remember = (date) => career.save({ men: company.men, slots: company.slots,
 const voyage = makeVoyage({ scene, helm, whales, boats, ship, start: START, company, crews, career, remember });
 const crisis = makeCrisis({ voyage, company, career, helm });
 const shipView = makeShipView({ view, voyage, company, crews, ship, helm, crisis });
-const quarter = makeQuarterdeck({ sailing: voyage.sail, onHold: () => voyage.hold() });
+const quarter = makeQuarterdeck({ sailing: voyage.sail, onHold: () => voyage.hold(), onRun: () => voyage.runOn() });
 const weather = makeWeather(view, voyage);
 const mate = makeMate({ voyage, career, crisis, helm });
 mate.watch(whales);
@@ -104,12 +106,15 @@ view.canvas.addEventListener('pointerup', (e) => {
 addEventListener('wheel', (e) => { if (!shipView.busy) view.zoom(e.deltaY); }, { passive: true });
 addEventListener('resize', view.resize);
 addEventListener('keydown', (e) => {
-  if (e.code !== 'Space' || crisis.now || shipView.open || !document.getElementById('modal').hidden) return;
-  e.preventDefault(); voyage.hold();
+  if (crisis.now || shipView.open || !document.getElementById('modal').hidden) return;
+  if (e.code === 'KeyF') return voyage.runOn();
+  if (e.code !== 'Space') return;
+  e.preventDefault();
+  if (!voyage.chase.throwIron()) voyage.hold();       // Space darts the iron when a boat is poised; else it holds the world
 });
 
 const focus = new THREE.Vector3();
-let last = null, t = 0, slow = 1, swell = 1, waves = 0;
+let last = null, t = 0, slow = 1, swell = 1, waves = 0, wideH = null;
 view.renderer.setAnimationLoop((ms) => {
   frame(last === null ? 0 : Math.min((ms - last) / 1000, 0.05));
   last = ms;
@@ -117,7 +122,9 @@ view.renderer.setAnimationLoop((ms) => {
 
 function frame(real) {
   const v = voyage.v;
-  const dt = v.paused || v.held ? 0 : shipView.busy ? real * shipView.slow : real;   // the world holds still for a decision, or while you look over the ship
+  // Passing the time stops of itself when anything wants the master: a spout, a choice, strained canvas, her course run.
+  if (v.fast && (v.phase !== 'sea' || !helm.target || crisis.now || voyage.sail.canvas.warned || !document.getElementById('modal').hidden)) v.fast = false;
+  const dt = v.paused || v.held ? 0 : shipView.busy ? real * shipView.slow : v.fast ? real * 3 : real;   // the world holds still for a decision, or while you look over the ship
   t += dt;
 
   helm.update(dt, t);
@@ -143,16 +150,21 @@ function frame(real) {
 
   // Keep the ship in the middle; during a chase, look between her and the whale.
   focus.set(helm.pos.x, 0, helm.pos.z);
-  if (voyage.quarry) focus.lerp(voyage.quarry.group.position, 0.4).setY(0);
+  const fight = voyage.chase.close && !shipView.busy;
+  if (voyage.quarry) focus.lerp(voyage.quarry.group.position, fight ? 0.8 : 0.4).setY(0);
+  if (fight && wideH === null) wideH = view.height(30);                // close in on the fight, and draw back after
+  if (!fight && wideH !== null) { if (!shipView.busy) view.height(wideH); wideH = null; }
   shipView.update(real);
-  view.follow(shipView.look(focus), real);        // or close in on her decks, when she is opened up
+  juice.jolt *= Math.exp(-real * 7);
+  view.follow(shipView.look(focus), real, juice.jolt);        // or close in on her decks, when she is opened up
 
   if ((slow += real) > 0.15) {
     slow = 0; voyage.draw(); minimap.draw(helm, whales, voyage.season.edge, wind.from);
-    quarter.draw(begun && voyage.atSea() && !shipView.busy, v.held);
+    quarter.draw(begun && voyage.atSea() && !shipView.busy, v.held, v.fast);
     mate.tick();
     pointer.draw(begun && voyage.v.phase === 'sea' && !shipView.busy);
   }
+  hud.dart(voyage.chase.aim);                      // the mark for the dart moves every frame
   view.render();
 }
 

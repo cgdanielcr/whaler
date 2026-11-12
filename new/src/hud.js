@@ -72,6 +72,14 @@ export const hud = {
     $('act2').hidden = !label2;
   },
 
+  // The mark and the gold for the dart: aim is [mark, from, to], each 0 to 1, or null.
+  dart(aim) {
+    $('dartBar').hidden = !aim;
+    if (!aim) return;
+    $('dartZone').style.left = pct(aim[1]); $('dartZone').style.width = pct(aim[2] - aim[1]);
+    $('dartPin').style.left = pct(aim[0]);
+  },
+
   chase(label, k, danger = false) {
     $('chase').classList.toggle('danger', danger);
     $('chase').hidden = label == null;

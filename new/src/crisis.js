@@ -37,7 +37,7 @@ export function makeCrisis({ voyage, company, career, helm }) {
     c = { kind, def, force, who, t: 0, lasts: def.lasts ? def.lasts(force) : null, paused: true, allHands: voyage.sail.hands.all, line: '', hull: v().hull,
       up: new Set([...places].filter(([, p]) => p.deck === 0).map(([id]) => id)), arrived: new Set(), hurt: new Set(), broaches: 0, lost: [],
       troubles: def.troubles.map((t) => ({ ...t, p: 0, s: 0, m: t.start || 0, state: t.from ? 'waiting' : 'open', men: [] })) };
-    v().paused = true; v().held = false;
+    v().paused = true; v().held = false; v().fast = false;
     const helmsman = company.man(`wheel:${w.onDeck === 'larboard' ? 'L' : 'S'}`);   // the man at the wheel stays there
     if (helmsman && c.up.has(helmsman.id) && find('wheel')) find('wheel').men.push(helmsman.id);
     say(def.opening(season.wind, c));
@@ -62,6 +62,14 @@ export function makeCrisis({ voyage, company, career, helm }) {
     for (const o of c.troubles) o.men = o.men.filter((x) => x !== id);
     t.men.push(id); c.arrived.delete(id);              // he has to get there first
     return `${m.name} goes to ${t.name.toLowerCase()}.`;
+  }
+
+  // A click on a trouble sends the best man to hand; with Shift, takes the last one off it.
+  function sendBest(tid, off) {
+    const t = find(tid);
+    if (off) { const id = t.men.pop(); return say(id ? `${company.byId(id).name} is taken off ${t.name.toLowerCase()}.` : `No one is at ${t.name.toLowerCase()}.`); }
+    const free = company.alive().filter((m) => ready(m) && !c.troubles.some((o) => o.men.includes(m.id))).sort((a, b) => company.score(b, t) - company.score(a, t))[0];
+    say(free ? assign(free.id, tid) : c.allHands ? 'Every hand is at a station already.' : 'No hand of the watch on deck is free. Call all hands.');
   }
 
   function callAll() {
@@ -177,7 +185,7 @@ export function makeCrisis({ voyage, company, career, helm }) {
   function toggle() { if (c) c.paused = !c.paused; }
 
   return {
-    start, tick, preview, assign, callAll, callBill, toggle, place, arrive, status,
+    start, tick, preview, assign, sendBest, callAll, callBill, toggle, place, arrive, status,
     get now() { return c; },
     get hasBill() { return !!bill(); },
     get wind() { return voyage.season.wind; },

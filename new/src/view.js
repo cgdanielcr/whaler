@@ -51,12 +51,14 @@ export function makeView() {
   }
   resize();
 
-  function follow(p, dt) {
+  const jolt = new THREE.Vector3();
+  function follow(p, dt, shake = 0) {
     if (first) { focus.copy(p); first = false; }
     focus.lerp(p, 1 - Math.exp(-dt * 2.5));
     if (Math.abs(wantH - viewH) > 0.01) { viewH += (wantH - viewH) * (1 - Math.exp(-dt * 4)); project(); }
     camera.position.copy(focus).addScaledVector(LOOK, 500);
     camera.lookAt(focus);
+    if (shake > 0.01) camera.position.add(jolt.set(Math.random() - 0.5, Math.random() - 0.5, Math.random() - 0.5).multiplyScalar(shake));   // a jolt, when something strikes
     sun.position.copy(focus).add(SUN);
     sun.target.position.copy(focus);
   }

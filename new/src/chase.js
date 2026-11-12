@@ -9,6 +9,7 @@ import { BOATS, SEATS } from './boatcrews.js';
 import { hud } from './hud.js';
 import { cheer } from './morale.js';
 import { sound } from './sound.js';
+import { juice } from './juice.js';
 
 const CHASE = 9;          // seconds two ordinary boats must lie alongside to kill her
 const GIVE_UP = 15;       // seconds of pulling before the boats give up on a whale they cannot reach
@@ -41,15 +42,33 @@ export function makeChase({ v, whales, boats, helm, company, crews }) {
   }
   function escape(text) { whales.escape(c.w); end(text); }
 
-  // A boat has come up with her: the boatsteerer stands and darts.
+  // A boat has come up with her. The first boatsteerer stands poised, and the
+  // moment to dart is the master's: a mark runs to and fro, and the iron must
+  // go when it lies in the gold. A good boatsteerer makes the gold wider. Left
+  // too long, he throws of himself. Later boats get fast behind the first.
   boats.onReach((b) => {
     if (!c || c.over) return false;
-    const who = crews.who(b, 1)?.name || 'The boatsteerer';
-    if (rand() < crews.quality(b).dart + (c.quiet ? 0.15 : 0)) { if (!c.struck) hud.toast(`${who} darts. Fast to her!`); c.struck = true; sound.thump(); return true; }
-    if (rand() < (c.quiet ? 0.12 : 0.3)) escape(`${who} darts, and misses! She is gallied, and off like the wind.`);
-    else hud.toast(`${who} darts, and misses! The line is coiled down for another try.`);
-    return false;
+    if (c.struck) return true;
+    if (c.dart) return false;
+    const q = crews.quality(b).dart + (c.quiet ? 0.15 : 0);
+    c.dart = { b, t: 0, half: 0.07 + 0.16 * q, speed: c.w.sp.warn < 1.8 ? 4.2 : 3.2, who: crews.who(b, 1)?.name || 'The boatsteerer' };
+    return 'poise';
   });
+  const pin = () => 0.5 + 0.5 * Math.sin(c.dart.t * c.dart.speed);
+  function dart(auto) {
+    const d = c.dart, off = Math.abs(pin() - 0.5), hit = auto ? rand() < 0.45 : off < d.half;
+    c.dart = null; boats.darted(hit);
+    if (hit) {
+      c.struck = true; sound.thump(); juice.shake(0.5);
+      const deep = !auto && off < d.half * 0.3;
+      if (deep) c.progress = 0.22;
+      juice.float(deep ? 'A deep iron!' : 'Fast!', 'good');
+      return hud.toast(deep ? `${d.who} buries the iron to the hitches. Fast to her, and she feels it!` : `${d.who} darts. Fast to her!`);
+    }
+    juice.float('Missed!', 'bad'); sound.splash();
+    if (rand() < (c.quiet ? 0.15 : 0.35)) escape(`${d.who} darts, and misses! She is gallied, and off like the wind.`);
+    else hud.toast(`${d.who} darts, and misses! The line is coiled down for another try.`);
+  }
 
   function drown(b, alone) {
     const crew = crews.crewOf(b);
@@ -65,7 +84,7 @@ export function makeChase({ v, whales, boats, helm, company, crews }) {
     for (const m of crew) m.health = Math.max(5, m.health - 25);
     crews.lose(b); v.boatsLost += 1; v.boats = crews.afloat;
     cheer(company, -2); cheer(company, -4, crew);              // shaken, and the boat's own crew most of all
-    sound.crack();
+    sound.crack(); juice.shake(1.6); juice.float('Stove!', 'bad');
     if (alone) return escape(`She stoves the ${boatName(b)}! ${drown(b, true)} She is away.`);
     v.paused = true;
     hud.decide(`Her flukes come down across the ${boatName(b)} and stave her to splinters. Six men are in the water, and the other boat is still fast to the whale.`, [
@@ -94,7 +113,7 @@ export function makeChase({ v, whales, boats, helm, company, crews }) {
     if (sinks) { cheer(company, -2); return end('She is dead, and she sinks! All her oil goes to the bottom.'); }
     v.taken += 1;
     cheer(company, 4);                                                // greasy luck: every man's lay is the fatter
-    sound.cheer();
+    sound.cheer(); juice.shake(0.6); juice.float(`${w.barrels} barrels!`, 'good');
     w.left = w.barrels;
     end(`She spouts blood and rolls fin out: about ${w.barrels} barrels in her. Bring her alongside before the sharks have her.`);
   }
@@ -104,7 +123,7 @@ export function makeChase({ v, whales, boats, helm, company, crews }) {
     if ((c.clock -= dt) > 0) return;
     if (c.mood === 'calm') { c.mood = 'warn'; c.clock = c.warn; c.w.angry = true; sound.pipe(); return; }
     c.mood = 'calm'; c.clock = between(...c.w.sp.calm); c.w.angry = false;
-    whales.thrash(c.w); sound.splash();
+    whales.thrash(c.w); sound.splash(); juice.shake(0.9);
     if (!c.haul) return hud.toast('Her flukes come down like a falling mast, on empty water.');
     if (rand() < Math.min(0.85, c.w.sp.stove * 2.4 * c.steady)) stove();
     else hud.toast('Her flukes sweep over the boats, a hand’s breadth clear. The headsman’s steering saved them.');
@@ -114,6 +133,11 @@ export function makeChase({ v, whales, boats, helm, company, crews }) {
     if (!c || c.over) return;
     c.t += dt;
     const fast = boats.fastCrews();
+    if (c.dart) {                                   // he waits for the word, but not for ever (and not while the mate is speaking)
+      c.dart.t += dt;
+      if (document.getElementById('mate').hidden && (c.dart.wait = (c.dart.wait || 0) + dt) > 4.5) dart(true);
+      return;
+    }
     if (!fast.length) {
       if (c.fright && c.t > c.fright) return escape('She hears the oars, and is off before a boat can come up with her.');
       if (c.w.sp.tooFast && c.t > GIVE_UP) escape('She is a finback, too fast for any boat. The men give up the chase.');
@@ -129,19 +153,26 @@ export function makeChase({ v, whales, boats, helm, company, crews }) {
     c.off = 0;
     const lance = fast.reduce((a, b) => a + crews.quality(b).lance, 0);        // every boat fast to her lances
     c.progress = Math.min(1, c.progress + (dt / CHASE) * (lance / 2) * (c.ids.length === 1 ? 1.25 : 1));
+    if ((c.stroke = (c.stroke || 0) + dt) > 0.8) { c.stroke = 0; sound.lance(); juice.shake(0.18); }       // each thrust of the lance
+    if (c.progress > 0.7 && !c.w.bleeding) { c.w.bleeding = true; juice.float('She spouts blood!', 'good'); hud.toast('"Her chimney\u2019s afire!" She spouts thick blood. A few strokes more.'); }
     if (c.soundAt != null && c.progress >= c.soundAt) { c.soundAt = null; return sounds(); }
     if (c.progress >= 1) finish();
   }
 
-  addEventListener('keydown', (e) => { if (c && !c.over && e.code === 'KeyS' && boats.fastCrews().length) c.haul = !c.haul; });
+  addEventListener('keydown', (e) => { if (c && !c.over && !c.dart && e.code === 'KeyS' && boats.fastCrews().length) c.haul = !c.haul; });
 
   return {
     start,
     tick,
     get whale() { return c && c.w; },
+    get close() { return !!c && !c.over && (!!c.dart || boats.fastCrews().length > 0); },   // the picture closes in on the fight
+    // The mark and the gold for the dart, or null: [where the mark is, gold from, gold to].
+    get aim() { return c && c.dart ? [pin(), 0.5 - c.dart.half, 0.5 + c.dart.half] : null; },
+    throwIron() { if (!c || !c.dart) return false; dart(false); return true; },
     get over() { return !c || c.over; },
     // The order the master may give now: [label, what it does], or null.
     get order() {
+      if (c && c.dart) return ['Dart! (Space)', () => dart(false)];
       if (!c || c.over || !boats.fastCrews().length) return null;
       return c.haul ? ['Stern all! Lie off (S)', () => { c.haul = false; hud.toast('"Stern all!" The boats back away and lie off.'); }]
         : ['Haul up and lance (S)', () => { c.haul = true; hud.toast('"Haul up!" The boats are hauled in on the line.'); }];
@@ -150,6 +181,7 @@ export function makeChase({ v, whales, boats, helm, company, crews }) {
     get status() {
       if (!c) return [null, null, false];
       if (c.over) return ['Hoisting in the boats', null, false];
+      if (c.dart) return [`${c.dart.who} stands with the iron raised. Dart when the mark is in the gold!`, null, false];
       if (!boats.fastCrews().length) return [c.quiet ? 'The boats are paddling up on her' : 'The boats are pulling for her', c.progress, false];
       if (c.mood === 'warn') return [c.haul ? 'She is rounding on the boats! Stern all!' : 'She lashes the water white. The boats lie clear.', c.progress, c.haul];
       if (!c.haul) return [c.off > DRAW ? 'Lying off. The irons are drawing: haul up!' : 'Lying off, clear of her flukes', c.progress, c.off > DRAW];

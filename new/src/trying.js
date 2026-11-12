@@ -5,6 +5,8 @@
 import * as THREE from 'three';
 import { room } from './stores.js';
 import { hud } from './hud.js';
+import { sound } from './sound.js';
+import { juice } from './juice.js';
 
 const BBL_PER_SECOND = 9;     // about fifty barrels a day
 const ROT = 0.9;              // what the sharks leave of a whale adrift, each day
@@ -54,6 +56,7 @@ export function makeTrying(scene, { v, whales, helm }) {
         acc += boiled * fx.stow; w.left -= boiled;          // a poor cooper loses some in the stowing
         const whole = Math.min(Math.floor(acc), room(v));
         v[w.sp.oil] += whole; w.tried += whole; acc -= whole;
+        if (whole > 0) sound.cask();
         w.group.scale.setScalar(w.size * (0.6 + 0.4 * (w.left / w.barrels)));
         if ((puffIn -= dt) <= 0) {
           puffIn = 0.12;
@@ -61,6 +64,7 @@ export function makeTrying(scene, { v, whales, helm }) {
           helm.object.localToWorld(works.set(2.2, 2.6, 0));
           p.m.position.copy(works); p.age = 0; p.m.visible = true;
         }
+        if (w.left < 0.5) juice.float(`${w.tried} barrels stowed`, 'good');
         if (w.left < 0.5) castOff(`Tried out: ${w.tried} barrels of ${w.sp.oil === 'sperm' ? 'sperm oil' : 'oil'} stowed down. The stripped carcass is cast adrift.`);
       }
       for (const p of smoke) {

@@ -83,6 +83,7 @@ export function makeWhales(scene, startEdge) {
         p.m.position.copy(hole);
         p.v.set(d[0] + (rand() - 0.5) * 0.6, d[1] * (0.8 + rand() * 0.4), d[2] + (rand() - 0.5) * 0.6).applyQuaternion(w.group.quaternion);
         p.age = -k * 0.05; p.m.visible = true;
+        p.m.material.color.set(w.bleeding ? 0xc8382c : 0xf4fbff);     // at the last she spouts blood
       }
     }
   }
@@ -173,7 +174,7 @@ export function makeWhales(scene, startEdge) {
         const p = puffs[nextPuff++ % puffs.length], a = k * 0.45;
         w.group.localToWorld(hole.set(-5.5, 0.6, 0));
         p.m.position.copy(hole); p.v.set(Math.cos(a) * 5, 3 + rand() * 4, Math.sin(a) * 5);
-        p.age = -k * 0.02; p.m.visible = true;
+        p.age = -k * 0.02; p.m.visible = true; p.m.material.color.set(0xf4fbff);
       }
     },
     escape(w) { Object.assign(w, { state: 'escaped', away: 25, phase: 'down', diveT: 0, angry: false }); },

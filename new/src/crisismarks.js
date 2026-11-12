@@ -19,6 +19,8 @@ export function makeCrisisMarks({ crisis, stage, layers }) {
       e = document.createElement('div');
       e.className = 'trouble'; e.dataset.trouble = t.id;
       e.innerHTML = '<b></b><div class="bar"><i></i></div><small></small>';
+      e.onclick = (ev) => crisis.sendBest(t.id, ev.shiftKey);
+      e.title = 'Click to send the best man to hand. Shift-click to take one off.';
       box.append(e); els.set(t.id, e);
     }
     return e;
@@ -56,7 +58,7 @@ export function makeCrisisMarks({ crisis, stage, layers }) {
     $('crisisTitle').textContent = c.def.title(crisis.wind);
     $('crisisLine').textContent = c.line;
     $('crisisB').style.width = c.lasts ? `${Math.max(0, 1 - c.t / c.lasts) * 100}%` : '100%';
-    $('crisisHint').textContent = c.paused ? 'Held. Drag men onto the troubles, then press Space to let it run.' : 'Press Space to hold.';
+    $('crisisHint').textContent = c.paused ? 'Held. Click a trouble to send the best man to hand, or drag a man to it. Then Space lets it run.' : 'Press Space to hold.';
     $('crisisPause').textContent = c.paused ? 'Let it run' : 'Hold';
     $('crisisAll').hidden = c.allHands;
     $('crisisBill').hidden = !crisis.hasBill;

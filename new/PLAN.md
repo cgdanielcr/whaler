@@ -88,6 +88,25 @@ voyage for the owners in about eight minutes; a person will be slower and lose m
 To try one trouble by itself, add `?crisis=squall` (or `fire`, `overboard`, `beset`,
 `gale`) to the address.
 
+## The second pass: the fifteen seconds (12 November 2026)
+
+Asked for after the first build: the systems were there, but most moments were click
+and wait. This pass went at the moments that repeat.
+
+- **The dart is yours.** When the first boat is on her the boatsteerer stands with his
+  iron raised and a mark runs to and fro; Space when it lies in the gold. A better
+  boatsteerer has a wider gold. Dead centre is a deep iron and a head start on the kill.
+- **The fight is felt.** The picture closes in on the boats, jolts when she lashes out
+  or a boat is stove, each lance stroke is heard, and near the end she spouts blood.
+- **Words rise over the sea** for the things that matter: Fast!, Stove!, 86 barrels!
+- **Pass the time (F).** A quiet passage runs three times as fast, and stops of itself
+  for a spout, a choice, strained canvas or the end of her course.
+- **A trouble takes one click.** Click its plate and the best man to hand goes to it;
+  Shift-click takes one off. Dragging a man of your choosing still works.
+- **Barrels are heard** going below as she tries out.
+
+Still click-and-wait: the passage itself. Sailing is ordered, not handled.
+
 ## The milestones
 
 Each ends live and playable, with one test to perform in a browser. None is started

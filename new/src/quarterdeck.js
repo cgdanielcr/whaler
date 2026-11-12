@@ -7,7 +7,7 @@ import { wearyWord } from './hands.js';
 
 const $ = (id) => document.getElementById(id);
 
-export function makeQuarterdeck({ sailing, onHold }) {
+export function makeQuarterdeck({ sailing, onHold, onRun }) {
   const dial = $('dial'), ctx = dial.getContext('2d'), S = dial.width, R = S / 2 - 10;
   const btns = sailing.state.names.map((name, i) => {
     const b = document.createElement('button');
@@ -17,6 +17,7 @@ export function makeQuarterdeck({ sailing, onHold }) {
   });
   $('allHands').onclick = () => sailing.allHands(!sailing.state.all);
   $('hold').onclick = onHold;
+  $('runOn').onclick = onRun;
 
   function drawDial(st) {
     const rel = st.from - st.heading - Math.PI / 2;        // the wind's eye on the dial, her head uppermost
@@ -47,7 +48,9 @@ export function makeQuarterdeck({ sailing, onHold }) {
   }
 
   return {
-    draw(show, held) {
+    draw(show, held, fast) {
+      $('runOn').classList.toggle('on', !!fast);
+      $('runOn').textContent = fast ? 'Passing the time… (F)' : 'Pass the time (F)';
       $('quarter').hidden = !show;
       $('heldMark').hidden = !held;
       if (!show) return;

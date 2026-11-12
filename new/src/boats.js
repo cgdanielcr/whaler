@@ -70,7 +70,9 @@ export function makeBoats(scene) {
     fastCrews: () => active().filter((b) => b.userData.mode === 'fast').map((b) => b.userData.crew),
     isOut: (crew) => boats.some((b) => b.userData.crew === crew && b.userData.mode !== 'stove'),
     onReach(fn) { reach = fn; },
-    lieOff(on) { lying = on; },               // the fast boats lie off clear of her flukes, or haul up alongside
+    lieOff(on) { lying = on; },
+    // The iron is thrown from the boat poised over her: it holds, or it does not.
+    darted(hit) { for (const b of active()) if (b.userData.mode === 'poise') { b.userData.mode = hit ? 'fast' : 'missed'; b.userData.wait = 3; } },               // the fast boats lie off clear of her flukes, or haul up alongside
 
     // crews: [{ crew: boat number, pull: how fast her oarsmen pull, 1 for ordinary }]
     launch(pos, heading, crews) {
@@ -116,9 +118,9 @@ export function makeBoats(scene) {
         }
         const dx = tx - b.position.x, dz = tz - b.position.z, d = Math.hypot(dx, dz);
         if (u.mode === 'missed' && (u.wait -= dt) <= 0) u.mode = 'out';       // the line is coiled down again
-        if (u.mode === 'out' && d < 1.5) u.mode = reach(u.crew) ? 'fast' : (u.wait = 3, 'missed');
+        if (u.mode === 'out' && d < 1.5) { const r = reach(u.crew); u.mode = r === 'poise' ? 'poise' : r ? 'fast' : (u.wait = 3, 'missed'); }
         if (u.mode === 'home' && d < 3.5) { scene.remove(b); boats.splice(boats.indexOf(b), 1); continue; }
-        if (u.mode === 'fast') {                        // towed along beside her
+        if (u.mode === 'fast' || u.mode === 'poise') {   // towed along beside her, or poised over her with the iron raised
           const k = Math.min(1, dt * 3);
           b.position.x += (tx - b.position.x) * k; b.position.z += (tz - b.position.z) * k; u.heading = whale.heading;
         } else if (u.mode !== 'missed' && d > 0.01) {

@@ -24,14 +24,14 @@ const WAYPOINT = { x: BERTH.x - 26, z: BERTH.z + 5 };   // stand in from here, c
 
 export function makeVoyage({ scene, helm, whales, boats, ship, start, company, crews, career, remember }) {
   const v = {
-    phase: 'port', fitted: false, paused: false, held: false, date: new Date(start), days: 0, hours: 0,
+    phase: 'port', fitted: false, paused: false, held: false, fast: false, date: new Date(start), days: 0, hours: 0,
     stores: 0, eat: 0, whale: 0, sperm: 0, crew: company.count, boats: crews.afloat, hull: 100, taken: 0, lost: 0, boatsLost: 0,
     leg: 0, told: {}, gear: {}, report: null,
   };
   const season = makeSeason();
   const sail = makeSailing({ helm, ship, season, company });
   const chase = makeChase({ v, whales, boats, helm, company, crews, career });
-  const lookout = makeLookout({ helm, whales });
+  const lookout = makeLookout({ helm, whales, onCry: () => { v.fast = false; } });
   let watch = watchAt(0, 0);             // the watch now on deck
   const reckonFx = () => gearEffects(effects(company, watch.onDeck), v.gear);
   let fx = reckonFx();                   // what the men at their stations do for her
@@ -185,7 +185,9 @@ export function makeVoyage({ scene, helm, whales, boats, ship, start, company, c
   return {
     v, season, sail, chase, trying, click, atSea, draw: () => draw(ctx),
     begin(date) { if (date) v.date = new Date(date); hud.toast('The Mastiff lies at the wharf, to be fitted out for a whaling voyage.'); fitOut(true); },
-    hold() { if (atSea() && !v.paused) v.held = !v.held; },
+    hold() { if (atSea() && !v.paused) { v.held = !v.held; v.fast = false; } },
+    // Pass the time: the glass runs three times as fast on a quiet passage, until anything happens.
+    runOn() { if (v.phase === 'sea' && !v.paused) { v.fast = !v.fast; v.held = false; if (v.fast && !helm.target) { v.fast = false; hud.toast('Lay a course first: click the sea.'); } } },
     get fx() { return fx; },
     get watch() { return { ...watch, trying: v.phase === 'trying' }; },
     refresh() { fx = reckonFx(); },      // after the owner moves men about

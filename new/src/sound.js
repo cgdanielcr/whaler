@@ -60,6 +60,8 @@ function makeSound() {
     pipe() { note('sine', 2100, 3300, 0.45, 0.05); note('sine', 3300, 2200, 0.5, 0.05, 0.45); },
     crack() { burst(900, 0.5, 0.5); },
     thump() { burst(140, 0.35, 0.6); },
+    lance() { burst(260, 0.14, 0.22); },
+    cask() { note('sine', 190, 120, 0.09, 0.07); },                 // a barrel run below
     splash() { burst(1600, 0.9, 0.25); },
     cheer() { note('triangle', 520, 660, 0.25, 0.05); note('triangle', 660, 880, 0.4, 0.05, 0.22); },
   };
