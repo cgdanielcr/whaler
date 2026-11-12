@@ -102,8 +102,9 @@ export function makeChase({ v, whales, boats, helm, company, crews }) {
   // Her temper: quiet, then a moment's warning, then she lashes out at whatever is alongside.
   function temper(dt) {
     if ((c.clock -= dt) > 0) return;
-    if (c.mood === 'calm') { c.mood = 'warn'; c.clock = c.warn; sound.pipe(); return; }
-    c.mood = 'calm'; c.clock = between(...c.w.sp.calm);
+    if (c.mood === 'calm') { c.mood = 'warn'; c.clock = c.warn; c.w.angry = true; sound.pipe(); return; }
+    c.mood = 'calm'; c.clock = between(...c.w.sp.calm); c.w.angry = false;
+    whales.thrash(c.w); sound.splash();
     if (!c.haul) return hud.toast('Her flukes come down like a falling mast, on empty water.');
     if (rand() < Math.min(0.85, c.w.sp.stove * 2.4 * c.steady)) stove();
     else hud.toast('Her flukes sweep over the boats, a hand’s breadth clear. The headsman’s steering saved them.');

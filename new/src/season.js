@@ -39,13 +39,13 @@ export function makeSeason() {
     const doy = dayOfYear(date), late = Math.min(1, Math.max(0, (doy - 200) / 80));
     if (s.gale) {
       if (--s.galeDays <= 0) { s.gale = false; s.wind = 'strong breeze'; hud.toast('The gale blows itself out.'); }
-    } else if (s.brewing || (days > 5 && Math.random() < 0.012 + 0.03 * late)) {     // it comes with a day's warning, or with none
+    } else if (s.brewing || (days > 5 && Math.random() < 0.01 + 0.02 * late)) {     // it comes with a day's warning, or with none
       s.brewing = false;
       s.gale = true; s.galeDays = 1 + Math.floor(Math.random() * 2); s.wind = pick(GALES);
       hud.toast(`It comes on to blow: a ${s.wind}. No boat can be lowered in this.`);
     } else {
       s.wind = pick(CALM);
-      if (days > 4 && Math.random() < 0.035 + 0.08 * late) {
+      if (days > 4 && Math.random() < 0.03 + 0.05 * late) {
         s.brewing = true; s.wind = 'strong breeze';
         hud.toast('The glass is falling, and there is a greasy look to the sky to windward. It will blow before tomorrow.');
       }

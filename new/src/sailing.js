@@ -49,7 +49,7 @@ export function makeSailing({ helm, ship, season, company }) {
       return {
         from: wind.from, heading: helm.heading, wind: season.wind, gale: season.gale,
         says: `${cap(season.wind)} from the ${compass(wind.from)}`,
-        point: !helm.set ? 'Lying still' : canvas.at > 2.9 ? 'Hove to' : helm.speed < 0.3 && !helm.target ? 'No course set' : sailing(helm.heading - wind.from),
+        point: !helm.set ? 'Lying still' : canvas.at > 2.9 ? 'Hove to' : !helm.target ? (helm.speed < 0.4 ? 'Lying to, no course set' : 'Losing her way') : sailing(helm.heading - wind.from),
         knots: helm.speed * 0.9, plan: Math.round(canvas.want), bear: BEAR[season.wind], job: canvas.job, lost: canvas.lost,
         all: hands.all, weary: hands.weariness(), rate, names: CANVAS.map((c) => c.name),
       };

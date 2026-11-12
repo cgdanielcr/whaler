@@ -61,6 +61,33 @@ Small things seen while playing: the crew bar shows initials, so two men read as
 - **Sound is made in the browser**, not loaded from files: wind, sea, the ship's bell
   striking the watches. No new dependency.
 
+## Where it stands (12 November 2026)
+
+All six milestones were built in one run, on the director's word to go ahead without
+stopping between them. **None has yet been played by him.** What follows is what was
+built, and where it falls short of the plan above.
+
+| | Built | Short of the plan |
+|---|---|---|
+| B1 The wind | Wind with a direction; six points she cannot lie in; she beats and goes about of herself, and wears if she misses stays; four states of canvas; sails blow out if over-pressed; yards brace round; a wind dial | Nothing known |
+| B2 The deck at work | Making and shortening sail take the watch time; all hands, and weariness for it; Space holds the world anywhere; full names | The station bill is a memory of how you last placed the hands in each trouble, called back with one button. It is not yet a page you write in calm weather |
+| B3 The hunt | Pull or paddle up; haul up and lance or stern all, on a warning that is shorter for a sperm whale; irons draw if you lie off; a stove boat's men to save or leave | The ship does not follow a running whale |
+| B4 Troubles | Squall, fire at the tryworks, man overboard, beset in the ice, beside the gale | Sickness and a fall from aloft are chances put as choices, not troubles fought on deck |
+| B5 The run | The owners' standing and what they look for; dismissal ends a career; the master's purse and seven things to buy; the talk on the wharf says where whales lie this season (right four times in five); six chances of the sea | **No chart of separate grounds and no port of call.** It is still one sea, with the whales lying differently each voyage |
+| B6 The finish | Title page; the mate's word, once for each new thing; sound made in the browser; the career, company and station bill remembered at the wharf; a finer picture as a switch | No hover-for-meaning on terms. A voyage is remembered only from the wharf, not mid-passage |
+
+The look: a brighter sea with breaking crests and surf, cloud shadows and wind streaks
+that run down the wind, light that turns with the season and darkens in a gale, rain,
+pale ice under the floes, a bow wave, sails that catch the light, flames at the tryworks.
+
+Numbers that were invented and want playing: every figure in `canvas.js`, `hands.js`,
+`wind.js`, `troubles.js`, `outfit.js`, `owners.js`, and the temper of each whale in
+`species.js`. A scripted hand that does everything right makes $1,500 to $3,000 a
+voyage for the owners in about eight minutes; a person will be slower and lose more.
+
+To try one trouble by itself, add `?crisis=squall` (or `fire`, `overboard`, `beset`,
+`gale`) to the address.
+
 ## The milestones
 
 Each ends live and playable, with one test to perform in a browser. None is started

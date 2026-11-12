@@ -4,6 +4,7 @@
 import { wrap } from './world.js';
 import { describe } from './species.js';
 import { hud } from './hud.js';
+import { sound } from './sound.js';
 
 export const SIGHT = 95;        // how far an ordinary lookout can see a spout
 export const MAKE_OUT = 50;     // how near before he can tell the kind of whale
@@ -27,7 +28,7 @@ export function makeLookout({ helm, whales }) {
     for (const w of whales.within(helm.pos, SIGHT * eyes)) {
       if (!w.sighted && w.surfaced) {
         w.sighted = true;
-        if (cry) hud.toast(`There she blows! ${bearing(w.group.position)}.`);
+        if (cry) { hud.toast(`There she blows! ${bearing(w.group.position)}.`); sound.bells(1); }
       }
       if (w.sighted && !w.known && far(w.group.position, helm.pos) < MAKE_OUT * eyes) {
         w.known = true;

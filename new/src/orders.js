@@ -37,7 +37,8 @@ export function offer(g) {
 
 function hint(g) {
   const { v, helm, trying, season } = g;
-  if (v.phase === 'port') return v.fitted ? 'Press Set sail, or click the sea.' : 'Choose how much provision to take.';
+  if (v.phase === 'port') return v.fitted ? 'Press Set sail, or click the sea.' : 'Lay out your purse, then choose how much provision to take.';
+  if (v.phase === 'hunt') return 'Hauled up, the headsmen lance her. When she rounds on the boats, Stern all! and lie off until she quiets.';
   if (v.phase === 'docking') return 'Standing in for the wharf. Click the sea to haul off.';
   if (v.phase === 'trying') return season.gale ? 'Too rough to work alongside. The tryworks wait on the weather.'
     : 'Cutting in and trying out. She lies still meanwhile; cast the carcass off to sail.';
@@ -49,7 +50,10 @@ function hint(g) {
   if (season.gale) return 'No boat can be lowered in a gale.';
   if (g.kind.sunday) return 'Sunday is kept: no whaling today.';
   if (!boatsToLower(g).length) return 'No boat is manned and marked to lower. Look to the boats in the ship view, or make for home.';
-  return 'Bowheads keep along the edge of the ice, sperm whales to the south, right whales and humpbacks between. Click the sea to set a course.';
+  if (g.sail.canvas.at > 2.9) return 'She is hove to. Make sail to get under way again.';
+  if (!helm.target) return 'Click the sea to lay her course. Bowheads keep along the edge of the ice, sperm whales to the south, right whales and humpbacks between.';
+  if (helm.beating) return 'Her mark lies to windward: she is beating up to it, tack and tack.';
+  return `Standing on. ${g.v.report.text}`;
 }
 
 export function draw(g) {

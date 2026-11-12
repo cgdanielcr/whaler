@@ -134,7 +134,7 @@ export function makeWhales(scene, startEdge) {
       p.y += ((w.phase === 'up' ? -0.35 : -5.5) - p.y) * Math.min(1, dt * 0.8);
       w.pitch += ((w.phase === 'down' && w.diveT < 3 ? -0.4 : 0) - w.pitch) * Math.min(1, dt * 2);
       g.rotation.set(0, -w.heading, w.pitch);
-      g.userData.pivot.rotation.z = Math.sin(t * (fleeing ? 4 : 1.6) + w.seed) * 0.3;
+      g.userData.pivot.rotation.z = Math.sin(t * (w.angry ? 9 : fleeing ? 4 : 1.6) + w.seed) * (w.angry ? 0.7 : 0.3);
 
       if (w.surfaced && (w.spoutIn -= dt) <= 0) { blow(w); w.spoutIn = fleeing ? 1.8 : 3.5 + rand() * 2; }
     }
@@ -167,7 +167,16 @@ export function makeWhales(scene, startEdge) {
       return best;
     },
     hunt(w) { w.state = 'fast'; },
-    escape(w) { Object.assign(w, { state: 'escaped', away: 25, phase: 'down', diveT: 0 }); },
+    // She lashes out: white water thrown up all about her flukes.
+    thrash(w) {
+      for (let k = 0; k < 14; k++) {
+        const p = puffs[nextPuff++ % puffs.length], a = k * 0.45;
+        w.group.localToWorld(hole.set(-5.5, 0.6, 0));
+        p.m.position.copy(hole); p.v.set(Math.cos(a) * 5, 3 + rand() * 4, Math.sin(a) * 5);
+        p.age = -k * 0.02; p.m.visible = true;
+      }
+    },
+    escape(w) { Object.assign(w, { state: 'escaped', away: 25, phase: 'down', diveT: 0, angry: false }); },
     kill(w, sinks) { Object.assign(w, { state: 'dead', clock: 0, sinks }); },
   };
 }

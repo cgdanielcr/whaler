@@ -17,6 +17,8 @@ import { makeDrag } from './drag.js';
 import { makePlacing } from './placing.js';
 import { mood, spiritsOf } from './morale.js';
 import { makeCrisisMarks } from './crisismarks.js';
+import { makeFlames } from './flames.js';
+import { sound } from './sound.js';
 
 const RISE_TIME = 1.1;                   // seconds for her decks to rise out of the sea, or sink back
 const WALK = 2.2;                        // how fast the men walk about the decks
@@ -37,6 +39,7 @@ export function makeShipView({ view, voyage, company, crews, ship, helm, crisis 
   const roster = makeRoster({ company, crews, voyage, onChange: () => { marks.relabel(); bar.render(); }, onSelect: (id) => { chosen = id; bar.choose(id); } });
   const placing = makePlacing({ company, crews, crisis, done: refresh });
   const trouble = makeCrisisMarks({ crisis, stage, layers: d.layers });
+  const flames = makeFlames(d.layers[0].group);
   const drag = makeDrag({ company, preview: placing.preview, drop: placing.drop, choose });
   const bar = makeCrewBar({ company, drag });
 
@@ -123,7 +126,7 @@ export function makeShipView({ view, voyage, company, crews, ship, helm, crisis 
   // The top bar: the date, the watch and the bells, and how the men are.
   function tellWatch(w, dt) {
     if (lastWatch !== null && w.index !== lastWatch && want) {
-      said = 3; watchLine.textContent = `Eight bells! The ${w.onDeck} watch comes on deck, and the other goes below.`;
+      sound.bells(4); said = 3; watchLine.textContent = `Eight bells! The ${w.onDeck} watch comes on deck, and the other goes below.`;
       roster.render(); bar.render();
     }
     lastWatch = w.index;
@@ -163,6 +166,7 @@ export function makeShipView({ view, voyage, company, crews, ship, helm, crisis 
     const settled = want && k >= 1 && Math.abs(at - sel) < 0.05;
     marks.update(sel, settled, mine);
     trouble.update(sel, settled);
+    flames.update(dt, crisis.now);
   }
 
   return {

@@ -26,6 +26,7 @@ import { makeQuarterdeck } from './quarterdeck.js';
 import { makeWeather } from './weather.js';
 import { makeMate } from './mate.js';
 import { showTitle } from './title.js';
+import { makePointer } from './pointer.js';
 import { sound } from './sound.js';
 
 const START = new Date(1841, 4, 1);
@@ -57,6 +58,7 @@ const quarter = makeQuarterdeck({ sailing: voyage.sail, onHold: () => voyage.hol
 const weather = makeWeather(view, voyage);
 const mate = makeMate({ voyage, career, crisis, helm });
 mate.watch(whales);
+const pointer = makePointer({ view, helm, whales });
 
 let begun = false;
 showTitle(career, (continuing) => {
@@ -149,6 +151,7 @@ function frame(real) {
     slow = 0; voyage.draw(); minimap.draw(helm, whales, voyage.season.edge, wind.from);
     quarter.draw(begun && voyage.atSea() && !shipView.busy, v.held);
     mate.tick();
+    pointer.draw(begun && voyage.v.phase === 'sea' && !shipView.busy);
   }
   view.render();
 }

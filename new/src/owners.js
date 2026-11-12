@@ -9,11 +9,11 @@ const KEY = 'whaler-new-career';
 const STANDING = ['', 'On your last chance', 'Under a cloud', 'On trial', 'Well thought of', 'The owners’ favourite'];
 
 export function makeCareer() {
-  const c = { voyages: 0, landed: 0, purse: 120, standing: 3, best: 0, whales: 0, over: null, learned: {}, bill: {} };
+  const c = { voyages: 0, landed: 0, purse: 150, standing: 3, best: 0, whales: 0, over: null, learned: {}, bill: {} };
 
   c.word = () => STANDING[Math.max(1, Math.min(5, c.standing))];
   // What the owners look for from the coming voyage, clear of charges and lays.
-  c.expect = () => 1400 + 350 * Math.min(c.voyages, 6);
+  c.expect = () => 1400 + 250 * Math.min(c.voyages, 5);
 
   // A voyage made: net is what the owners keep, lay the master's own share. Returns what is said.
   c.settle = (net, lay, taken) => {

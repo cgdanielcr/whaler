@@ -1,7 +1,8 @@
 // The crew bar: every man down the left of the ship screen, with his face,
-// his name, how he is in body and spirits, and his watch. Click a man to
+// his name in full, how he is in body and spirits, whether he is weary, and his watch. Click a man to
 // choose him; press and drag to carry him to a station or a boat.
 import { portrait } from './portrait.js';
+import { wearyWord } from './hands.js';
 
 const GROUPS = [['Officers', (m) => m.officer], ['Larboard watch', (m) => m.watch === 'larboard'],
   ['Starboard watch', (m) => m.watch === 'starboard'], ['Idlers', (m) => !m.officer && !m.watch]];
@@ -16,11 +17,11 @@ export function makeCrewBar({ company, drag }) {
     box.innerHTML = GROUPS.map(([title, f]) => {
       const men = alive.filter(f);
       return men.length ? `<div class="cgrp">${title}</div>` + men.map((m) => {
-        const short = `${m.name.split(' ')[0][0]}. ${m.name.split(' ').slice(1).join(' ')}`;
-        return `<div class="hand${m.id === chosen ? ' on' : ''}" data-id="${m.id}" title="${m.name}, ${m.title.toLowerCase()}">` +
-          `<img src="${portrait(m)}" alt="" draggable="false"><div class="cn"><b>${short}</b>` +
+        return `<div class="hand${m.id === chosen ? ' on' : ''}" data-id="${m.id}" title="${m.name}, ${m.title.toLowerCase()}. ${wearyWord(m.weary || 0)}.">` +
+          `<img src="${portrait(m)}" alt="" draggable="false"><div class="cn"><b>${m.name}</b>` +
           `<i class="cb"><i style="width:${m.health}%;background:${tint(m.health, 60, 30)}"></i></i>` +
-          `<i class="cb"><i style="width:${m.spirits}%;background:${tint(m.spirits, 55, 40)}"></i></i></div></div>`;
+          `<i class="cb"><i style="width:${m.spirits}%;background:${tint(m.spirits, 55, 40)}"></i></i>` +
+          ((m.weary || 0) >= 20 ? `<em>${wearyWord(m.weary).toLowerCase()}</em>` : '') + '</div></div>';
       }).join('') : '';
     }).join('');
   }

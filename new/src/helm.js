@@ -61,7 +61,7 @@ export function makeHelm(ship, ice) {
         const rate = (0.4 + 0.45 * Math.min(1, s.speed / 4)) * (inStays ? 0.85 * s.handling : 1);
         turn = s.round ? s.round * rate * dt : THREE.MathUtils.clamp(to, -rate * dt, rate * dt);
         s.heading = wrap(s.heading + turn);
-        const drive = free ? 0.45 : s.wind.drive * pointOfSail(off) * s.canvas;
+        const drive = free ? 0.45 : Math.max(d < 8 && s.canvas > 0 ? 0.2 : 0, s.wind.drive * pointOfSail(off) * s.canvas);   // the last cable's length she is worked up to her mark
         if (s.set) want = MAX_SPEED * drive * s.hands * s.slow * Math.min(1, 0.25 + d / 20) * (1 - Math.min(0.5, Math.abs(to) / 2.6));
       }
     }

@@ -34,6 +34,16 @@ export function makeIce(scene) {
     all.add(mesh);
     floes.push({ x, z, r });
   }
+  // Under each floe, the pale green of the ice below the water, and a rim of slush about it.
+  const under = new THREE.Group(), glow = new THREE.MeshBasicMaterial({ color: 0x8fe6dc, transparent: true, opacity: 0.38, depthWrite: false });
+  for (const f of floes) {
+    const skirt = new THREE.Mesh(new THREE.CircleGeometry(f.r * 1.28 + 0.8, 9).rotateX(-Math.PI / 2), glow);
+    skirt.position.set(f.x, 0.34, f.z); skirt.rotation.y = f.x;
+    under.add(skirt);
+  }
+  const skirts = bake(under);
+  skirts.children.forEach((m) => { m.castShadow = m.receiveShadow = false; m.renderOrder = 0; });
+  scene.add(skirts);
   scene.add(bake(all));        // all the ice drawn as two shapes
 
   return {
